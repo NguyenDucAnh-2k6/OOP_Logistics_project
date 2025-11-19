@@ -1,0 +1,6 @@
+com\oop\logistics\models\DisasterEvent.class
+com\oop\logistics\App.class
+com\oop\logistics\utils\HttpClientUtil.class
+com\oop\logistics\Facebook\FacebookPost.class
+com\oop\logistics\Facebook\FacebookClient.class
+com\oop\logistics\Facebook\FacebookService.class

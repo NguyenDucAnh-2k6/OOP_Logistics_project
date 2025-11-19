@@ -1,22 +1,35 @@
 package com.oop.logistics.Facebook;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
+
 public class FacebookClient {
 
     private final String accessToken;
     private final HttpClient httpClient;
+    private final Gson gson;
 
     public FacebookClient(String accessToken) {
         this.accessToken = accessToken;
         this.httpClient = HttpClient.newHttpClient();
+        this.gson = new Gson();
     }
 
-    public String getPagePosts(String pageId) throws Exception {
+    /**
+     * Get raw JSON response from Facebook API
+     */
+    public String getPagePostsRaw(String pageId) throws Exception {
         String url = "https://graph.facebook.com/v19.0/" 
                      + pageId 
-                     + "/posts?access_token=" 
+                     + "/posts?fields=id,message,created_time,likes.summary(true),comments.summary(true),shares"
+                     + "&access_token=" 
                      + accessToken;
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -27,6 +40,75 @@ public class FacebookClient {
         HttpResponse<String> response =
                 httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Facebook API error: " + response.statusCode() + " - " + response.body());
+        }
+
         return response.body();
+    }
+
+    /**
+     * Get parsed list of FacebookPost objects
+     */
+    public List<FacebookPost> getPagePosts(String pageId) throws Exception {
+        String jsonResponse = getPagePostsRaw(pageId);
+        return parsePostsFromJson(jsonResponse);
+    }
+
+    /**
+     * Parse JSON response into FacebookPost objects
+     */
+    private List<FacebookPost> parsePostsFromJson(String jsonResponse) {
+        List<FacebookPost> posts = new ArrayList<>();
+        
+        JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+        JsonArray dataArray = jsonObject.getAsJsonArray("data");
+
+        if (dataArray != null) {
+            for (int i = 0; i < dataArray.size(); i++) {
+                JsonObject postJson = dataArray.get(i).getAsJsonObject();
+                FacebookPost post = gson.fromJson(postJson, FacebookPost.class);
+                
+                // Parse engagement metrics if available
+                if (postJson.has("likes")) {
+                    JsonObject likes = postJson.getAsJsonObject("likes");
+                    if (likes.has("summary")) {
+                        post.setLikes(likes.getAsJsonObject("summary").get("total_count").getAsInt());
+                    }
+                }
+                
+                if (postJson.has("comments")) {
+                    JsonObject comments = postJson.getAsJsonObject("comments");
+                    if (comments.has("summary")) {
+                        post.setComments(comments.getAsJsonObject("summary").get("total_count").getAsInt());
+                    }
+                }
+                
+                if (postJson.has("shares")) {
+                    post.setShares(postJson.getAsJsonObject("shares").get("count").getAsInt());
+                }
+                
+                posts.add(post);
+            }
+        }
+
+        return posts;
+    }
+
+    /**
+     * Search posts by keyword
+     */
+    public List<FacebookPost> searchPosts(String pageId, String keyword) throws Exception {
+        List<FacebookPost> allPosts = getPagePosts(pageId);
+        List<FacebookPost> filteredPosts = new ArrayList<>();
+
+        for (FacebookPost post : allPosts) {
+            if (post.getMessage() != null && 
+                post.getMessage().toLowerCase().contains(keyword.toLowerCase())) {
+                filteredPosts.add(post);
+            }
+        }
+
+        return filteredPosts;
     }
 }
