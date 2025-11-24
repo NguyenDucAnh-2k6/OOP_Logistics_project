@@ -1,5 +1,4 @@
 package com.oop.logistics.analysis;
-
 import com.oop.logistics.models.*;
 import com.oop.logistics.config.CategoryManager;
 import java.util.*;

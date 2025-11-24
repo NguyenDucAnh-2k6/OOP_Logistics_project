@@ -81,7 +81,7 @@ public class DisasterAnalysisReport {
 /**
  * Timeline data point for temporal analysis
  */
-class TimelineDataPoint {
+/*class TimelineDataPoint {
     private String date;
     private int count;
     
@@ -95,12 +95,12 @@ class TimelineDataPoint {
     
     public int getCount() { return count; }
     public void setCount(int count) { this.count = count; }
-}
+}*/
 
 /**
  * Sentiment analysis result
  */
-class SentimentAnalysisResult {
+/*class SentimentAnalysisResult {
     private Map<String, Integer> sentimentDistribution;
     private double averageConfidence;
     
@@ -119,34 +119,15 @@ class SentimentAnalysisResult {
     public void setAverageConfidence(double averageConfidence) { 
         this.averageConfidence = averageConfidence; 
     }
-}
+}*/
 
 /**
  * Location-specific analysis
  */
-class LocationAnalysis {
-    private String location;
-    private int eventCount;
-    private Map<String, Integer> disasterTypes;
-    private int totalEngagement;
-    
-    public LocationAnalysis() {
-        this.disasterTypes = new HashMap<>();
-    }
-    
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    
-    public int getEventCount() { return eventCount; }
-    public void setEventCount(int eventCount) { this.eventCount = eventCount; }
-    
-    public Map<String, Integer> getDisasterTypes() { return disasterTypes; }
-    public void setDisasterTypes(Map<String, Integer> disasterTypes) { 
-        this.disasterTypes = disasterTypes; 
-    }
-    
-    public int getTotalEngagement() { return totalEngagement; }
-    public void setTotalEngagement(int totalEngagement) { 
-        this.totalEngagement = totalEngagement; 
-    }
-}
+/*
+ * Location-specific analysis
+ *
+ * NOTE: The full `LocationAnalysis` model is defined in
+ * `models/LocationAnalysis.java`. The lightweight package-private
+ * definition was removed to avoid duplicate-type compile errors.
+ */

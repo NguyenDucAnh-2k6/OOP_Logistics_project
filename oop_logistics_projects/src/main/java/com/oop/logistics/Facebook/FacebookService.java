@@ -128,4 +128,30 @@ public class FacebookService {
 
         return viralPosts;
     }
+
+    /**
+     * Search posts on a page by keyword (case-insensitive).
+     * Simple wrapper over fetchPagePosts that filters messages containing the keyword.
+     */
+    public List<FacebookPost> searchPosts(String pageId, String keyword) {
+        if (keyword == null || keyword.isEmpty()) return new ArrayList<>();
+
+        try {
+            List<FacebookPost> all = fetchPagePosts(pageId);
+            List<FacebookPost> results = new ArrayList<>();
+            String q = keyword.toLowerCase();
+
+            for (FacebookPost post : all) {
+                if (post.getMessage() == null) continue;
+                if (post.getMessage().toLowerCase().contains(q)) {
+                    results.add(post);
+                }
+            }
+
+            return results;
+        } catch (Exception e) {
+            System.err.println("Error searching posts: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
 }
