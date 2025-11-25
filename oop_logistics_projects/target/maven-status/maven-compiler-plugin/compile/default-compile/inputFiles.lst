@@ -10,10 +10,12 @@ D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\o
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\models\SentimentAnalysisResult.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\datasources\FacebookDataSourceWithScraping.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\models\DisasterAnalysisReport.java
+D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\scraping\FacebookCrawler.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\preprocessing\LocationExtractor.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\ui\ConfigurationDialog.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\Twitter\TwitterService.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\core\SourceConfiguration.java
+D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\scraping\FacebookParser.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\datasources\TwitterDataSource.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\Twitter\TwitterClient.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\models\TimelineDataPoint.java
