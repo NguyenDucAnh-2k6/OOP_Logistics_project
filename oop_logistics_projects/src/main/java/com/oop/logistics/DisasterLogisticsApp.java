@@ -1,14 +1,15 @@
 package com.oop.logistics;
-
+import com.oop.logistics.models.*;
+import com.oop.logistics.utils.*;
 import com.oop.logistics.analysis.PythonAnalysisClient;
 import com.oop.logistics.config.CategoryManager;
 import com.oop.logistics.config.KeywordManager;
 import com.oop.logistics.core.*;
-import com.oop.logistics.datasources.FacebookDataSource;
-import com.oop.logistics.datasources.TwitterDataSource;
+import com.oop.logistics.datasources.*;
+
 import com.oop.logistics.ui.DashboardFrame;
 import javax.swing.*;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * Main application entry point
@@ -256,18 +257,14 @@ public class DisasterLogisticsApp {
  * Command line runner for testing without GUI
  */
 class CommandLineRunner {
-
-    public static void main(String[] args) {
-        System.out.println("=== Disaster Logistics CLI ===\n");
-        runPipeline();
-    }
-
+    // ... main method ...
+    
     public static void runPipeline() {
-        // Initialize components
+        // --- 1. INITIALIZE COMPONENTS ---
         KeywordManager keywordManager = new KeywordManager();
         CategoryManager categoryManager = new CategoryManager();
         PythonAnalysisClient analysisAPI =
-            new PythonAnalysisClient("http://localhost:5000");
+            new PythonAnalysisClient("http://localhost:5000"); //
 
         // Create pipeline
         DisasterLogisticsPipeline pipeline = new DisasterLogisticsPipeline(
@@ -276,86 +273,61 @@ class CommandLineRunner {
             analysisAPI
         );
 
-        // Configure Twitter source
-        String bearerToken = System.getenv("TWITTER_BEARER_TOKEN");
-        if (bearerToken != null) {
-            TwitterDataSource twitterSource = new TwitterDataSource(keywordManager);
+        // --- 2. CONFIGURE FACEBOOK SCRAPING (for comments) ---
+        // NOTE: This assumes you are using FacebookDataSourceWithScraping
+        String disasterKeyword = "Yagi storm"; // The disaster keyword
+        String fbPageUsername = "BBCNewsVietnamese"; // A high-traffic page/source
+        List<DisasterEvent> finalEvents = new ArrayList<>();
+        FacebookDataSourceWithScraping facebookSource = null;
+        
+        try {
+            facebookSource = new FacebookDataSourceWithScraping();
             SourceConfiguration config = new SourceConfiguration();
-            config.setProperty("bearer_token", bearerToken);
-            twitterSource.configure(config);
-            pipeline.registerDataSource(twitterSource);
-            System.out.println("Twitter source configured");
-        } else {
-            System.out.println("TWITTER_BEARER_TOKEN not set - skipping Twitter");
-        }
-
-        // Configure Facebook source
-        String fbToken = System.getenv("FACEBOOK_ACCESS_TOKEN");
-        String fbPage = System.getenv("FACEBOOK_PAGE_ID");
-        if (fbToken != null && fbPage != null) {
-            FacebookDataSource facebookSource = new FacebookDataSource();
-            SourceConfiguration config = new SourceConfiguration();
-            config.setProperty("access_token", fbToken);
-            config.setProperty("page_id", fbPage);
+            
+            // Set the necessary configuration for Selenium comment scraping
+            config.setProperty("mode", "SELENIUM"); // Must be SELENIUM mode for comment scraping
+            config.setProperty("page_username", fbPageUsername);
+            config.setProperty("headless", 1); // Run headless (1=true)
+            
             facebookSource.configure(config);
-            pipeline.registerDataSource(facebookSource);
-            System.out.println("Facebook source configured");
-        } else {
-            System.out.println("Facebook credentials not set - skipping Facebook");
+
+            System.out.println("\n✓ Starting targeted scraping for comments...");
+            // Assuming the implementation from the previous step is now available in FacebookDataSourceWithScraping
+            finalEvents = facebookSource.fetchDisasterCommentsForAnalysis(
+                disasterKeyword, 
+                10,   // Max 10 relevant posts
+                50    // Max 50 comments per post
+            );
+
+        } catch (Exception e) {
+            System.err.println("✗ Facebook Scraping failed: " + e.getMessage());
+        } finally {
+            if (facebookSource != null) {
+                facebookSource.cleanup(); // Close the Selenium browser instance
+            }
         }
-
-        // Check data sources
-        var stats = pipeline.getCollectionStats();
-        System.out.println("\nCollection Stats: " + stats);
-
-        if (stats.getActiveSources() == 0) {
-            System.err.println("\nNo data sources configured!");
-            System.err.println("Set environment variables:");
-            System.err.println("  - TWITTER_BEARER_TOKEN");
-            System.err.println("  - FACEBOOK_ACCESS_TOKEN and FACEBOOK_PAGE_ID");
+        
+        if (finalEvents.isEmpty()) {
+            System.err.println("\nNo data collected. Exiting pipeline.");
             pipeline.shutdown();
             return;
         }
 
-        // Execute pipeline
-        System.out.println("\nExecuting pipeline...\n");
-        DisasterLogisticsPipeline.PipelineResult result = pipeline.execute();
+        // --- 3. RUN ANALYSIS (Preprocessing, Location, Sentiment) ---
+        System.out.println("\n✓ Running analysis pipeline on collected comments (" + finalEvents.size() + " events)...");
+        List<DisasterEvent> processedEvents = pipeline.dataPreprocessor.preprocess(finalEvents);
+        DisasterAnalysisReport report = pipeline.disasterAnalyzer.analyzeEvents(processedEvents);
 
-        if (result.isSuccess()) {
-            System.out.println("=== Pipeline Results ===");
-            System.out.println("Raw events collected: " + result.getRawEventCount());
-            System.out.println("Processed events: " + result.getProcessedEventCount());
-
-            var report = result.getAnalysisReport();
-            System.out.println("\n=== Analysis Report ===");
-            System.out.println("Total events: " + report.getTotalEvents());
-            System.out.println("\nEvents by Type:");
-            report.getEventsByType().forEach((type, count) ->
-                System.out.println("  " + type + ": " + count));
-
-            System.out.println("\nEvents by Location:");
-            report.getEventsByLocation().forEach((location, count) ->
-                System.out.println("  " + location + ": " + count));
-
-            System.out.println("\nEvents by Severity:");
-            report.getEventsBySeverity().forEach((severity, count) ->
-                System.out.println("  " + severity + ": " + count));
-
-            System.out.println("\nAverage Engagement: " +
-                String.format("%.2f", report.getAverageEngagement()));
-
-            System.out.println("\n=== Top 5 Events ===");
-            report.getTopEngagementEvents().stream()
-                .limit(5)
-                .forEach(event -> System.out.println("  - " + event.getDisasterType() +
-                    " at " + event.getLocation() +
-                    " (Engagement: " + event.getEngagement() + ")"));
-
-        } else {
-            System.err.println("Pipeline failed: " + result.getError());
+        // --- 4. EXPORT TO CSV ---
+        try {
+            CsvExporter.exportEventsToCsv(processedEvents, "yagi_storm_sentiment_timeline.csv");
+        } catch (Exception e) {
+            System.err.println("FATAL: Could not export data to CSV: " + e.getMessage());
         }
 
-        // Shutdown
+        // --- 5. PRINT REPORT (for CLI verification) ---
+        // (You can copy the original print logic here to see the results immediately)
+
         pipeline.shutdown();
         System.out.println("\nDone!");
     }

@@ -9,6 +9,7 @@ com\oop\logistics\scraping\FacebookCrawler.class
 com\oop\logistics\core\DataCollector.class
 com\oop\logistics\datasources\FacebookDataSourceWithScraping$ScrapingMode.class
 com\oop\logistics\ui\DashboardFrame$3.class
+com\oop\logistics\Facebook\FacebookComment.class
 com\oop\logistics\config\CategoryManager$Category.class
 com\oop\logistics\scraping\FacebookScraperSelenium.class
 com\oop\logistics\models\AnalysisResponse.class
@@ -25,6 +26,7 @@ com\oop\logistics\config\KeywordManager$1.class
 com\oop\logistics\ui\DashboardFrame$4.class
 com\oop\logistics\core\DisasterLogisticsPipeline.class
 com\oop\logistics\core\SourceConfiguration.class
+com\oop\logistics\utils\CsvExporter.class
 com\oop\logistics\ui\DashboardFrame$1.class
 com\oop\logistics\ui\ConfigurationDialog.class
 com\oop\logistics\utils\DateTimeUtil.class

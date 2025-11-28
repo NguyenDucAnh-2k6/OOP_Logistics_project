@@ -16,8 +16,8 @@ import java.util.List;
 public class DisasterLogisticsPipeline {
     
     private final DataCollector dataCollector;
-    private final DataPreprocessor dataPreprocessor;
-    private final DisasterAnalyzer disasterAnalyzer;
+    public final DataPreprocessor dataPreprocessor;
+    public final DisasterAnalyzer disasterAnalyzer;
     private final KeywordManager keywordManager;
     private final CategoryManager categoryManager;
     

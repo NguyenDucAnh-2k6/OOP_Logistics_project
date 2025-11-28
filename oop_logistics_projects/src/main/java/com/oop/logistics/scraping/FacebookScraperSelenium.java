@@ -1,5 +1,5 @@
 package com.oop.logistics.scraping;
-
+import com.oop.logistics.Facebook.FacebookComment;
 import com.oop.logistics.Facebook.FacebookPost;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -383,7 +383,86 @@ public class FacebookScraperSelenium {
         
         return posts.subList(0, Math.min(maxResults, posts.size()));
     }
+        /**
+ * Scrape comments for a specific post URL
+ */
+public List<FacebookComment> scrapeComments(String postUrl, int maxComments) {
+        List<FacebookComment> comments = new ArrayList<>();
 
+        try {
+            driver.get(postUrl);
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("body")));
+            Thread.sleep(3000);
+
+            // Extract the Post ID from the URL for later reference
+            String postId = extractPostId(postUrl);
+
+            // --- 1. Load All Comments (Click Loop) ---
+            // Continuously click "View more comments" or "View more replies" up to 50 times
+            for (int i = 0; i < 50; i++) {
+                try {
+                    // Try to find the button that contains keywords like "comments" or "bình luận"
+                    WebElement moreCommentsButton = wait.until(ExpectedConditions.
+                            presenceOfElementLocated(By.xpath("//div[@role='button']//span[contains(text(),'comments') or contains(text(),'bình luận') or contains(text(),'trả lời')]")));
+
+                    // Use JavascriptExecutor to click to avoid interception by headers/popups
+                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", moreCommentsButton);
+
+                    // Wait for new content to load or for the button to disappear
+                    wait.until(ExpectedConditions.invisibilityOf(moreCommentsButton));
+                    Thread.sleep(1500); 
+
+                } catch (TimeoutException | NoSuchElementException e) {
+                    // If the button is not found after a delay, assume all comments are loaded
+                    break;
+                } catch (StaleElementReferenceException e) {
+                    // If element becomes stale, retry the loop
+                    continue;
+                }
+            }
+            List<WebElement> commentContainers = 
+                driver.findElements(By.cssSelector("div[role='article'][tabindex='-1']")); 
+            
+            System.out.println("Found " + commentContainers.size() + " comment containers.");
+
+            for (WebElement container : commentContainers) {
+                if (comments.size() >= maxComments) break;
+                
+                try {
+                    // Locator 1: Comment Text (most stable)
+                    WebElement textElement = container.findElement(
+                        By.cssSelector("div[data-testid='comment-body'] div[dir='auto'], span[dir='auto']")
+                    ); 
+                    String text = textElement.getText().trim();
+                    
+                    // Locator 2: Timestamp (Look for the time link/element)
+                    WebElement timeElement = container.findElement(
+                        By.cssSelector("a[role='link'] > div > span")
+                    );
+                    String timeRaw = timeElement.getAttribute("aria-label"); 
+
+                    if (!text.isEmpty()) {
+                        FacebookComment comment = new FacebookComment();
+                        comment.setText(text);
+                        comment.setCreatedTime(timeRaw != null ? timeRaw : java.time.LocalDateTime.now().toString());
+                        comment.setPostId(postId);
+                        
+                        comments.add(comment);
+                    }
+                } catch (NoSuchElementException | StaleElementReferenceException e) {
+                    // Skip if text or time elements are missing from this container
+                    continue;
+                }
+            }
+
+            System.out.println("✓ Scraped " + comments.size() + " comments from " + postUrl);
+
+        } catch (Exception e) {
+            System.err.println("Fatal error scraping comments: " + e.getMessage());
+        }
+
+        return comments;
+    }
     /**
      * Take screenshot (useful for debugging)
      */

@@ -1,5 +1,5 @@
 package com.oop.logistics.datasources;
-
+import com.oop.logistics.Facebook.FacebookComment;
 import com.oop.logistics.core.DataSource;
 import com.oop.logistics.core.SourceConfiguration;
 import com.oop.logistics.Facebook.FacebookService;
@@ -335,5 +335,67 @@ public class FacebookDataSourceWithScraping implements DataSource {
         if (mode == ScrapingMode.SELENIUM && seleniumScraper != null) {
             seleniumScraper.takeScreenshot(filename);
         }
+    }
+    public List<DisasterEvent> fetchDisasterCommentsForAnalysis(String disasterKeyword, int maxPosts, int maxCommentsPerPost) {
+        if (mode != ScrapingMode.SELENIUM) {
+            System.err.println("ERROR: Comment scraping is only supported in SELENIUM mode.");
+            return new ArrayList<>();
+        }
+        if (seleniumScraper == null || !seleniumScraper.isReady()) {
+            System.err.println("ERROR: Selenium Scraper not initialized or ready.");
+            return new ArrayList<>();
+        }
+
+        List<FacebookComment> allComments = new ArrayList<>();
+
+        try {
+            // Step 1: Search posts by keyword (e.g., "Yagi storm")
+            List<FacebookPost> posts = seleniumScraper.searchPosts(disasterKeyword, maxPosts);
+            System.out.println("Found " + posts.size() + " relevant posts to scrape comments from.");
+
+            // Step 2: Scrape comments for each post
+            for (FacebookPost post : posts) {
+                // Construct the full URL for comment scraping (assuming the ID is a permalink ID)
+                String postUrl = "https://www.facebook.com/" + post.getId();
+                
+                // *** CORE COMMENT SCRAPING CALL ***
+                List<FacebookComment> comments = seleniumScraper.scrapeComments(postUrl, maxCommentsPerPost);
+                
+                allComments.addAll(comments);
+            }
+        } catch (Exception e) {
+            System.err.println("Pipeline error during comment scraping: " + e.getMessage());
+        } finally {
+            // It's crucial to call cleanup when done to close the browser instance
+            // cleanup(); 
+            // NOTE: You might want to remove 'cleanup()' from here and call it at app shutdown
+        }
+
+        // Step 3: Convert comments to DisasterEvents for the rest of the pipeline
+        return convertCommentsToDisasterEvents(allComments);
+    }
+
+    /**
+     * Convert scraped Facebook Comments to DisasterEvent objects
+     */
+    private List<DisasterEvent> convertCommentsToDisasterEvents(List<FacebookComment> comments) {
+        List<DisasterEvent> events = new ArrayList<>();
+        
+        for (FacebookComment comment : comments) {
+            DisasterEvent event = new DisasterEvent();
+            // Use the comment text as the primary description for sentiment analysis
+            event.setDescription(comment.getText()); 
+            
+            // Set source/time fields
+            event.setSourceId(comment.getPostId() + "_c_" + comment.getText().hashCode()); // Unique ID
+            event.setTimestamp(comment.getCreatedTime()); // Raw time string
+            event.setSource("Facebook_Comment");
+            
+            // NOTE: Location and Engagement (likes/shares) are usually not available for comments
+            
+            events.add(event);
+        }
+        
+        return events;
     }
 }

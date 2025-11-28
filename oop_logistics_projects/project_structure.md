@@ -50,7 +50,7 @@ disaster-logistics-system/
 │   │   │               │   ├── PythonAnalysisClient.java
 │   │   │               │   ├── DisasterAnalyzer.java
 │   │   │               │   └── JavaSentimentAnalyzer.java  (Optional)
-│   │   │               │
+│   │   │            
 │   │   │               ├── ui/                        (User Interface)
 │   │   │               │   ├── DashboardFrame.java
 │   │   │               │   ├── EventDetailsDialog.java     (TODO)

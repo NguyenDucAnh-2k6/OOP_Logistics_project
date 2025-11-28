@@ -2,7 +2,6 @@ flask
 
 # NLP and ML libraries
 transformers
-torch
 
 # Additional utilities
 numpy
