@@ -9,6 +9,7 @@ import com.oop.logistics.scraping.FacebookScraperJSoup;
 import com.oop.logistics.models.DisasterEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Enhanced Facebook DataSource with both API and Scraping support
@@ -350,7 +351,14 @@ public class FacebookDataSourceWithScraping implements DataSource {
 
         try {
             // Step 1: Search posts by keyword (e.g., "Yagi storm")
-            List<FacebookPost> posts = seleniumScraper.searchPosts(disasterKeyword, maxPosts);
+            //List<FacebookPost> posts = seleniumScraper.searchPosts(disasterKeyword, maxPosts);
+            String identifier = pageUsername != null ? pageUsername : pageId;
+            List<FacebookPost> rawPosts = seleniumScraper.scrapePagePosts(identifier, maxPosts);
+            System.out.println("Scraped " + rawPosts.size() + " posts from page timeline.");
+            // Filter posts by keyword in Java to find relevant ones for the storm
+            List<FacebookPost> posts = rawPosts.stream().filter(post -> post.getMessage() != null && 
+            post.getMessage().toLowerCase().contains(disasterKeyword.toLowerCase())).collect(Collectors.toList());
+            System.out.println("Found " + posts.size() + " posts relevant to '" + disasterKeyword + "'.");
             System.out.println("Found " + posts.size() + " relevant posts to scrape comments from.");
 
             // Step 2: Scrape comments for each post

@@ -167,11 +167,13 @@ public class FacebookScraperSelenium {
         
         // Try multiple selectors (Facebook changes these frequently)
         String[] selectors = {
-            "[role='article']",
-            "div[data-ad-preview='message']",
-            "div.userContentWrapper",
-            "div[data-testid='post_message']"
-        };
+        // Most common selector for a post container in modern FB
+        "div[role='feed'] > div",
+        // Fallback to the classic ARIA role for an article
+        "div[role='article']",
+        // Selector for the entire feed story wrapper
+        "div[data-testid='fbFeedStory']" 
+    };
         
         for (String selector : selectors) {
             try {
