@@ -1,5 +1,7 @@
 package com.oop.logistics.Facebook;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Data model for a scraped Facebook comment.
  * It stores the raw comment text and the unparsed, localized timestamp.
@@ -33,11 +35,33 @@ public class FacebookComment {
     public String getPostId() { return postId; }
     public void setPostId(String postId) { this.postId = postId; }
     
+    @SerializedName("id")
+    private String id;
+    
+    @SerializedName("message")
+    private String message;
+    
+    @SerializedName("created_time")
+    
+    
+    private String fromName; // From user's name
+
+    // Getters and Setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
+    public String getFromName() { return fromName; }
+    public void setFromName(String fromName) { this.fromName = fromName; }
+
     @Override
     public String toString() {
         return "FacebookComment{" +
-               "text='" + (text != null ? text.substring(0, Math.min(50, text.length())) + "..." : null) + '\'' +
-               ", createdTime='" + createdTime + '\'' +
-               '}';
+                "id='" + id + '\'' +
+                ", message='" + message + '\'' +
+                ", createdTime='" + createdTime + '\'' +
+                ", fromName='" + fromName + '\'' +
+                '}';
     }
 }

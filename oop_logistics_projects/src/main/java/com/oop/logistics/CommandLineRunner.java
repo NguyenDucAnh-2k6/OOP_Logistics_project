@@ -30,8 +30,8 @@ public class CommandLineRunner {
 
         // --- 2. CONFIGURE FACEBOOK SCRAPING (for comments) ---
         // NOTE: This assumes you are using FacebookDataSourceWithScraping
-        String disasterKeyword = "yagi"; // The disaster keyword
-        String fbPageUsername = "BBCNewsVietnamese"; // A high-traffic page/source
+        String disasterKeyword = "Yagi"; // The disaster keyword
+        String fbPageUsername = "BBCnewsVietnamese"; // A high-traffic page/source
         List<DisasterEvent> finalEvents = new ArrayList<>();
         FacebookDataSourceWithScraping facebookSource = null;
         
@@ -42,7 +42,7 @@ public class CommandLineRunner {
             // Set the necessary configuration for Selenium comment scraping
             config.setProperty("mode", "SELENIUM"); // Must be SELENIUM mode for comment scraping
             config.setProperty("page_username", fbPageUsername);
-            config.setProperty("headless", 0); // Run headless (1=true)
+            config.setProperty("headless", 1); // Run headless (1=true)
             
             facebookSource.configure(config);
 

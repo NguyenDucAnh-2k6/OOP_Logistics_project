@@ -12,12 +12,12 @@ import java.util.List;
 
 public class FacebookClient {
 
-    private final String accessToken;
+    private final String accessToken = "EAAdllrHFvAYBP1mZAlNTIYHoUpWGckMwmY07S8fxYBaPYyLL01k4tNJ7j1ox9gvWTu5HTZCMB7t0d7ozWSNZBr3Jnq665L9JZBoovdl73PmMR8vGiZAxUKFyV2wmHTlONsZCMObfAqQlrwFTfeny25dt9xY5AsTbZA0aFpGc9NgquVOQAikgwLo6DM3UvUZCLceAUZBp7EP0P0R8osDdu6lSP2ySSoCYWQt9mmmsZAVzgXOf2TRAwQ6G8WXtCxhbOMo36t0iCb7kZCzwSqicR9nvSCP";
     private final HttpClient httpClient;
     private final Gson gson;
 
     public FacebookClient(String accessToken) {
-        this.accessToken = accessToken;
+        //this.accessToken = accessToken;
         this.httpClient = HttpClient.newHttpClient();
         this.gson = new Gson();
     }
@@ -111,4 +111,48 @@ public class FacebookClient {
 
         return filteredPosts;
     }
+    // In FacebookClient.java, add this method
+public List<FacebookComment> getPostComments(String postId) throws Exception {
+    String url = "https://graph.facebook.com/v19.0/" 
+                 + postId 
+                 + "/comments?fields=id,message,created_time,from&summary=true"
+                 + "&access_token=" 
+                 + accessToken;
+
+    HttpRequest request = HttpRequest.newBuilder()
+            .uri(new URI(url))
+            .GET()
+            .build();
+
+    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+    if (response.statusCode() != 200) {
+        throw new RuntimeException("Facebook API error: " + response.statusCode() + " - " + response.body());
+    }
+
+    return parseCommentsFromJson(response.body());
+}
+
+// Add a private parser method
+private List<FacebookComment> parseCommentsFromJson(String jsonResponse) {
+    List<FacebookComment> comments = new ArrayList<>();
+    JsonObject jsonObject = gson.fromJson(jsonResponse, JsonObject.class);
+    JsonArray dataArray = jsonObject.getAsJsonArray("data");
+
+    if (dataArray != null) {
+        for (int i = 0; i < dataArray.size(); i++) {
+            JsonObject commentJson = dataArray.get(i).getAsJsonObject();
+            FacebookComment comment = new FacebookComment();
+            comment.setId(commentJson.get("id").getAsString());
+            if (commentJson.has("message")) comment.setMessage(commentJson.get("message").getAsString());
+            if (commentJson.has("created_time")) comment.setCreatedTime(commentJson.get("created_time").getAsString());
+            if (commentJson.has("from")) {
+                JsonObject from = commentJson.getAsJsonObject("from");
+                comment.setFromName(from.get("name").getAsString());
+            }
+            comments.add(comment);
+        }
+    }
+    return comments;
+}
 }

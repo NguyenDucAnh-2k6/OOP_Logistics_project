@@ -51,7 +51,6 @@ public class FacebookScraperSelenium {
         // Disable automation flags
         options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
         options.setExperimentalOption("useAutomationExtension", false);
-        
         this.driver = new ChromeDriver(options);
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(20));
         
@@ -98,7 +97,7 @@ public class FacebookScraperSelenium {
         List<FacebookPost> posts = new ArrayList<>();
         
         try {
-            String url = "https://www.facebook.com/" + pageUsername;
+            String url = "https://mbasic.facebook.com/" + pageUsername;
             System.out.println("Navigating to: " + url);
             
             driver.get(url);
@@ -162,7 +161,7 @@ public class FacebookScraperSelenium {
     /**
      * Find post elements using multiple selectors
      */
-    private List<WebElement> findPostElements() {
+    /*private List<WebElement> findPostElements() {
         List<WebElement> elements = new ArrayList<>();
         
         // Try multiple selectors (Facebook changes these frequently)
@@ -185,6 +184,17 @@ public class FacebookScraperSelenium {
             } catch (Exception e) {
                 continue;
             }
+        }
+        
+        return elements;
+    }*/
+    private List<WebElement> findPostElements() {
+        // Find post elements on mbasic site (simplest structure)
+        List<WebElement> elements = driver.findElements(By.cssSelector("div[role='main'] > div > div > div:not([data-ft])"));
+        
+        // Fallback: search for <article> or div with common attributes
+        if (elements.isEmpty()) {
+             elements = driver.findElements(By.cssSelector("article, div[data-ft]"));
         }
         
         return elements;
@@ -402,60 +412,55 @@ public List<FacebookComment> scrapeComments(String postUrl, int maxComments) {
             // --- 1. Load All Comments (Click Loop) ---
             // Continuously click "View more comments" or "View more replies" up to 50 times
             for (int i = 0; i < 50; i++) {
-                try {
-                    // Try to find the button that contains keywords like "comments" or "bình luận"
-                    WebElement moreCommentsButton = wait.until(ExpectedConditions.
-                            presenceOfElementLocated(By.xpath("//div[@role='button']//span[contains(text(),'comments') or contains(text(),'bình luận') or contains(text(),'trả lời')]")));
-
-                    // Use JavascriptExecutor to click to avoid interception by headers/popups
-                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", moreCommentsButton);
-
-                    // Wait for new content to load or for the button to disappear
-                    wait.until(ExpectedConditions.invisibilityOf(moreCommentsButton));
-                    Thread.sleep(1500); 
-
-                } catch (TimeoutException | NoSuchElementException e) {
-                    // If the button is not found after a delay, assume all comments are loaded
-                    break;
-                } catch (StaleElementReferenceException e) {
-                    // If element becomes stale, retry the loop
-                    continue;
-                }
-            }
-            List<WebElement> commentContainers = 
-                driver.findElements(By.cssSelector("div[role='article'][tabindex='-1']")); 
-            
-            System.out.println("Found " + commentContainers.size() + " comment containers.");
-
-            for (WebElement container : commentContainers) {
-                if (comments.size() >= maxComments) break;
+            try {
+                // Find and click any link that contains "View previous comments" or similar
+                WebElement moreCommentsLink = wait.until(ExpectedConditions.
+                    presenceOfElementLocated(By.partialLinkText("View previous comments")));
                 
-                try {
-                    // Locator 1: Comment Text (most stable)
-                    WebElement textElement = container.findElement(
-                        By.cssSelector("div[data-testid='comment-body'] div[dir='auto'], span[dir='auto']")
-                    ); 
-                    String text = textElement.getText().trim();
-                    
-                    // Locator 2: Timestamp (Look for the time link/element)
-                    WebElement timeElement = container.findElement(
-                        By.cssSelector("a[role='link'] > div > span")
-                    );
-                    String timeRaw = timeElement.getAttribute("aria-label"); 
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", moreCommentsLink);
+                Thread.sleep(1500); 
 
-                    if (!text.isEmpty()) {
-                        FacebookComment comment = new FacebookComment();
-                        comment.setText(text);
-                        comment.setCreatedTime(timeRaw != null ? timeRaw : java.time.LocalDateTime.now().toString());
-                        comment.setPostId(postId);
-                        
-                        comments.add(comment);
-                    }
-                } catch (NoSuchElementException | StaleElementReferenceException e) {
-                    // Skip if text or time elements are missing from this container
-                    continue;
-                }
+            } catch (TimeoutException | NoSuchElementException e) {
+                // Assume all comments are loaded
+                break;
+            } catch (StaleElementReferenceException e) {
+                // Retry
+                continue;
             }
+        }
+
+        // --- 2. Extract Comment Text and Time (mbasic) ---
+        // Find all comment message bodies, often nested under a specific ID/class
+        // On mbasic, messages often appear in <div>s without strong class attributes
+        List<WebElement> messageElements = 
+            driver.findElements(By.xpath("//div[@id='root']/div/div/div/div/div/div[2]/div/div[2]/div/div[1]/div/div[2]/div/div/div[2]")); // Example: try to find the comment thread container
+        
+        // Simpler selector for the comment body text itself in the mobile view:
+        List<WebElement> commentTextElements = driver.findElements(By.cssSelector("div[id*='comment_text_'], div[id*='comment_body']"));
+
+        for (WebElement textElement : commentTextElements) {
+            if (comments.size() >= maxComments) break;
+            
+            try {
+                // 1. Extract Comment Text
+                String text = textElement.getText().trim();
+                
+                // 2. Extract Timestamp (Look for the <abbr> tag, which holds time in mbasic)
+                WebElement timeElement = textElement.findElement(By.xpath("./following-sibling::div//abbr"));
+                String timeRaw = timeElement.getText(); 
+
+                if (!text.isEmpty()) {
+                    FacebookComment comment = new FacebookComment(
+                        text, 
+                        timeRaw != null ? timeRaw : java.time.LocalDateTime.now().toString(),
+                        postId
+                    );
+                    comments.add(comment);
+                }
+            } catch (NoSuchElementException | StaleElementReferenceException e) {
+                continue;
+            }
+        }
 
             System.out.println("✓ Scraped " + comments.size() + " comments from " + postUrl);
 

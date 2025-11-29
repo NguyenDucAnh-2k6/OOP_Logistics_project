@@ -360,7 +360,15 @@ public class FacebookDataSourceWithScraping implements DataSource {
             post.getMessage().toLowerCase().contains(disasterKeyword.toLowerCase())).collect(Collectors.toList());
             System.out.println("Found " + posts.size() + " posts relevant to '" + disasterKeyword + "'.");
             System.out.println("Found " + posts.size() + " relevant posts to scrape comments from.");
-
+            if (!posts.isEmpty()) {
+                System.out.println("\n--- URLs of Scraped Posts ---");
+                for (FacebookPost post : posts) {
+                    // Construct the direct URL using the post ID
+                    String postUrl = "https://www.facebook.com/" + post.getId();
+                    System.out.println(postUrl);
+                }
+                System.out.println("-----------------------------");
+           }
             // Step 2: Scrape comments for each post
             for (FacebookPost post : posts) {
                 // Construct the full URL for comment scraping (assuming the ID is a permalink ID)
@@ -375,7 +383,7 @@ public class FacebookDataSourceWithScraping implements DataSource {
             System.err.println("Pipeline error during comment scraping: " + e.getMessage());
         } finally {
             // It's crucial to call cleanup when done to close the browser instance
-            // cleanup(); 
+           // cleanup(); 
             // NOTE: You might want to remove 'cleanup()' from here and call it at app shutdown
         }
 
