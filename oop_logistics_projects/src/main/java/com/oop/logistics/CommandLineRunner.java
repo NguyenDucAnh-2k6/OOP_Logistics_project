@@ -30,7 +30,7 @@ public class CommandLineRunner {
 
         // --- 2. CONFIGURE FACEBOOK SCRAPING (for comments) ---
         // NOTE: This assumes you are using FacebookDataSourceWithScraping
-        String disasterKeyword = "Yagi storm"; // The disaster keyword
+        String disasterKeyword = "yagi"; // The disaster keyword
         String fbPageUsername = "BBCNewsVietnamese"; // A high-traffic page/source
         List<DisasterEvent> finalEvents = new ArrayList<>();
         FacebookDataSourceWithScraping facebookSource = null;

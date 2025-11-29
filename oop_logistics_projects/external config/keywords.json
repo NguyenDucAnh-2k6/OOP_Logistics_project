@@ -1,13 +1,18 @@
 {
   "Flood": [
-    "lũ lụt",
+    "lũ",
     "flood",
     "flooding",
     "ngập lụt",
     "nước lũ",
     "inundation",
     "đập vỡ",
-    "dam breach"
+    "dam breach",
+    "cuốn trôi",
+    "thiệt hại",
+    "phá hủy",
+    "ngập",
+    "chìm"
   ],
   "Storm": [
     "bão",
@@ -63,9 +68,7 @@
     "rescue",
     "evacuation",
     "sơ tán"
-  ]
-}
-{
+  ],
   "Infrastructure": {
     "name": "Infrastructure",
     "type": "DAMAGE",
@@ -208,10 +211,7 @@
       "tiền mặt"
     ],
     "description": "Financial assistance and donations"
-  }
-}
-
-{
+  },
   "facebook": {
     "enabled": true,
     "access_token": "${FACEBOOK_ACCESS_TOKEN}",
@@ -241,10 +241,7 @@
       "thiên tai",
       "lũ lụt"
     ]
-  }
-}
-
-{
+  },
   "app": {
     "name": "Disaster Logistics Management System",
     "version": "1.0.0",
