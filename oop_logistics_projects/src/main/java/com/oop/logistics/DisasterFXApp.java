@@ -49,6 +49,7 @@ public class DisasterFXApp extends Application {
         primaryStage.setTitle("Disaster Logistics Intelligence Dashboard - Yagi Storm");
         primaryStage.setScene(scene);
         primaryStage.show();
+        System.out.println("Current Working Directory: " + System.getProperty("user.dir"));
     }
 
     private void loadData(String csvPath) {
