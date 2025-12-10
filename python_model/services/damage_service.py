@@ -2,11 +2,11 @@ from typing import List
 
 # Map từ khóa → loại thiệt hại
 DAMAGE_KEYWORDS = {
-    "HouseDamage": ["nhà", "mái", "tường", "sập", "ngập nhà", "tốc mái", "tốc"],
+    "HouseDamage": ["nhà", "mái", "tường", "sập", "ngập", "tốc mái", "tốc"],
     "InfrastructureDamage": ["cầu", "đường", "đê", "trụ điện", "cột điện", "cống"],
-    "HumanAffected": ["người chết", "thương", "vong", "mất tích", "bị thương"],
-    "EconomicDisruption": ["kinh tế", "sản xuất", "buôn bán", "nhà máy", "xí nghiệp"],
-    "PropertyLost": ["mất", "tài sản", "đồ đạc", "xe", "xe máy"],
+    "HumanAffected": ["chết", "thương", "vong", "mất tích", "thương"],
+    "EconomicDisruption": ["kinh tế", "sản xuất", "bán", "nhà máy", "xí nghiệp"],
+    "PropertyLost": ["mất", "tài sản", "đồ", "xe", "xe máy"],
 }
 
 
