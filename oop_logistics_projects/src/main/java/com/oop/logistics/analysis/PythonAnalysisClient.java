@@ -1,7 +1,5 @@
 package com.oop.logistics.analysis;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -11,6 +9,9 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public class PythonAnalysisClient {
     
@@ -26,9 +27,16 @@ public class PythonAnalysisClient {
         this.gson = new Gson();
     }
 
-    // Helper to send POST requests
+    // Helper to send POST requests with DEBUG printing
     private String sendPost(String endpoint, Object payload) throws Exception {
         String json = gson.toJson(payload);
+        
+        // --- DEBUG: Print what we are sending to Python ---
+        System.out.println("DEBUG: Sending to " + endpoint);
+        System.out.println("DEBUG: Payload (First 100 chars): " + 
+            (json.length() > 100 ? json.substring(0, 100) + "..." : json));
+        // -------------------------------------------------
+
         HttpRequest request = HttpRequest.newBuilder()
             .uri(new URI(apiUrl + endpoint))
             .header("Content-Type", "application/json")
@@ -36,18 +44,20 @@ public class PythonAnalysisClient {
             .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        
         if (response.statusCode() != 200) {
-            throw new RuntimeException("API Error: " + response.statusCode() + " " + response.body());
+            // Throw explicit error with the response body (which contains the missing field name)
+            throw new RuntimeException("API Error " + response.statusCode() + ": " + response.body());
         }
         return response.body();
     }
 
-    // --- PROBLEM 1: Sentiment Trends ---
+    // --- PROBLEM 1: Sentiment Trends (Requires texts AND dates) ---
     public List<Map<String, Object>> getSentimentTimeSeries(List<String> texts, List<String> dates) {
         try {
             Map<String, Object> payload = new HashMap<>();
-            payload.put("texts", texts);
-            payload.put("dates", dates);
+            payload.put("texts", texts); // Must match Python schema "texts"
+            payload.put("dates", dates); // Must match Python schema "dates"
             
             String response = sendPost("/sentiment-time-series", payload);
             Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
@@ -58,7 +68,7 @@ public class PythonAnalysisClient {
         }
     }
 
-    // --- PROBLEM 2: Damage Classification ---
+    // --- PROBLEM 2: Damage Classification (Requires texts) ---
     public List<String> getDamageClassification(List<String> texts) {
         try {
             Map<String, Object> payload = new HashMap<>();
@@ -73,7 +83,7 @@ public class PythonAnalysisClient {
         }
     }
 
-    // --- PROBLEM 3: Relief Sentiment (Satisfaction) ---
+    // --- PROBLEM 3: Relief Sentiment (Requires texts) ---
     public Map<String, Map<String, Double>> getReliefSentiment(List<String> texts) {
         try {
             Map<String, Object> payload = new HashMap<>();
@@ -88,7 +98,7 @@ public class PythonAnalysisClient {
         }
     }
 
-    // --- PROBLEM 4: Relief Time Series ---
+    // --- PROBLEM 4: Relief Time Series (Requires texts AND dates) ---
     public List<Map<String, Object>> getReliefTimeSeries(List<String> texts, List<String> dates) {
         try {
             Map<String, Object> payload = new HashMap<>();

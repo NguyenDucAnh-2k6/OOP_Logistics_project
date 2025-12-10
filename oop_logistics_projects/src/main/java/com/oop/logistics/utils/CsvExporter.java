@@ -1,10 +1,13 @@
 package com.oop.logistics.utils;
 
-import com.oop.logistics.models.DisasterEvent;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import com.oop.logistics.models.DisasterEvent;
 
 /**
  * Utility for exporting DisasterEvent data to CSV format.
@@ -21,7 +24,10 @@ public class CsvExporter {
      * @throws IOException If an I/O error occurs.
      */
     public static void exportEventsToCsv(List<DisasterEvent> events, String filePath) throws IOException {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8))) {
+    // Write BOM for Excel compatibility (optional but recommended for Vietnamese CSVs)
+            writer.write('\ufeff'); 
+            writer.println(CSV_HEADER);
             writer.println(CSV_HEADER);
 
             for (DisasterEvent event : events) {
