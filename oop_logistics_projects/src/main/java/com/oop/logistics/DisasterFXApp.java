@@ -33,44 +33,81 @@ public class DisasterFXApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // 1. Initialize API Client
-        client = new PythonAnalysisClient("http://localhost:8000"); // Ensure Python API is running on port 8000
+        // 1. Initialize API Client (Port 8000 matches your main.py)
+        client = new PythonAnalysisClient("http://localhost:8000"); 
 
-        // 2. Load Data from CSV
-        loadData("yagi_storm_sentiment_timeline.csv"); // Must match your exported file name
+        // 2. Load Data from your CSV file
+        // Make sure "YagiComments.csv" is in the project root folder
+        loadData("YagiComments.csv"); 
 
         // 3. Setup Layout
         mainLayout = new BorderPane();
         mainLayout.setLeft(createSideMenu());
-        mainLayout.setCenter(new Label("Select a problem to analyze"));
+        mainLayout.setCenter(new Label("Select a problem on the left to analyze Yagi Storm data."));
 
         Scene scene = new Scene(mainLayout, 1000, 600);
-        primaryStage.setTitle("Disaster Logistics Intelligence Dashboard");
+        primaryStage.setTitle("Disaster Logistics Intelligence Dashboard - Yagi Storm");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
     private void loadData(String csvPath) {
+        rawTexts.clear();
+        rawDates.clear();
         try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
             String line;
-            String header = br.readLine(); // Skip header
+            String headerLine = br.readLine();
+            
+            if (headerLine == null) {
+                System.err.println("CSV file is empty!");
+                return;
+            }
+
+            // --- Dynamic Column Detection ---
+            String[] headers = headerLine.split(",");
+            int textIdx = -1;
+            int dateIdx = -1;
+
+            // Find columns by checking likely names (case-insensitive)
+            for (int i = 0; i < headers.length; i++) {
+                String h = headers[i].toLowerCase().replace("\"", "").trim();
+                // Check for Content/Text columns
+                if (h.equals("text") || h.equals("description") || h.equals("content") || h.equals("comment")) textIdx = i;
+                // Check for Time/Date columns
+                if (h.equals("thời gian") || h.equals("date") || h.equals("timestamp") || h.equals("time")) dateIdx = i;
+            }
+
+            if (textIdx == -1 || dateIdx == -1) {
+                System.err.println("ERROR: Could not find 'Text' or 'Date' columns in CSV header: " + headerLine);
+                System.err.println("Please ensure your CSV has headers like 'Text' and 'Thời gian' or 'Date'.");
+                return;
+            }
+
+            // --- Read Data Rows ---
             while ((line = br.readLine()) != null) {
-                // Assuming CSV format: SourceID,Timestamp,DateOnly,...,Description
-                // You might need to adjust split logic if description has commas
-                String[] parts = line.split(",", -1); 
-                if (parts.length > 7) {
-                    rawDates.add(parts[2]); // DateOnly column
-                    // Description is the last column, remove quotes if present
-                    String text = parts[parts.length - 1].replace("\"", "");
-                    rawTexts.add(text);
+                // Regex to split by comma ONLY if not inside quotes (handles CSVs with commas in text)
+                String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+
+                if (parts.length > Math.max(textIdx, dateIdx)) {
+                    String text = parts[textIdx].replace("\"", "").trim();
+                    String date = parts[dateIdx].replace("\"", "").trim();
+
+                    // Clean Date: Keep only YYYY-MM-DD if user wants daily grouping
+                    // If your Python API handles full timestamps, you can keep it as is.
+                    // Here we ensure it's at least not empty.
+                    if (!text.isEmpty() && !date.isEmpty()) {
+                        rawTexts.add(text);
+                        rawDates.add(date);
+                    }
                 }
             }
-            System.out.println("Loaded " + rawTexts.size() + " records.");
+            System.out.println("✓ Successfully loaded " + rawTexts.size() + " records from " + csvPath);
+
         } catch (Exception e) {
             System.err.println("Error loading CSV: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
     private VBox createSideMenu() {
         VBox menu = new VBox(10);
         menu.setPadding(new Insets(15));
