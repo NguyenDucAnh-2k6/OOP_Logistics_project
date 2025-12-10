@@ -1,105 +1,106 @@
 package com.oop.logistics.analysis;
 
 import com.google.gson.Gson;
-import com.oop.logistics.models.AnalysisRequest;
-import com.oop.logistics.models.AnalysisResponse;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-/**
- * Client for communicating with Python-based sentiment analysis API
- */
-public class PythonAnalysisClient implements AnalysisAPI {
+public class PythonAnalysisClient {
     
     private final String apiUrl;
     private final HttpClient httpClient;
     private final Gson gson;
-    private final int timeoutSeconds;
-    
+
     public PythonAnalysisClient(String apiUrl) {
-        this(apiUrl, 30);
-    }
-    
-    public PythonAnalysisClient(String apiUrl, int timeoutSeconds) {
         this.apiUrl = apiUrl;
-        this.timeoutSeconds = timeoutSeconds;
         this.httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(timeoutSeconds))
+            .connectTimeout(Duration.ofSeconds(30))
             .build();
         this.gson = new Gson();
     }
-    
-    @Override
-    public AnalysisResponse analyzeSentiment(AnalysisRequest request) {
+
+    // Helper to send POST requests
+    private String sendPost(String endpoint, Object payload) throws Exception {
+        String json = gson.toJson(payload);
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(new URI(apiUrl + endpoint))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("API Error: " + response.statusCode() + " " + response.body());
+        }
+        return response.body();
+    }
+
+    // --- PROBLEM 1: Sentiment Trends ---
+    public List<Map<String, Object>> getSentimentTimeSeries(List<String> texts, List<String> dates) {
         try {
-            String jsonRequest = gson.toJson(request);
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("texts", texts);
+            payload.put("dates", dates);
             
-            HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(new URI(apiUrl + "/analyze"))
-                .header("Content-Type", "application/json")
-                .timeout(Duration.ofSeconds(timeoutSeconds))
-                .POST(HttpRequest.BodyPublishers.ofString(jsonRequest))
-                .build();
-            
-            HttpResponse<String> response = httpClient.send(
-                httpRequest, 
-                HttpResponse.BodyHandlers.ofString()
-            );
-            
-            if (response.statusCode() == 200) {
-                return gson.fromJson(response.body(), AnalysisResponse.class);
-            } else {
-                AnalysisResponse errorResponse = new AnalysisResponse();
-                errorResponse.setError("API returned status code: " + response.statusCode());
-                return errorResponse;
-            }
-            
+            String response = sendPost("/sentiment-time-series", payload);
+            Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
+            return gson.fromJson(response, listType);
         } catch (Exception e) {
-            AnalysisResponse errorResponse = new AnalysisResponse();
-            errorResponse.setError("Failed to connect to analysis API: " + e.getMessage());
-            return errorResponse;
+            e.printStackTrace();
+            return List.of();
         }
     }
-    
-    @Override
-    public boolean isAvailable() {
+
+    // --- PROBLEM 2: Damage Classification ---
+    public List<String> getDamageClassification(List<String> texts) {
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(apiUrl + "/health"))
-                .timeout(Duration.ofSeconds(5))
-                .GET()
-                .build();
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("texts", texts);
             
-            HttpResponse<String> response = httpClient.send(
-                request, 
-                HttpResponse.BodyHandlers.ofString()
-            );
-            
-            return response.statusCode() == 200;
-            
+            String response = sendPost("/damage-classification", payload);
+            Type listType = new TypeToken<List<String>>(){}.getType();
+            return gson.fromJson(response, listType);
         } catch (Exception e) {
-            return false;
+            e.printStackTrace();
+            return List.of();
         }
     }
-    
-    @Override
-    public String getProviderName() {
-        return "Python Sentiment Analysis API";
+
+    // --- PROBLEM 3: Relief Sentiment (Satisfaction) ---
+    public Map<String, Map<String, Double>> getReliefSentiment(List<String> texts) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("texts", texts);
+            
+            String response = sendPost("/relief-sentiment", payload);
+            Type mapType = new TypeToken<Map<String, Map<String, Double>>>(){}.getType();
+            return gson.fromJson(response, mapType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of();
+        }
     }
-    
-    @Override
-    public String getConfiguration() {
-        return String.format("API URL: %s, Timeout: %ds", apiUrl, timeoutSeconds);
-    }
-    
-    /**
-     * Batch analyze multiple texts
-     */
-    public AnalysisResponse analyzeBatch(java.util.List<String> texts) {
-        AnalysisRequest request = new AnalysisRequest(texts);
-        return analyzeSentiment(request);
+
+    // --- PROBLEM 4: Relief Time Series ---
+    public List<Map<String, Object>> getReliefTimeSeries(List<String> texts, List<String> dates) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("texts", texts);
+            payload.put("dates", dates);
+            
+            String response = sendPost("/relief-time-series", payload);
+            Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
+            return gson.fromJson(response, listType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
     }
 }
