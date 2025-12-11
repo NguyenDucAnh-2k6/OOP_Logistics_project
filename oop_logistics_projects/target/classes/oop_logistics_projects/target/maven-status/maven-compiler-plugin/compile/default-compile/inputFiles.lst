@@ -27,6 +27,7 @@ D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\o
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\models\AnalysisRequest.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\core\DataCollector.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\Facebook\FacebookPost.java
+D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\DisasterLogisticsApp.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\Launcher.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\ui\DashboardFrame.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\config\CategoryManager.java
@@ -40,3 +41,4 @@ D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\o
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\models\AnalysisResponse.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\DisasterFXApp.java
 D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\preprocessing\DataPreprocessor.java
+D:\JAVAProjects\OOP_Logistics_project\oop_logistics_projects\src\main\java\com\oop\logistics\CommandLineRunner.java

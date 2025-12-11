@@ -2,19 +2,28 @@ package com.oop.logistics.analysis;
 
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
+import java.net.http.HttpClient;  // Required for Interface
+import java.net.http.HttpRequest; // Required for Interface
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-public class PythonAnalysisClient {
+import com.oop.logistics.models.AnalysisRequest;
+import com.oop.logistics.models.AnalysisResponse;
+
+/**
+ * Client for interacting with the Python Sentiment Analysis API.
+ * Implements AnalysisAPI to support the core pipeline, 
+ * and provides specialized methods for the JavaFX GUI.
+ */
+public class PythonAnalysisClient implements AnalysisAPI { 
     
     private final String apiUrl;
     private final HttpClient httpClient;
@@ -28,18 +37,72 @@ public class PythonAnalysisClient {
         this.gson = new Gson();
     }
 
+    // ==================================================================================
+    //  PART 1: AnalysisAPI Interface Implementation (For DisasterLogisticsPipeline)
+    // ==================================================================================
+
+    @Override
+    public String getProviderName() {
+        return "Python FastAPI Backend";
+    }
+
+    @Override
+    public String getConfiguration() {
+        return "URL: " + apiUrl;
+    }
+
+    @Override
+    public boolean isAvailable() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(apiUrl + "/docs")) // Check if docs exist as health check
+                .GET()
+                .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.statusCode() == 200;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public AnalysisResponse analyzeSentiment(AnalysisRequest request) {
+        // This method is called by DisasterAnalyzer in a loop.
+        // We will map it to the /damage-classification endpoint or similar for a single result.
+        // Since the Python API is designed for batches, this is a simplified adapter.
+        
+        AnalysisResponse response = new AnalysisResponse();
+        try {
+            // Adapt single request to list format for Python
+            List<String> texts = Collections.singletonList(request.getText());
+            List<String> results = getDamageClassification(texts); // Reusing existing method
+            
+            if (!results.isEmpty()) {
+                response.setSentiment(results.get(0)); // Set result
+                response.setConfidence(1.0);
+            } else {
+                response.setSentiment("Neutral");
+            }
+        } catch (Exception e) {
+            response.setError("API Error: " + e.getMessage());
+        }
+        return response;
+    }
+
+    // ==================================================================================
+    //  PART 2: Core HTTP Logic
+    // ==================================================================================
+
     private String sendPost(String endpoint, Object payload) throws Exception {
         String json = gson.toJson(payload);
         
-        // DEBUG: Print payload (Note: Windows console might still show ? here, but that's just display)
-        System.out.println("DEBUG POST " + endpoint + ": " + (json.length() > 200 ? json.substring(0, 200) + "..." : json));
+        // DEBUG: Print payload to console
+        // System.out.println("DEBUG POST " + endpoint + ": " + (json.length() > 100 ? json.substring(0, 100) + "..." : json));
 
         HttpRequest request = HttpRequest.newBuilder()
             .uri(new URI(apiUrl + endpoint))
-            // 1. Explicitly state charset in the header
-            .header("Content-Type", "application/json; charset=utf-8")
-            // 2. Explicitly encode the String bytes as UTF-8
-            .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)) 
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
             .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -50,8 +113,10 @@ public class PythonAnalysisClient {
         return response.body();
     }
 
-    // --- PROBLEM 1: Sentiment Trends ---
-    // REMOVED try-catch, added 'throws Exception'
+    // ==================================================================================
+    //  PART 3: GUI Specific Methods (Problem 1, 2, 3, 4)
+    // ==================================================================================
+
     public List<Map<String, Object>> getSentimentTimeSeries(List<String> texts, List<String> dates) throws Exception {
         Map<String, Object> payload = new HashMap<>();
         payload.put("texts", texts);
@@ -62,7 +127,6 @@ public class PythonAnalysisClient {
         return gson.fromJson(response, listType);
     }
 
-    // --- PROBLEM 2: Damage Classification ---
     public List<String> getDamageClassification(List<String> texts) throws Exception {
         Map<String, Object> payload = new HashMap<>();
         payload.put("texts", texts);
@@ -72,7 +136,6 @@ public class PythonAnalysisClient {
         return gson.fromJson(response, listType);
     }
 
-    // --- PROBLEM 3: Relief Sentiment ---
     public Map<String, Map<String, Double>> getReliefSentiment(List<String> texts) throws Exception {
         Map<String, Object> payload = new HashMap<>();
         payload.put("texts", texts);
@@ -82,7 +145,6 @@ public class PythonAnalysisClient {
         return gson.fromJson(response, mapType);
     }
 
-    // --- PROBLEM 4: Relief Time Series ---
     public List<Map<String, Object>> getReliefTimeSeries(List<String> texts, List<String> dates) throws Exception {
         Map<String, Object> payload = new HashMap<>();
         payload.put("texts", texts);

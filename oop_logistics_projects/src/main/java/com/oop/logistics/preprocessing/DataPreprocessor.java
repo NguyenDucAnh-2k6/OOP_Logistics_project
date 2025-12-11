@@ -1,9 +1,14 @@
 package com.oop.logistics.preprocessing;
 
-import com.oop.logistics.models.DisasterEvent;
-import com.oop.logistics.config.KeywordManager;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.oop.logistics.config.KeywordManager;
+import com.oop.logistics.models.DisasterEvent;
 
 /**
  * Handles data preprocessing: cleaning, deduplication, enrichment
@@ -25,11 +30,12 @@ public class DataPreprocessor {
         // Step 1: Clean data
         List<DisasterEvent> cleaned = cleanEvents(events);
         
-        // Step 2: Remove duplicates
-        List<DisasterEvent> deduplicated = deduplicateEvents(cleaned);
+        // Step 2: Remove duplicates (DISABLED to keep all comments)
+        // List<DisasterEvent> deduplicated = deduplicateEvents(cleaned);
         
         // Step 3: Enrich events with additional information
-        List<DisasterEvent> enriched = enrichEvents(deduplicated);
+        // DIRECTLY pass 'cleaned' list to enrichment, bypassing deduplication
+        List<DisasterEvent> enriched = enrichEvents(cleaned);
         
         // Step 4: Filter invalid events
         return filterValidEvents(enriched);
