@@ -1,14 +1,30 @@
 from typing import List, Dict
 
 POSITIVE_WORDS = [
+    # General positive terms
     "cảm ơn", "tốt", "ổn", "an toàn", "được hỗ trợ",
-    "hài lòng", "đủ", "cứu trợ", "giúp"
+    "hài lòng", "đầy đủ", "cứu trợ", "giúp đỡ", "tuyệt vời",
+    "may mắn", "kịp thời", "ấm lòng", 
+    
+    # Extracted from YagiComments.csv (Wishes for safety, relief)
+    "bình an", "cầu mong", "mong", "không sao", "qua nhanh",
+    "không thiệt hại", "đỡ khổ"
 ]
 
 NEGATIVE_WORDS = [
-    "hư", "hỏng", "tắc", "thiệt hại", "không có", "mất điện",
-    "chậm", "bất tiện", "không nhận", "thiếu", "sót", "bỏ"
+    # General negative terms
+    "hư hỏng", "tắc", "thiệt hại", "không có", "mất điện",
+    "quá chậm", "bất tiện", "không nhận", "thiếu", "bỏ sót",
+    
+    # Extracted from YagiComments.csv (Fear, Damage, Loss)
+    "khủng khiếp", "sợ", "khiếp", "kinh", "dã man", "sợ hãi",
+    "nguy hiểm", "mất sóng", "không liên lạc", "mất nước",
+    "tan hoang", "đổ", "gãy", "gẫy", "bay", "tốc mái",
+    "tàn phá", "bật gốc", "ngập", "xót xa", "mất mát",
+    "tan tác", "sập", "hỏng hết", "lật thuyền", "gió giật", "ác"
 ]
+
+# ... rest of your file (predict_sentiment function etc.) ...
 
 
 def predict_sentiment(text: str) -> str:

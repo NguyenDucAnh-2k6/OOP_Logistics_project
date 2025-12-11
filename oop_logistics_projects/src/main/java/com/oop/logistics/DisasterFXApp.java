@@ -219,36 +219,59 @@ public class DisasterFXApp extends Application {
 
     // --- CHARTS & ANALYSIS ---
 
+    // --- PROBLEM 1: Sentiment Trends (Line Chart) ---
     private void showProblem1() {
         setStatus("Analyzing Problem 1 (Sentiment Trends)...", false);
         
-        // Use a background thread to prevent UI freezing
         new Thread(() -> {
             try {
+                // 1. Fetch Data
                 List<Map<String, Object>> data = client.getSentimentTimeSeries(rawTexts, rawDates);
                 
+                // 2. Sort Data by Date (Crucial for correct line plotting)
+                // We use a simple custom comparator for dd/MM/yyyy format
+                data.sort((p1, p2) -> {
+                    String d1 = (String) p1.get("date");
+                    String d2 = (String) p2.get("date");
+                    return parseDate(d1).compareTo(parseDate(d2));
+                });
+
                 Platform.runLater(() -> {
+                    // 3. Configure Axes
                     CategoryAxis xAxis = new CategoryAxis();
                     xAxis.setLabel("Date");
                     NumberAxis yAxis = new NumberAxis();
                     yAxis.setLabel("Comment Count");
 
                     LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
-                    chart.setTitle("Public Sentiment Evolution (Positive vs Negative)");
+                    chart.setTitle("Sentiment Trends Over Time (Positive vs Negative vs Neutral)");
                     chart.setAnimated(true);
 
+                    // 4. Create Series (Add Neutral to match Python)
                     XYChart.Series<String, Number> posSeries = new XYChart.Series<>();
                     posSeries.setName("Positive");
+                    
                     XYChart.Series<String, Number> negSeries = new XYChart.Series<>();
                     negSeries.setName("Negative");
+                    
+                    XYChart.Series<String, Number> neuSeries = new XYChart.Series<>();
+                    neuSeries.setName("Neutral"); // Added Neutral Series
 
+                    // 5. Populate Data
                     for (Map<String, Object> point : data) {
                         String date = (String) point.get("date");
                         posSeries.getData().add(new XYChart.Data<>(date, ((Number) point.get("positive")).intValue()));
                         negSeries.getData().add(new XYChart.Data<>(date, ((Number) point.get("negative")).intValue()));
+                        neuSeries.getData().add(new XYChart.Data<>(date, ((Number) point.get("neutral")).intValue()));
                     }
 
-                    chart.getData().addAll(posSeries, negSeries);
+                    // 6. Add all series to chart
+                    chart.getData().addAll(posSeries, negSeries, neuSeries);
+                    
+                    // 7. Apply Colors to match your Python plot (Green, Red, Gray)
+                    // Note: JavaFX uses CSS for reliable coloring, but we can try looking up nodes after adding
+                    applyCustomColors(chart, posSeries, negSeries, neuSeries);
+
                     displayChart(chart);
                     setStatus("Analysis Complete.", false);
                 });
@@ -256,6 +279,42 @@ public class DisasterFXApp extends Application {
                 Platform.runLater(() -> setStatus("API Error: " + e.getMessage(), true));
             }
         }).start();
+    }
+
+    // Helper to sort dates (dd/MM/yyyy or dd/MM/yy)
+    private java.time.LocalDate parseDate(String dateStr) {
+        try {
+            java.time.format.DateTimeFormatter formatter;
+            if (dateStr.length() > 8) { // Assuming d/M/yyyy or dd/MM/yyyy
+                 formatter = java.time.format.DateTimeFormatter.ofPattern("d/M/yyyy");
+            } else { // d/M/yy
+                 formatter = java.time.format.DateTimeFormatter.ofPattern("d/M/yy");
+            }
+            return java.time.LocalDate.parse(dateStr, formatter);
+        } catch (Exception e) {
+            return java.time.LocalDate.MIN; // Push invalid dates to start
+        }
+    }
+
+    // Helper to style the lines like Matplotlib
+    private void applyCustomColors(LineChart<String, Number> chart, 
+                                   XYChart.Series<String, Number> pos, 
+                                   XYChart.Series<String, Number> neg,
+                                   XYChart.Series<String, Number> neu) {
+        // We use style lookup which works after the scene is rendered
+        pos.getNode().setStyle("-fx-stroke: green;");
+        neg.getNode().setStyle("-fx-stroke: red;");
+        neu.getNode().setStyle("-fx-stroke: gray;");
+        
+        for (XYChart.Data<String, Number> data : pos.getData()) {
+            if(data.getNode() != null) data.getNode().setStyle("-fx-background-color: green, white;");
+        }
+        for (XYChart.Data<String, Number> data : neg.getData()) {
+            if(data.getNode() != null) data.getNode().setStyle("-fx-background-color: red, white;");
+        }
+        for (XYChart.Data<String, Number> data : neu.getData()) {
+            if(data.getNode() != null) data.getNode().setStyle("-fx-background-color: gray, white;");
+        }
     }
 
     private void showProblem2() {
