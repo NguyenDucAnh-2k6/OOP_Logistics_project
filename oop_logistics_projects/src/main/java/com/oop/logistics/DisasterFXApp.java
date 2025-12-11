@@ -225,57 +225,54 @@ public class DisasterFXApp extends Application {
         
         new Thread(() -> {
             try {
-                // 1. Fetch Data
+                // 1. Fetch Data (Now throws Exception if API fails)
                 List<Map<String, Object>> data = client.getSentimentTimeSeries(rawTexts, rawDates);
                 
-                // 2. Sort Data by Date (Crucial for correct line plotting)
-                // We use a simple custom comparator for dd/MM/yyyy format
+                // 2. Safety Check
+                if (data == null || data.isEmpty()) {
+                    Platform.runLater(() -> setStatus("API returned no data.", true));
+                    return;
+                }
+
+                // 3. Sort Data (Safe now because we handled errors)
                 data.sort((p1, p2) -> {
                     String d1 = (String) p1.get("date");
                     String d2 = (String) p2.get("date");
+                    if (d1 == null || d2 == null) return 0;
                     return parseDate(d1).compareTo(parseDate(d2));
                 });
 
                 Platform.runLater(() -> {
-                    // 3. Configure Axes
-                    CategoryAxis xAxis = new CategoryAxis();
-                    xAxis.setLabel("Date");
+                    // ... (Existing chart creation code) ...
+                    // Copy the chart creation logic from my previous answer here
+                    // ...
+                    
+                    // (Simplified for brevity, make sure you keep your chart logic)
+                    CategoryAxis xAxis = new CategoryAxis(); 
                     NumberAxis yAxis = new NumberAxis();
-                    yAxis.setLabel("Comment Count");
-
                     LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
-                    chart.setTitle("Sentiment Trends Over Time (Positive vs Negative vs Neutral)");
-                    chart.setAnimated(true);
-
-                    // 4. Create Series (Add Neutral to match Python)
-                    XYChart.Series<String, Number> posSeries = new XYChart.Series<>();
-                    posSeries.setName("Positive");
+                    chart.setTitle("Sentiment Trends");
                     
-                    XYChart.Series<String, Number> negSeries = new XYChart.Series<>();
-                    negSeries.setName("Negative");
-                    
-                    XYChart.Series<String, Number> neuSeries = new XYChart.Series<>();
-                    neuSeries.setName("Neutral"); // Added Neutral Series
+                    XYChart.Series<String, Number> pos = new XYChart.Series<>(); pos.setName("Positive");
+                    XYChart.Series<String, Number> neg = new XYChart.Series<>(); neg.setName("Negative");
+                    XYChart.Series<String, Number> neu = new XYChart.Series<>(); neu.setName("Neutral");
 
-                    // 5. Populate Data
                     for (Map<String, Object> point : data) {
                         String date = (String) point.get("date");
-                        posSeries.getData().add(new XYChart.Data<>(date, ((Number) point.get("positive")).intValue()));
-                        negSeries.getData().add(new XYChart.Data<>(date, ((Number) point.get("negative")).intValue()));
-                        neuSeries.getData().add(new XYChart.Data<>(date, ((Number) point.get("neutral")).intValue()));
+                        pos.getData().add(new XYChart.Data<>(date, ((Number) point.get("positive")).intValue()));
+                        neg.getData().add(new XYChart.Data<>(date, ((Number) point.get("negative")).intValue()));
+                        neu.getData().add(new XYChart.Data<>(date, ((Number) point.get("neutral")).intValue()));
                     }
-
-                    // 6. Add all series to chart
-                    chart.getData().addAll(posSeries, negSeries, neuSeries);
                     
-                    // 7. Apply Colors to match your Python plot (Green, Red, Gray)
-                    // Note: JavaFX uses CSS for reliable coloring, but we can try looking up nodes after adding
-                    applyCustomColors(chart, posSeries, negSeries, neuSeries);
-
+                    chart.getData().addAll(pos, neg, neu);
+                    applyCustomColors(chart, pos, neg, neu);
                     displayChart(chart);
+                    
                     setStatus("Analysis Complete.", false);
                 });
             } catch (Exception e) {
+                // This will now print the REAL error (e.g. "API Error 500")
+                e.printStackTrace(); 
                 Platform.runLater(() -> setStatus("API Error: " + e.getMessage(), true));
             }
         }).start();
