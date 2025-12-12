@@ -92,7 +92,11 @@
         <artifactId>jsoup</artifactId>
         <version>1.17.2</version>
     </dependency>
-
+    <dependency>
+        <groupId>com.opencsv</groupId>
+        <artifactId>opencsv</artifactId>
+        <version>5.7.1</version>
+    </dependency>
     <!-- JSON (optional, if you want to parse structured data) -->
     <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -111,7 +115,7 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>3.1.0</version>
             <configuration>
-                <mainClass>com.oop.logistics.CommandLineRunner</mainClass>
+                <mainClass>com.oop.logistics.Launcher</mainClass>
             </configuration>
         </plugin>
         <plugin>
