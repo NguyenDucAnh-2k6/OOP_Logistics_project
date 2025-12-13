@@ -8,6 +8,10 @@ import java.util.Map;
  * Request model for analysis APIs
  */
 public class AnalysisRequest {
+    private String region;
+    private int month;
+    private int year;
+
     
     @SerializedName("text")
     private String text;
@@ -51,6 +55,29 @@ public class AnalysisRequest {
     
     public Map<String, Object> getParameters() { return parameters; }
     public void setParameters(Map<String, Object> parameters) { this.parameters = parameters; }
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public void setMonth(int month) {
+        this.month = month;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public void setYear(int year) {
+        this.year = year;
+    }
 }
 
 /**

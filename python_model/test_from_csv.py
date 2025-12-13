@@ -11,7 +11,7 @@ with open(CSV_PATH, "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         texts.append(row["text"])
-        dates.append(row["Date"])
+        dates.append(row["date"])
 
 # Payload đúng chuẩn API
 payload = {

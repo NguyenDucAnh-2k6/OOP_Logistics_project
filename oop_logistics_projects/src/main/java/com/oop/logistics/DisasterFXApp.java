@@ -1,6 +1,5 @@
 package com.oop.logistics;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -58,7 +57,8 @@ public class DisasterFXApp extends Application {
     @Override
     public void start(Stage primaryStage) {
         // 1. Initialize API Client
-        client = new PythonAnalysisClient("http://localhost:8000");
+        client = new PythonAnalysisClient("http://127.0.0.1:8000");
+
 
         // 2. Setup Main Layout
         mainLayout = new BorderPane();
@@ -122,6 +122,7 @@ public class DisasterFXApp extends Application {
                setStatus("Error: Missing texts or dates.", true);
                return;
             }
+            
             safeRun(this::showProblem1);
         });
         btn2.setOnAction(e -> safeRun(this::showProblem2));

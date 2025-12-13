@@ -27,10 +27,11 @@ public class PythonAnalysisClient implements AnalysisAPI {
     public PythonAnalysisClient(String apiUrl) {
         this.apiUrl = apiUrl;
         this.httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
-            .build();
+             .version(HttpClient.Version.HTTP_1_1)  // ép dùng HTTP/1.1
+             .connectTimeout(Duration.ofSeconds(30))
+             .build();
         // FIX 1: Disable HTML escaping to keep text raw and clean
-        this.gson = new GsonBuilder().disableHtmlEscaping().create();
+        this.gson = new GsonBuilder().serializeNulls().disableHtmlEscaping().create();
     }
 
     // ... (Keep existing Interface methods: getProviderName, isAvailable, etc.) ...
@@ -56,17 +57,23 @@ public class PythonAnalysisClient implements AnalysisAPI {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(new URI(apiUrl + endpoint))
             // FIX 3: Use simple header (Python 'requests' library does this by default)
-            .header("Content-Type", "application/json") 
-            .POST(HttpRequest.BodyPublishers.ofByteArray(jsonBytes))
+            .header("Content-Type", "application/json; charset=utf-8") 
+            .header("Accept", "application/json")
+            //.header("Upgrade", "")
+            .header("Sec-WebSocket-Key", "")
+            .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+            .version(HttpClient.Version.HTTP_1_1)
             .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        
+        System.out.println("JSON SENT:");
+        System.out.println(json);
         if (response.statusCode() != 200) {
             System.err.println("API ERROR: " + response.statusCode());
             System.err.println("BODY: " + response.body());
             throw new RuntimeException("API Error " + response.statusCode() + ": " + response.body());
         }
+
         return response.body();
     }
 
