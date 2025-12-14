@@ -1,6 +1,5 @@
 package com.oop.logistics;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -11,6 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.oop.logistics.analysis.PythonAnalysisClient;
+import com.opencsv.CSVReader;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -57,7 +57,8 @@ public class DisasterFXApp extends Application {
     @Override
     public void start(Stage primaryStage) {
         // 1. Initialize API Client
-        client = new PythonAnalysisClient("http://localhost:8000");
+        client = new PythonAnalysisClient("http://127.0.0.1:8000");
+
 
         // 2. Setup Main Layout
         mainLayout = new BorderPane();
@@ -116,10 +117,23 @@ public class DisasterFXApp extends Application {
         Button btn3 = createStyledButton("Problem 3:\nRelief Satisfaction");
         Button btn4 = createStyledButton("Problem 4:\nRelief Effectiveness");
 
-        btn1.setOnAction(e -> safeRun(this::showProblem1));
+        btn1.setOnAction(e -> {
+            if (rawTexts.isEmpty() || rawDates.isEmpty()) {
+               setStatus("Error: Missing texts or dates.", true);
+               return;
+            }
+            
+            safeRun(this::showProblem1);
+        });
         btn2.setOnAction(e -> safeRun(this::showProblem2));
         btn3.setOnAction(e -> safeRun(this::showProblem3));
-        btn4.setOnAction(e -> safeRun(this::showProblem4));
+        btn4.setOnAction(e -> {if (rawTexts.isEmpty() || rawDates.isEmpty()) {
+            setStatus("Error: Missing texts or dates.", true);
+            return;
+            } 
+            safeRun(this::showProblem4);
+        });
+
 
         menu.getChildren().addAll(menuTitle, btn1, btn2, btn3, btn4);
         return menu;
@@ -142,49 +156,54 @@ public class DisasterFXApp extends Application {
     private void loadData(String csvPath) {
         rawTexts.clear();
         rawDates.clear();
-        
-        File file = new File(csvPath);
-        if (!file.exists()) file = new File("oop_logistics_projects/" + csvPath);
 
+        File file = new File(csvPath);
         if (!file.exists()) {
-            setStatus("Error: " + csvPath + " not found!", true);
+            setStatus("CSV not found: " + csvPath, true);
             return;
         }
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            String line = br.readLine(); // Header
-            if (line == null) return;
-            
-            String[] headers = line.split(",");
-            int textIdx = -1, dateIdx = -1;
-            
-            for (int i = 0; i < headers.length; i++) {
-                String h = headers[i].toLowerCase().replace("\"", "").trim();
-                if (h.contains("text") || h.contains("content")) textIdx = i;
-                if (h.contains("date") || h.contains("thời gian")) dateIdx = i;
-            }
-
-            if (textIdx == -1 || dateIdx == -1) {
-                setStatus("Error: CSV Columns missing (Need 'Text', 'Date')", true);
+        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+            List<String[]> allRows = reader.readAll();
+            if (allRows.size() < 2) {
+                setStatus("CSV is empty.", true);
                 return;
             }
 
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-                if (parts.length > Math.max(textIdx, dateIdx)) {
-                    String text = parts[textIdx].replace("\"", "").trim();
-                    String date = parts[dateIdx].replace("\"", "").trim();
-                    if (!text.isEmpty() && !date.isEmpty()) {
-                        rawTexts.add(text);
-                        rawDates.add(date);
-                    }
-                }
-            }
-            setStatus("Loaded " + rawTexts.size() + " records.", false);
-        } catch (Exception e) {
-            setStatus("Load Error: " + e.getMessage(), true);
+        String[] header = allRows.get(0);
+        int dateIdx = -1;
+        int textIdx = -1;
+
+        for (int i = 0; i < header.length; i++) {
+            String h = header[i].toLowerCase().trim();
+            if (h.equals("date")) dateIdx = i;
+            else if (h.equals("text")) textIdx = i;
         }
+
+        if (dateIdx == -1 || textIdx == -1) {
+            setStatus("Error: CSV missing 'date' or 'text' column.", true);
+            return;
+        }
+
+        for (int i = 1; i < allRows.size(); i++) {
+            String[] row = allRows.get(i);
+            if (row.length <= Math.max(dateIdx, textIdx)) continue;
+
+            String date = row[dateIdx].trim();
+            String text = row[textIdx].trim();
+
+            if (!date.isEmpty() && !text.isEmpty()) {
+                rawDates.add(date);
+                rawTexts.add(text);
+            }
+        }
+
+        setStatus("Loaded " + rawTexts.size() + " comments.", false);
+
+    } catch (Exception e) {
+        setStatus("Load Error: " + e.getMessage(), true);
     }
+}
 
     // ============================================================================================
     //  PROBLEM 1: SENTIMENT TRENDS (Line Chart)
@@ -380,7 +399,11 @@ public class DisasterFXApp extends Application {
     }
 
     private void safeRun(Runnable r) {
-        if (rawTexts.isEmpty()) setStatus("No data loaded.", true);
-        else r.run();
+    if (rawTexts.isEmpty() || rawDates.isEmpty()) {
+        setStatus("No data loaded (missing text/date).", true);
+        return;
     }
+    r.run();
+}
+
 }

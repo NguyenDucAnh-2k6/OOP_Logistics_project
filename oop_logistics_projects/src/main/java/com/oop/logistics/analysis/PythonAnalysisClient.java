@@ -29,8 +29,7 @@ public class PythonAnalysisClient implements AnalysisAPI {
         this.httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(30))
             .build();
-        // FIX 1: Disable HTML escaping to keep text raw and clean
-        this.gson = new GsonBuilder().disableHtmlEscaping().create();
+        this.gson = new Gson();
     }
 
     // ... (Keep existing Interface methods: getProviderName, isAvailable, etc.) ...
@@ -55,18 +54,19 @@ public class PythonAnalysisClient implements AnalysisAPI {
 
         HttpRequest request = HttpRequest.newBuilder()
             .uri(new URI(apiUrl + endpoint))
-            // FIX 3: Use simple header (Python 'requests' library does this by default)
-            .header("Content-Type", "application/json") 
-            .POST(HttpRequest.BodyPublishers.ofByteArray(jsonBytes))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
             .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        
+        System.out.println("JSON SENT:");
+        System.out.println(json);
         if (response.statusCode() != 200) {
             System.err.println("API ERROR: " + response.statusCode());
             System.err.println("BODY: " + response.body());
             throw new RuntimeException("API Error " + response.statusCode() + ": " + response.body());
         }
+
         return response.body();
     }
 

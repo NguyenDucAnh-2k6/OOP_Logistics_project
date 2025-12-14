@@ -1,4 +1,6 @@
-public static class Category {
+package com.oop.logistics.config;
+import java.util.*;
+public class Category {
         private String name;
         private String type; // "DAMAGE" or "RELIEF"
         private List<String> keywords;

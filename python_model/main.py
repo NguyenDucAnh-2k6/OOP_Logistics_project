@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 from models.schemas import (
     SentimentTimeSeriesRequest,
@@ -16,13 +16,14 @@ app = FastAPI(title="Humanitarian Logistics Analysis API")
 
 
 @app.post("/sentiment-time-series")
-async def sentiment_time_series(req: SentimentTimeSeriesRequest):
+def sentiment_time_series(req: SentimentTimeSeriesRequest):
     """
     Bài toán 1: Theo dõi tâm lý công chúng theo thời gian.
     Input: danh sách texts + dates
     Output: list[ {date, positive, negative, neutral} ]
     """
-    print(f"Received {len(req.texts)} comments for analysis.")
+    print(">>> ĐÃ NHẬN REQ SENTIMENT TIME SERIES")
+    print(req.model_dump())
     return aggregate_by_date(req.texts, req.dates)
 
 
@@ -59,7 +60,14 @@ def relief_time_series(req: ReliefSentimentRequest):
     if req.dates is None:
         raise ValueError("Trường 'dates' là bắt buộc cho API /relief-time-series")
     return aggregate_relief_time_series(req.texts, req.dates)
-
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    body = await request.body()
+    print("\n========== RAW REQUEST BODY ==========")
+    print(body[:500], "...")   # tránh in quá dài
+    print("=====================================\n")
+    response = await call_next(request)
+    return response
 
 # Chạy trực tiếp bằng: python main.py
 if __name__ == "__main__":
