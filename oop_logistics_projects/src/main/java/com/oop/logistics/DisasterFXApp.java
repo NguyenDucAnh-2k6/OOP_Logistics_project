@@ -45,12 +45,9 @@ public class DisasterFXApp extends Application {
     
     private BorderPane mainLayout;
     private Label statusLabel;
-    private VBox sideMenu;
 
-    // --- COLORS & STYLES ---
+    // --- COLORS ---
     private static final String SIDEBAR_COLOR = "#2c3e50";
-    private static final String SIDEBAR_TEXT = "white";
-    private static final String ACCENT_COLOR = "#3498db";
     private static final String BG_COLOR = "#ecf0f1";
 
     public static void main(String[] args) {
@@ -66,13 +63,13 @@ public class DisasterFXApp extends Application {
         mainLayout = new BorderPane();
         mainLayout.setStyle("-fx-background-color: " + BG_COLOR + ";");
 
-        // --- TOP: Header ---
+        // --- Header ---
         HBox header = new HBox();
         header.setPadding(new Insets(15, 20, 15, 20));
         header.setAlignment(Pos.CENTER_LEFT);
         header.setStyle("-fx-background-color: white; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);");
         
-        Label appTitle = new Label("Disaster Logistics Intelligence");
+        Label appTitle = new Label("Disaster Logistics Dashboard");
         appTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
         appTitle.setTextFill(Color.web(SIDEBAR_COLOR));
         
@@ -81,29 +78,25 @@ public class DisasterFXApp extends Application {
         
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        
         header.getChildren().addAll(appTitle, spacer, statusLabel);
         mainLayout.setTop(header);
 
-        // --- LEFT: Side Menu ---
-        sideMenu = createSideMenu();
-        mainLayout.setLeft(sideMenu);
+        // --- Side Menu ---
+        mainLayout.setLeft(createSideMenu());
 
-        // --- CENTER: Content Area ---
-        Label welcomeMsg = new Label("Select an analysis module from the left menu.");
+        // --- Center Content ---
+        Label welcomeMsg = new Label("Select a problem from the left menu to analyze data.");
         welcomeMsg.setFont(Font.font("Segoe UI", 16));
         welcomeMsg.setTextFill(Color.DARKGRAY);
-        
         StackPane centerContainer = new StackPane(welcomeMsg);
-        centerContainer.setPadding(new Insets(20));
         mainLayout.setCenter(centerContainer);
 
         // 3. Load Data
         loadData("D:\\JAVAProjects\\OOP_Logistics_project\\YagiComments.csv");
 
-        // 4. Final Scene Setup
+        // 4. Show Window
         Scene scene = new Scene(mainLayout, 1200, 700);
-        primaryStage.setTitle("Yagi Storm Analysis Dashboard");
+        primaryStage.setTitle("Yagi Storm Analysis - JavaFX Client");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -115,14 +108,13 @@ public class DisasterFXApp extends Application {
         menu.setStyle("-fx-background-color: " + SIDEBAR_COLOR + ";");
 
         Label menuTitle = new Label("ANALYSIS MODULES");
-        menuTitle.setTextFill(Color.web("#95a5a6"));
+        menuTitle.setTextFill(Color.web("#bdc3c7"));
         menuTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        menuTitle.setPadding(new Insets(0, 0, 10, 5));
-
+        
         Button btn1 = createStyledButton("Problem 1:\nSentiment Trends");
         Button btn2 = createStyledButton("Problem 2:\nDamage Types");
         Button btn3 = createStyledButton("Problem 3:\nRelief Satisfaction");
-        Button btn4 = createStyledButton("Problem 4:\nRelief By Time");
+        Button btn4 = createStyledButton("Problem 4:\nRelief Effectiveness");
 
         btn1.setOnAction(e -> safeRun(this::showProblem1));
         btn2.setOnAction(e -> safeRun(this::showProblem2));
@@ -138,61 +130,38 @@ public class DisasterFXApp extends Application {
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setPrefHeight(50);
         btn.setAlignment(Pos.CENTER_LEFT);
-        btn.setPadding(new Insets(10));
-        btn.setFont(Font.font("Segoe UI", 13));
-        btn.setStyle(
-            "-fx-background-color: transparent; " +
-            "-fx-text-fill: " + SIDEBAR_TEXT + "; " +
-            "-fx-border-color: #34495e; " +
-            "-fx-border-width: 0 0 1 0; " +
-            "-fx-cursor: hand;"
-        );
-        
-        // Hover effects
-        btn.setOnMouseEntered(e -> btn.setStyle(
-            "-fx-background-color: " + ACCENT_COLOR + "; " +
-            "-fx-text-fill: white; " +
-            "-fx-border-color: #34495e; " +
-            "-fx-border-width: 0 0 1 0; " +
-            "-fx-cursor: hand;"
-        ));
-        btn.setOnMouseExited(e -> btn.setStyle(
-            "-fx-background-color: transparent; " +
-            "-fx-text-fill: " + SIDEBAR_TEXT + "; " +
-            "-fx-border-color: #34495e; " +
-            "-fx-border-width: 0 0 1 0; " +
-            "-fx-cursor: hand;"
-        ));
-        
+        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-cursor: hand; -fx-border-color: #34495e; -fx-border-width: 0 0 1 0;");
+        btn.setOnMouseEntered(e -> btn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white;"));
+        btn.setOnMouseExited(e -> btn.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: #34495e; -fx-border-width: 0 0 1 0;"));
         return btn;
     }
 
-    // --- DATA LOADING (Robust UTF-8) ---
+    // ============================================================================================
+    //  DATA LOADING
+    // ============================================================================================
     private void loadData(String csvPath) {
-        // ... (Keep your existing robust loading logic here, just ensuring UTF-8)
-        File file = new File(csvPath);
-        if (!file.exists()) {
-             file = new File("oop_logistics_projects/" + csvPath);
-        }
+        rawTexts.clear();
+        rawDates.clear();
         
+        File file = new File(csvPath);
+        if (!file.exists()) file = new File("oop_logistics_projects/" + csvPath);
+
         if (!file.exists()) {
-            setStatus("Error: CSV not found!", true);
+            setStatus("Error: " + csvPath + " not found!", true);
             return;
         }
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            // ... (Copy the dynamic column detection logic from your previous successful version)
-            String line;
-            String headerLine = br.readLine();
-            if (headerLine == null) return;
-
-            String[] headers = headerLine.split(",");
+            String line = br.readLine(); // Header
+            if (line == null) return;
+            
+            String[] headers = line.split(",");
             int textIdx = -1, dateIdx = -1;
-
+            
             for (int i = 0; i < headers.length; i++) {
                 String h = headers[i].toLowerCase().replace("\"", "").trim();
-                if (h.equals("text") || h.equals("description") || h.equals("content") || h.equals("comment")) textIdx = i;
-                if (h.equals("thời gian") || h.equals("date") || h.equals("timestamp")) dateIdx = i;
+                if (h.contains("text") || h.contains("content")) textIdx = i;
+                if (h.contains("date") || h.contains("thời gian")) dateIdx = i;
             }
 
             if (textIdx == -1 || dateIdx == -1) {
@@ -217,241 +186,201 @@ public class DisasterFXApp extends Application {
         }
     }
 
-    // --- CHARTS & ANALYSIS ---
-
-    // --- PROBLEM 1: Sentiment Trends (Line Chart) ---
+    // ============================================================================================
+    //  PROBLEM 1: SENTIMENT TRENDS (Line Chart)
+    // ============================================================================================
     private void showProblem1() {
-        setStatus("Analyzing Problem 1 (Sentiment Trends)...", false);
-        
+        setStatus("Analyzing P1: Sentiment Trends...", false);
         new Thread(() -> {
             try {
-                // 1. Fetch Data (Now throws Exception if API fails)
                 List<Map<String, Object>> data = client.getSentimentTimeSeries(rawTexts, rawDates);
                 
-                // 2. Safety Check
-                if (data == null || data.isEmpty()) {
-                    Platform.runLater(() -> setStatus("API returned no data.", true));
-                    return;
-                }
-
-                // 3. Sort Data (Safe now because we handled errors)
-                data.sort((p1, p2) -> {
-                    String d1 = (String) p1.get("date");
-                    String d2 = (String) p2.get("date");
-                    if (d1 == null || d2 == null) return 0;
-                    return parseDate(d1).compareTo(parseDate(d2));
-                });
+                // Sort by date
+                data.sort((p1, p2) -> parseDate((String)p1.get("date")).compareTo(parseDate((String)p2.get("date"))));
 
                 Platform.runLater(() -> {
-                    // ... (Existing chart creation code) ...
-                    // Copy the chart creation logic from my previous answer here
-                    // ...
-                    
-                    // (Simplified for brevity, make sure you keep your chart logic)
-                    CategoryAxis xAxis = new CategoryAxis(); 
-                    NumberAxis yAxis = new NumberAxis();
+                    CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Date");
+                    NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Count");
                     LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
-                    chart.setTitle("Sentiment Trends");
-                    
+                    chart.setTitle("Public Sentiment Over Time");
+
                     XYChart.Series<String, Number> pos = new XYChart.Series<>(); pos.setName("Positive");
                     XYChart.Series<String, Number> neg = new XYChart.Series<>(); neg.setName("Negative");
                     XYChart.Series<String, Number> neu = new XYChart.Series<>(); neu.setName("Neutral");
 
                     for (Map<String, Object> point : data) {
-                        String date = (String) point.get("date");
-                        pos.getData().add(new XYChart.Data<>(date, ((Number) point.get("positive")).intValue()));
-                        neg.getData().add(new XYChart.Data<>(date, ((Number) point.get("negative")).intValue()));
-                        neu.getData().add(new XYChart.Data<>(date, ((Number) point.get("neutral")).intValue()));
+                        String d = (String) point.get("date");
+                        pos.getData().add(new XYChart.Data<>(d, ((Number) point.get("positive")).intValue()));
+                        neg.getData().add(new XYChart.Data<>(d, ((Number) point.get("negative")).intValue()));
+                        neu.getData().add(new XYChart.Data<>(d, ((Number) point.get("neutral")).intValue()));
                     }
-                    
+
                     chart.getData().addAll(pos, neg, neu);
-                    applyCustomColors(chart, pos, neg, neu);
+                    styleLines(pos, "green"); styleLines(neg, "red"); styleLines(neu, "gray");
                     displayChart(chart);
-                    
-                    setStatus("Analysis Complete.", false);
+                    setStatus("P1 Analysis Complete.", false);
                 });
-            } catch (Exception e) {
-                // This will now print the REAL error (e.g. "API Error 500")
-                e.printStackTrace(); 
-                Platform.runLater(() -> setStatus("API Error: " + e.getMessage(), true));
-            }
+            } catch (Exception e) { handleEx(e); }
         }).start();
     }
 
-    // Helper to sort dates (dd/MM/yyyy or dd/MM/yy)
-    private java.time.LocalDate parseDate(String dateStr) {
-        try {
-            java.time.format.DateTimeFormatter formatter;
-            if (dateStr.length() > 8) { // Assuming d/M/yyyy or dd/MM/yyyy
-                 formatter = java.time.format.DateTimeFormatter.ofPattern("d/M/yyyy");
-            } else { // d/M/yy
-                 formatter = java.time.format.DateTimeFormatter.ofPattern("d/M/yy");
-            }
-            return java.time.LocalDate.parse(dateStr, formatter);
-        } catch (Exception e) {
-            return java.time.LocalDate.MIN; // Push invalid dates to start
-        }
-    }
-
-    // Helper to style the lines like Matplotlib
-    private void applyCustomColors(LineChart<String, Number> chart, 
-                                   XYChart.Series<String, Number> pos, 
-                                   XYChart.Series<String, Number> neg,
-                                   XYChart.Series<String, Number> neu) {
-        // We use style lookup which works after the scene is rendered
-        pos.getNode().setStyle("-fx-stroke: green;");
-        neg.getNode().setStyle("-fx-stroke: red;");
-        neu.getNode().setStyle("-fx-stroke: gray;");
-        
-        for (XYChart.Data<String, Number> data : pos.getData()) {
-            if(data.getNode() != null) data.getNode().setStyle("-fx-background-color: green, white;");
-        }
-        for (XYChart.Data<String, Number> data : neg.getData()) {
-            if(data.getNode() != null) data.getNode().setStyle("-fx-background-color: red, white;");
-        }
-        for (XYChart.Data<String, Number> data : neu.getData()) {
-            if(data.getNode() != null) data.getNode().setStyle("-fx-background-color: gray, white;");
-        }
-    }
-
+    // ============================================================================================
+    //  PROBLEM 2: DAMAGE TYPES (Bar Chart)
+    // ============================================================================================
     private void showProblem2() {
-        setStatus("Analyzing Problem 2 (Damage Types)...", false);
+        setStatus("Analyzing P2: Damage Types...", false);
         new Thread(() -> {
             try {
-                List<String> classifications = client.getDamageClassification(rawTexts);
-                Map<String, Long> counts = classifications.stream()
-                        .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
+                List<String> categories = client.getDamageClassification(rawTexts);
+                
+                // Process: Count frequencies
+                Map<String, Long> counts = categories.stream()
+                    .filter(c -> !c.equals("Other")) // Optional filter
+                    .collect(Collectors.groupingBy(c -> c, Collectors.counting()));
 
                 Platform.runLater(() -> {
-                    CategoryAxis xAxis = new CategoryAxis();
-                    xAxis.setLabel("Damage Category");
-                    NumberAxis yAxis = new NumberAxis();
-                    yAxis.setLabel("Mentions");
-
+                    CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Damage Category");
+                    NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Reports");
                     BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
-                    chart.setTitle("Most Common Types of Damage");
+                    chart.setTitle("Most Reported Damage Types");
                     chart.setLegendVisible(false);
 
                     XYChart.Series<String, Number> series = new XYChart.Series<>();
-                    counts.forEach((type, count) -> {
-                        if(!type.equals("Other")) series.getData().add(new XYChart.Data<>(type, count));
-                    });
-
+                    counts.forEach((cat, count) -> series.getData().add(new XYChart.Data<>(cat, count)));
+                    
                     chart.getData().add(series);
+                    // Color the bars red
+                    for(XYChart.Data<String,Number> data : series.getData()) {
+                        data.getNode().setStyle("-fx-bar-fill: #e74c3c;");
+                    }
+                    
                     displayChart(chart);
-                    setStatus("Analysis Complete.", false);
+                    setStatus("P2 Analysis Complete.", false);
                 });
-            } catch (Exception e) {
-                Platform.runLater(() -> setStatus("API Error: " + e.getMessage(), true));
-            }
+            } catch (Exception e) { handleEx(e); }
         }).start();
     }
 
+    // ============================================================================================
+    //  PROBLEM 3: RELIEF SATISFACTION (Stacked Bar Chart)
+    // ============================================================================================
     private void showProblem3() {
-        setStatus("Analyzing Problem 3 (Relief Satisfaction)...", false);
+        setStatus("Analyzing P3: Relief Satisfaction...", false);
         new Thread(() -> {
             try {
                 Map<String, Map<String, Double>> data = client.getReliefSentiment(rawTexts);
 
                 Platform.runLater(() -> {
-                    CategoryAxis xAxis = new CategoryAxis();
-                    xAxis.setLabel("Relief Item");
-                    NumberAxis yAxis = new NumberAxis();
-                    yAxis.setLabel("Sentiment Score");
-
+                    CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Relief Sector");
+                    NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Mentions");
                     StackedBarChart<String, Number> chart = new StackedBarChart<>(xAxis, yAxis);
-                    chart.setTitle("Public Satisfaction by Relief Item");
+                    chart.setTitle("Public Satisfaction by Sector");
 
-                    XYChart.Series<String, Number> posSeries = new XYChart.Series<>();
-                    posSeries.setName("Positive");
-                    XYChart.Series<String, Number> negSeries = new XYChart.Series<>();
-                    negSeries.setName("Negative");
+                    XYChart.Series<String, Number> posSeries = new XYChart.Series<>(); posSeries.setName("Positive");
+                    XYChart.Series<String, Number> negSeries = new XYChart.Series<>(); negSeries.setName("Negative");
 
-                    data.forEach((category, sentiments) -> {
-                        if (!category.equals("Other")) {
-                            posSeries.getData().add(new XYChart.Data<>(category, sentiments.get("positive")));
-                            negSeries.getData().add(new XYChart.Data<>(category, sentiments.get("negative")));
+                    data.forEach((cat, scores) -> {
+                        if (!cat.equals("Other")) {
+                            posSeries.getData().add(new XYChart.Data<>(cat, scores.get("positive")));
+                            negSeries.getData().add(new XYChart.Data<>(cat, scores.get("negative")));
                         }
                     });
 
-                    chart.getData().addAll(negSeries, posSeries);
+                    chart.getData().addAll(negSeries, posSeries); // Neg on bottom
+                    // Style
+                    for(XYChart.Data<String,Number> d : posSeries.getData()) d.getNode().setStyle("-fx-bar-fill: #2ecc71;");
+                    for(XYChart.Data<String,Number> d : negSeries.getData()) d.getNode().setStyle("-fx-bar-fill: #e74c3c;");
+                    
                     displayChart(chart);
-                    setStatus("Analysis Complete.", false);
+                    setStatus("P3 Analysis Complete.", false);
                 });
-            } catch (Exception e) {
-                Platform.runLater(() -> setStatus("API Error: " + e.getMessage(), true));
-            }
+            } catch (Exception e) { handleEx(e); }
         }).start();
     }
 
+    // ============================================================================================
+    //  PROBLEM 4: RELIEF TRENDS (Multi-Line Chart)
+    // ============================================================================================
     private void showProblem4() {
-        setStatus("Analyzing Problem 4 (Relief Trends)...", false);
+        setStatus("Analyzing P4: Relief Trends...", false);
         new Thread(() -> {
             try {
                 List<Map<String, Object>> data = client.getReliefTimeSeries(rawTexts, rawDates);
 
+                // Sort the raw list by date first
+                data.sort((p1, p2) -> parseDate((String)p1.get("date")).compareTo(parseDate((String)p2.get("date"))));
+
                 Platform.runLater(() -> {
-                    CategoryAxis xAxis = new CategoryAxis();
-                    xAxis.setLabel("Date");
-                    NumberAxis yAxis = new NumberAxis();
-                    yAxis.setLabel("Positive Mentions");
-
+                    CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Date");
+                    NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Positive Mentions");
                     LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
-                    chart.setTitle("Effectiveness of Relief Efforts Over Time");
+                    chart.setTitle("Relief Effectiveness Trends (Positive Sentiment)");
 
+                    // Group by Category to create separate lines
                     Map<String, XYChart.Series<String, Number>> seriesMap = new java.util.HashMap<>();
 
                     for (Map<String, Object> point : data) {
                         String cat = (String) point.get("category");
+                        String date = (String) point.get("date");
+                        Number val = (Number) point.get("positive");
+
                         if (cat.equals("Other")) continue;
 
                         seriesMap.putIfAbsent(cat, new XYChart.Series<>());
                         seriesMap.get(cat).setName(cat);
-                        seriesMap.get(cat).getData().add(new XYChart.Data<>(
-                            (String) point.get("date"), 
-                            (Number) point.get("positive")
-                        ));
+                        seriesMap.get(cat).getData().add(new XYChart.Data<>(date, val));
                     }
 
                     seriesMap.values().forEach(s -> chart.getData().add(s));
                     displayChart(chart);
-                    setStatus("Analysis Complete.", false);
+                    setStatus("P4 Analysis Complete.", false);
                 });
-            } catch (Exception e) {
-                Platform.runLater(() -> setStatus("API Error: " + e.getMessage(), true));
-            }
+            } catch (Exception e) { handleEx(e); }
         }).start();
     }
 
-    // --- HELPER METHODS ---
+    // --- UTILITIES ---
 
     private void displayChart(Chart chart) {
-        // Wrap in VBox for padding and style
         VBox container = new VBox(chart);
         container.setPadding(new Insets(20));
         container.setStyle("-fx-background-color: white; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0); -fx-background-radius: 5;");
-        
-        // Ensure chart grows
         VBox.setVgrow(chart, Priority.ALWAYS);
         chart.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         
-        // Add padding around the container inside center area
         StackPane wrapper = new StackPane(container);
         wrapper.setPadding(new Insets(20));
-        
         mainLayout.setCenter(wrapper);
     }
 
-    private void setStatus(String msg, boolean isError) {
-        statusLabel.setText(msg);
-        statusLabel.setTextFill(isError ? Color.RED : Color.web("#27ae60"));
+    private void styleLines(XYChart.Series<String, Number> series, String color) {
+        // Simple delay lookup since nodes aren't created until added to chart
+        if (series.getNode() != null) series.getNode().setStyle("-fx-stroke: " + color + ";");
+        for (XYChart.Data<String, Number> data : series.getData()) {
+            if (data.getNode() != null) data.getNode().setStyle("-fx-background-color: " + color + ", white;");
+        }
     }
 
-    private void safeRun(Runnable action) {
-        if (rawTexts.isEmpty()) {
-            setStatus("No data loaded. Check YagiComments.csv", true);
-            return;
-        }
-        action.run();
+    private java.time.LocalDate parseDate(String d) {
+        try {
+            java.time.format.DateTimeFormatter f = java.time.format.DateTimeFormatter.ofPattern(d.length() > 8 ? "d/M/yyyy" : "d/M/yy");
+            return java.time.LocalDate.parse(d, f);
+        } catch (Exception e) { return java.time.LocalDate.MIN; }
+    }
+
+    private void setStatus(String msg, boolean error) {
+        statusLabel.setText(msg);
+        statusLabel.setTextFill(error ? Color.RED : Color.web("#27ae60"));
+        if(error) System.err.println(msg);
+    }
+
+    private void handleEx(Exception e) {
+        e.printStackTrace();
+        Platform.runLater(() -> setStatus("API Error: " + e.getMessage(), true));
+    }
+
+    private void safeRun(Runnable r) {
+        if (rawTexts.isEmpty()) setStatus("No data loaded.", true);
+        else r.run();
     }
 }

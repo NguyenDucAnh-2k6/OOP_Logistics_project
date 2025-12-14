@@ -17,6 +17,7 @@ com\oop\logistics\scraping\FacebookScraperSelenium.class
 com\oop\logistics\models\AnalysisResponse.class
 com\oop\logistics\core\DataSource.class
 com\oop\logistics\analysis\PythonAnalysisClient$4.class
+com\oop\logistics\CommandLineRunner.class
 com\oop\logistics\analysis\PythonAnalysisClient.class
 com\oop\logistics\core\DisasterLogisticsPipeline$PipelineResult.class
 com\oop\logistics\datasources\TwitterDataSource.class
