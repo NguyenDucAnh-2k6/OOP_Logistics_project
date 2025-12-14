@@ -372,11 +372,20 @@ public class DisasterFXApp extends Application {
         mainLayout.setCenter(wrapper);
     }
 
-    private void styleLines(XYChart.Series<String, Number> series, String color) {
-        // Simple delay lookup since nodes aren't created until added to chart
-        if (series.getNode() != null) series.getNode().setStyle("-fx-stroke: " + color + ";");
+    private void styleLines(XYChart.Series<String, Number> series, String colorHex) {
+        // 1. Style the Line (Stroke)
+        javafx.scene.Node line = series.getNode();
+        if (line != null) {
+            line.setStyle("-fx-stroke: " + colorHex + "; -fx-stroke-width: 2px;");
+        }
+
+        // 2. Style the Data Points (Symbols)
         for (XYChart.Data<String, Number> data : series.getData()) {
-            if (data.getNode() != null) data.getNode().setStyle("-fx-background-color: " + color + ", white;");
+            javafx.scene.Node symbol = data.getNode();
+            if (symbol != null) {
+                // Set the outer color (stroke) and inner color (background)
+                symbol.setStyle("-fx-background-color: " + colorHex + ", white; -fx-background-insets: 0, 2;");
+            }
         }
     }
 
