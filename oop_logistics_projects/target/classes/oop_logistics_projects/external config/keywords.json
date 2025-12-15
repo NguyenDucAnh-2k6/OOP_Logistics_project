@@ -1,0 +1,270 @@
+{
+  "Flood": [
+    "lũ",
+    "flood",
+    "flooding",
+    "ngập lụt",
+    "nước lũ",
+    "inundation",
+    "đập vỡ",
+    "dam breach",
+    "cuốn trôi",
+    "thiệt hại",
+    "phá hủy",
+    "ngập",
+    "chìm"
+  ],
+  "Storm": [
+    "bão",
+    "storm",
+    "hurricane",
+    "typhoon",
+    "cyclone",
+    "tempest",
+    "gió bão",
+    "tropical storm"
+  ],
+  "Earthquake": [
+    "động đất",
+    "earthquake",
+    "seismic",
+    "chấn động",
+    "tremor",
+    "quake"
+  ],
+  "Fire": [
+    "cháy",
+    "fire",
+    "hỏa hoạn",
+    "cháy rừng",
+    "wildfire",
+    "forest fire",
+    "cháy nhà",
+    "house fire"
+  ],
+  "Landslide": [
+    "sạt lở",
+    "landslide",
+    "sạt lở đất",
+    "lở đất",
+    "mudslide",
+    "rockslide"
+  ],
+  "Drought": [
+    "hạn hán",
+    "drought",
+    "dry season",
+    "water shortage",
+    "thiếu nước"
+  ],
+  "Emergency": [
+    "thiên tai",
+    "disaster",
+    "cứu trợ",
+    "relief",
+    "khẩn cấp",
+    "emergency",
+    "cứu hộ",
+    "rescue",
+    "evacuation",
+    "sơ tán"
+  ],
+  "Infrastructure": {
+    "name": "Infrastructure",
+    "type": "DAMAGE",
+    "keywords": [
+      "roads",
+      "bridges",
+      "buildings",
+      "electricity",
+      "water supply",
+      "đường xá",
+      "cầu",
+      "nhà cửa",
+      "điện",
+      "cấp nước"
+    ],
+    "description": "Damage to infrastructure and utilities"
+  },
+  "Housing": {
+    "name": "Housing",
+    "type": "DAMAGE",
+    "keywords": [
+      "homes destroyed",
+      "homes damaged",
+      "displacement",
+      "homeless",
+      "nhà bị phá hủy",
+      "mất nhà",
+      "di dời",
+      "không nơi ở"
+    ],
+    "description": "Residential property damage"
+  },
+  "Agriculture": {
+    "name": "Agriculture",
+    "type": "DAMAGE",
+    "keywords": [
+      "crops",
+      "livestock",
+      "farmland",
+      "agricultural loss",
+      "cây trồng",
+      "vật nuôi",
+      "ruộng đồng",
+      "thiệt hại nông nghiệp"
+    ],
+    "description": "Agricultural losses"
+  },
+  "Human": {
+    "name": "Human",
+    "type": "DAMAGE",
+    "keywords": [
+      "casualties",
+      "injuries",
+      "deaths",
+      "missing persons",
+      "affected people",
+      "thương vong",
+      "bị thương",
+      "tử vong",
+      "mất tích",
+      "người bị ảnh hưởng"
+    ],
+    "description": "Human casualties and impacts"
+  },
+  "Food": {
+    "name": "Food",
+    "type": "RELIEF",
+    "keywords": [
+      "rice",
+      "instant noodles",
+      "canned food",
+      "drinking water",
+      "food supplies",
+      "gạo",
+      "mì tôm",
+      "thực phẩm đóng hộp",
+      "nước uống"
+    ],
+    "description": "Food and water supplies"
+  },
+  "Medical": {
+    "name": "Medical",
+    "type": "RELIEF",
+    "keywords": [
+      "medicine",
+      "first aid",
+      "bandages",
+      "medical supplies",
+      "healthcare",
+      "thuốc",
+      "sơ cứu",
+      "băng bó",
+      "y tế"
+    ],
+    "description": "Medical supplies and healthcare"
+  },
+  "Shelter": {
+    "name": "Shelter",
+    "type": "RELIEF",
+    "keywords": [
+      "tents",
+      "blankets",
+      "clothing",
+      "mattresses",
+      "temporary housing",
+      "lều trại",
+      "chăn",
+      "quần áo",
+      "nơi trú ẩn tạm"
+    ],
+    "description": "Shelter and temporary housing"
+  },
+  "Hygiene": {
+    "name": "Hygiene",
+    "type": "RELIEF",
+    "keywords": [
+      "soap",
+      "sanitizer",
+      "toiletries",
+      "clean water",
+      "sanitation",
+      "xà phòng",
+      "nước rửa tay",
+      "đồ vệ sinh",
+      "nước sạch"
+    ],
+    "description": "Hygiene and sanitation supplies"
+  },
+  "Financial": {
+    "name": "Financial",
+    "type": "RELIEF",
+    "keywords": [
+      "donation",
+      "funding",
+      "financial aid",
+      "money",
+      "quyên góp",
+      "tài trợ",
+      "hỗ trợ tài chính",
+      "tiền mặt"
+    ],
+    "description": "Financial assistance and donations"
+  },
+  "facebook": {
+    "enabled": true,
+    "access_token": "${FACEBOOK_ACCESS_TOKEN}",
+    "page_ids": [
+      "123456789",
+      "987654321"
+    ],
+    "refresh_interval_minutes": 30
+  },
+  "twitter": {
+    "enabled": false,
+    "api_key": "${TWITTER_API_KEY}",
+    "api_secret": "${TWITTER_API_SECRET}",
+    "bearer_token": "${TWITTER_BEARER_TOKEN}",
+    "search_keywords": [
+      "#lũlụt",
+      "#bão",
+      "#thiêntai"
+    ]
+  },
+  "news_api": {
+    "enabled": false,
+    "api_key": "${NEWS_API_KEY}",
+    "countries": ["vn"],
+    "keywords": [
+      "disaster",
+      "thiên tai",
+      "lũ lụt"
+    ]
+  },
+  "app": {
+    "name": "Disaster Logistics Management System",
+    "version": "1.0.0",
+    "language": "vi"
+  },
+  "analysis": {
+    "sentiment_api_url": "http://localhost:5000",
+    "sentiment_api_timeout_seconds": 30,
+    "enable_sentiment_analysis": true
+  },
+  "collection": {
+    "parallel_threads": 5,
+    "collection_timeout_seconds": 60,
+    "retry_attempts": 3
+  },
+  "preprocessing": {
+    "enable_deduplication": true,
+    "enable_location_extraction": true,
+    "enable_severity_detection": true
+  },
+  "ui": {
+    "window_width": 1200,
+    "window_height": 800,
+    "refresh_interval_seconds": 300
+  }
+}

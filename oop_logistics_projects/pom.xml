@@ -115,7 +115,7 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>3.1.0</version>
             <configuration>
-                <mainClass>com.oop.logistics.Launcher</mainClass>
+                <mainClass>com.oop.logistics.ui.Launcher</mainClass>
             </configuration>
         </plugin>
         <plugin>

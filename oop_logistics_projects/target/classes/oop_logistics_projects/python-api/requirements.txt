@@ -1,0 +1,14 @@
+flask
+
+# NLP and ML libraries
+transformers
+
+# Additional utilities
+numpy
+pandas
+
+# Optional: Vietnamese-specific NLP
+# underthesea==6.7.0
+
+# Production server (optional)
+gunicorn
