@@ -1,4 +1,4 @@
-package com.oop.logistics;
+package com.oop.logistics.ui;
 
 import java.io.File;
 import java.io.FileInputStream;

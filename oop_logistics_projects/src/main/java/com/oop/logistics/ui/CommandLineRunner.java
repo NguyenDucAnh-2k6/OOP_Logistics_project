@@ -1,4 +1,4 @@
-package com.oop.logistics;
+package com.oop.logistics.ui;
 
 import java.util.ArrayList;
 import java.util.List;

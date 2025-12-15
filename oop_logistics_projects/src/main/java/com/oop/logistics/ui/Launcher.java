@@ -1,4 +1,4 @@
-package com.oop.logistics;
+package com.oop.logistics.ui;
 
 public class Launcher {
     public static void main(String[] args) {
