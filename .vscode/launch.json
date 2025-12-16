@@ -3,6 +3,20 @@
     "configurations": [
         {
             "type": "java",
+            "name": "FacebookCrawler",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.crawler.FacebookCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestCrawler",
+            "request": "launch",
+            "mainClass": "TestCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
             "name": "hello",
             "request": "launch",
             "mainClass": "hello",
