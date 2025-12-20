@@ -3,6 +3,27 @@
     "configurations": [
         {
             "type": "java",
+            "name": "TestCrawler",
+            "request": "launch",
+            "mainClass": "test.TestCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "Launcher",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.ui.Launcher",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "DisasterFXApp",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.ui.DisasterFXApp",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
             "name": "FacebookCrawler",
             "request": "launch",
             "mainClass": "com.oop.logistics.crawler.FacebookCrawler",

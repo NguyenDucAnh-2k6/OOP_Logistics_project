@@ -114,7 +114,8 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>3.1.0</version>
             <configuration>
-                <mainClass>com.oop.logistics.ui.Launcher</mainClass>
+                <mainClass>crawler.TestCrawler</mainClass>
+                <classpathScope>test</classpathScope>
             </configuration>
         </plugin>
         <plugin>
