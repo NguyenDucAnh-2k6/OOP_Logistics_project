@@ -4,7 +4,10 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
+import java.io.FileWriter;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class FacebookCrawler {
@@ -20,136 +23,139 @@ public class FacebookCrawler {
         options.addArguments("--start-maximized");
 
         driver = new ChromeDriver(options);
-
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
     }
 
-    // -------------------------------------------------------
-    // ĐĂNG NHẬP BẰNG COOKIE, KHÔNG DÙNG DEVTOOLS
-    // -------------------------------------------------------
+
+    // -------------------------------------------------------------------------
+    //  LOGIN BẰNG COOKIE – CÁCH ỔN ĐỊNH NHẤT
+    // -------------------------------------------------------------------------
     public void loginWithCookies(Map<String, String> cookies) throws InterruptedException {
 
         driver.get("https://facebook.com");
-        Thread.sleep(2000);
+        Thread.sleep(3000);
 
         System.out.println(">>> Adding cookies...");
 
-        for (Map.Entry<String, String> entry : cookies.entrySet()) {
-
-            Cookie ck = new Cookie.Builder(entry.getKey(), entry.getValue())
+        for (Map.Entry<String, String> e : cookies.entrySet()) {
+            Cookie ck = new Cookie.Builder(e.getKey(), e.getValue())
                     .domain(".facebook.com")
                     .path("/")
                     .isSecure(true)
-                    .isHttpOnly(true)
                     .build();
 
-            try {
-                driver.manage().addCookie(ck);
-            }
-            catch (Exception ex) {
-                System.out.println("Failed to add cookie: " + entry.getKey());
-            }
+            driver.manage().addCookie(ck);
         }
 
-        System.out.println(">>> Cookies injected, refreshing...");
         driver.navigate().refresh();
         Thread.sleep(3000);
 
         System.out.println(">>> Login OK");
-        System.out.println("URL after login: " + driver.getCurrentUrl());
     }
 
 
-    // -------------------------------------------------------
-    // SCROLL CHẬM, KHÔNG BỎ LỠ COMMENTS
-    // -------------------------------------------------------
-    private void slowScroll(int times) throws InterruptedException {
-        JavascriptExecutor js = driver;
-
-        for (int i = 0; i < times; i++) {
-            js.executeScript("window.scrollBy(0, 500);");
-            System.out.println("Scrolling... step " + (i + 1));
+    // -------------------------------------------------------------------------
+    //  HÀM CLICK MỘT CÁCH AN TOÀN
+    // -------------------------------------------------------------------------
+    private void safeClick(By selector) {
+        try {
+            WebElement btn = driver.findElement(selector);
+            btn.click();
             Thread.sleep(1200);
-        }
+        } catch (Exception ignored) {}
     }
 
 
-    // -------------------------------------------------------
-    // CLICK TẤT CẢ LOẠI “Xem thêm bình luận”
-    // -------------------------------------------------------
+    // -------------------------------------------------------------------------
+    //  MỞ TẤT CẢ COMMENT (ALL COMMENTS + SEE MORE + SEE MORE COMMENTS)
+    // -------------------------------------------------------------------------
     private void expandAllComments() throws InterruptedException {
 
-        String[] selectors = new String[]{
-                "//span[text()='Xem thêm bình luận']",
-                "//span[contains(text(),'Xem thêm câu trả lời')]",
-                "//span[contains(text(),'Xem thêm')]",
-                "//div[@role='button']//span[contains(text(),'thêm')]",
-                "//div[@role='button']//span[contains(text(),'Bình luận')]",
-                "//div[@role='button']//span[contains(text(),'Xem')]"
-        };
+        // Bấm nút "Bình luận"
+        safeClick(By.xpath("//div[@role='button']//span[contains(text(),'Bình luận')]"));
 
-        for (int round = 0; round < 6; round++) {
+        // Bấm nút "Tất cả bình luận"
+        safeClick(By.xpath("//span[contains(text(),'Tất cả bình luận')]"));
 
-            System.out.println(">>> Clicking buttons round " + (round + 1));
+        // Loop bấm “Xem thêm bình luận”
+        for (int i = 0; i < 15; i++) {
+            List<WebElement> more = driver.findElements(
+                    By.xpath("//div[@role='button']//span[contains(text(),'Xem thêm bình luận')]")
+            );
 
-            for (String xp : selectors) {
-                List<WebElement> btns = driver.findElements(By.xpath(xp));
+            if (more.isEmpty()) break;
 
-                for (WebElement b : btns) {
-                    try {
-                        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", b);
-                        Thread.sleep(800);
-                    }
-                    catch (Exception ignored) {}
-                }
+            for (WebElement m : more) {
+                try { m.click(); Thread.sleep(1300); }
+                catch (Exception ignored) {}
             }
 
             Thread.sleep(1200);
         }
+
+        // Mở “Xem thêm” trong từng comment
+        List<WebElement> more2 = driver.findElements(By.xpath("//div[@role='button']//span[text()='Xem thêm']"));
+        for (WebElement m : more2) {
+            try { m.click(); Thread.sleep(1000); }
+            catch (Exception ignored) {}
+        }
     }
 
 
-    // -------------------------------------------------------
-    // CRAWL COMMENTS + DATE
-    // -------------------------------------------------------
-    public List<Map<String, String>> crawlComments(String postUrl) throws InterruptedException {
+    // -------------------------------------------------------------------------
+    //  CRAWL COMMENT + TIME
+    // -------------------------------------------------------------------------
+    public List<Map<String,String>> crawlComments(String postUrl) throws InterruptedException {
 
         driver.get(postUrl);
-        Thread.sleep(4000);
+        Thread.sleep(5000);
 
-        System.out.println("Loaded URL = " + driver.getCurrentUrl());
-
-        // Scroll xuống từ từ
-        slowScroll(12);
-
-        // Click toàn bộ xem thêm
         expandAllComments();
 
-        Thread.sleep(2000);
+        // Tìm từng comment + time
+        List<WebElement> blocks = driver.findElements(By.xpath("//div[@aria-label='Bình luận']"));
 
-        System.out.println(">>> Collecting comments...");
+        List<Map<String,String>> results = new ArrayList<>();
 
-        List<WebElement> commentBlocks = driver.findElements(By.xpath("//div[@aria-label='Bình luận']"));
-
-        List<Map<String, String>> results = new ArrayList<>();
-
-        for (WebElement block : commentBlocks) {
-
+        for (WebElement block : blocks) {
             try {
-                String text = block.findElement(By.xpath(".//div[@dir='auto']")).getText();
-                String time = block.findElement(By.xpath(".//a[contains(@href,'comment_id')]/span")).getText();
+                String text = block.findElement(By.xpath(".//div[@dir='auto']")).getText().trim();
+                String time = block.findElement(By.xpath(".//a[contains(@href,'/posts/')]//span")).getText();
 
-                Map<String, String> row = new HashMap<>();
+                Map<String,String> row = new HashMap<>();
                 row.put("date", time);
                 row.put("text", text);
 
                 results.add(row);
-            }
-            catch (Exception ignored) {}
+
+            } catch (Exception ignored) {}
         }
 
-        System.out.println(">>> TOTAL COMMENTS FOUND = " + results.size());
+        System.out.println(">>> TOTAL COMMENTS: " + results.size());
         return results;
+    }
+
+
+    // -------------------------------------------------------------------------
+    //  LƯU CSV
+    // -------------------------------------------------------------------------
+    public void saveCSV(List<Map<String,String>> data, String path) {
+        try (FileWriter fw = new FileWriter(path)) {
+
+            fw.write("date,text\n");
+
+            for (Map<String,String> row : data) {
+                String date = row.get("date").replace(",", " ");
+                String text = row.get("text").replace("\"", "\"\"");
+                fw.write(date + ",\"" + text + "\"\n");
+            }
+
+            fw.flush();
+            System.out.println(">>> CSV saved to: " + path);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
