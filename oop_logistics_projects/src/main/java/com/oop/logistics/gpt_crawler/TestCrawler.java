@@ -8,7 +8,7 @@ public class TestCrawler {
         String xs    = "14%3A_3tWopl3qts-2g%3A2%3A1765898701%3A-1%3A-1%3A%3AAcxoaG_DEIT2YU-dAm--C8TVP9BBcqcCWanCHhnpUw";
         String fr    = "1hqFmtFI3VKuxGTMG.AWeQkm8Oj4TiKT3IfOH2wcLWI4CWfTkZbG7QwZGbxn3Nokp3orA.BpQq_0..AAA.0.0.BpQq_0.AWczvMVsV2yYbsB7kkvkAGk6ois";
 
-        String url = "https://www.facebook.com/share/p/1GYUos3v6x/";
+        String url = "https://www.facebook.com/share/p/14PBMYhmgsQ/";
 
         FacebookCrawler crawler = new FacebookCrawler(cUser, xs, fr);
 

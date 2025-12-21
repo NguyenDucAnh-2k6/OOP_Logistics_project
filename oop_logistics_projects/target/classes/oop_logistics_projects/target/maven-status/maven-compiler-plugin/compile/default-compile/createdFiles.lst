@@ -45,6 +45,8 @@ com\oop\logistics\analysis\PythonAnalysisClient$2.class
 com\oop\logistics\analysis\DisasterAnalyzer.class
 com\oop\logistics\gpt_crawler\FacebookCrawler.class
 com\oop\logistics\datasources\FacebookDataSource.class
+com\oop\logistics\gem_crawler\FacebookCrawler.class
+com\oop\logistics\gem_crawler\TestCrawler.class
 com\oop\logistics\config\KeywordManager.class
 com\oop\logistics\config\CategoryManager.class
 com\oop\logistics\models\TimelineDataPoint.class

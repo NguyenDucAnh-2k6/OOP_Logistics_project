@@ -47,7 +47,7 @@ public class TestCrawler {
             
             // Choose URL to crawl
             // String postUrl = "https://www.facebook.com/share/p/17GAV3Q9ZA/";  // Regular post
-            String postUrl = "https://www.facebook.com/share/p/1GYUos3v6x/";  // Reel
+            String postUrl = "https://www.facebook.com/share/p/14PBMYhmgsQ/";  // Reel
             
             crawler = new FacebookCrawler();
             

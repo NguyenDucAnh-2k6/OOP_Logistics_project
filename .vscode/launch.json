@@ -5,6 +5,20 @@
             "type": "java",
             "name": "TestCrawler",
             "request": "launch",
+            "mainClass": "com.oop.logistics.gem_crawler.TestCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "FacebookCrawler",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.scraping.FacebookCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestCrawler",
+            "request": "launch",
             "mainClass": "com.oop.logistics.gpt_crawler.TestCrawler",
             "projectName": "oop_logistics_projects"
         },
