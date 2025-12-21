@@ -7,6 +7,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.FileWriter;
@@ -18,13 +19,14 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * FacebookCrawler v9 - Cookie-based authentication with CSV export
- * Adjustable constants for maximum comment extraction
+ * FacebookCrawler v11 - Improved date extraction with hover
+ * Hovers over timestamps to reveal full date and time
  */
 public class FacebookCrawler {
     
     private WebDriver driver;
     private WebDriverWait wait;
+    private Actions actions;
     private boolean isLoggedIn = false;
     
     // ==================== ADJUSTABLE CONSTANTS ====================
@@ -135,12 +137,13 @@ public class FacebookCrawler {
         options.addArguments("--disable-blink-features=AutomationControlled");
         options.addArguments("--disable-notifications");
         options.addArguments("--lang=vi-VN");
-        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36");
         options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
         options.setExperimentalOption("useAutomationExtension", false);
         
         driver = new ChromeDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+        actions = new Actions(driver);
     }
     
     /**
@@ -686,16 +689,91 @@ public class FacebookCrawler {
                 content = "";
             }
             
-            // Extract timestamp
+            // Extract timestamp with hover to get full date
             try {
+                // Find timestamp elements (relative time like "1 năm", "9 tuần")
                 List<WebElement> timeElements = element.findElements(By.xpath(
                     ".//span[contains(text(), 'tuần') or contains(text(), 'ngày') or " +
                     "contains(text(), 'giờ') or contains(text(), 'phút') or contains(text(), 'giây') or " +
+                    "contains(text(), 'năm') or " +
                     "contains(text(), 'week') or contains(text(), 'day') or " +
-                    "contains(text(), 'hour') or contains(text(), 'minute')]"));
+                    "contains(text(), 'hour') or contains(text(), 'minute') or contains(text(), 'year')]"));
                 
                 if (!timeElements.isEmpty()) {
-                    timestamp = timeElements.get(0).getText().trim();
+                    WebElement timeElement = timeElements.get(0);
+                    String relativeTime = timeElement.getText().trim();
+                    
+                    // Try to hover to get full date
+                    try {
+                        // Scroll element into view
+                        JavascriptExecutor js = (JavascriptExecutor) driver;
+                        js.executeScript("arguments[0].scrollIntoView({block: 'center'});", timeElement);
+                        Thread.sleep(300);
+                        
+                        // Hover over the element
+                        actions.moveToElement(timeElement).perform();
+                        Thread.sleep(800); // Wait for tooltip to appear
+                        
+                        // Try to find tooltip with full date
+                        List<WebElement> tooltips = driver.findElements(By.xpath(
+                            "//div[@role='tooltip'] | //div[contains(@class, 'tooltip')] | " +
+                            "//div[contains(@style, 'position: fixed') or contains(@style, 'position: absolute')]"));
+                        
+                        for (WebElement tooltip : tooltips) {
+                            try {
+                                String tooltipText = tooltip.getText().trim();
+                                // Check if tooltip contains date-like text
+                                if (tooltipText.matches(".*\\d{1,2}.*tháng.*\\d{4}.*") || 
+                                    tooltipText.matches(".*\\d{1,2}:\\d{2}.*") ||
+                                    tooltipText.length() > relativeTime.length()) {
+                                    timestamp = tooltipText;
+                                    break;
+                                }
+                            } catch (Exception e) {
+                                continue;
+                            }
+                        }
+                        
+                        // If no tooltip found, try aria-label or title attribute
+                        if (timestamp.isEmpty()) {
+                            String ariaLabel = timeElement.getAttribute("aria-label");
+                            String title = timeElement.getAttribute("title");
+                            
+                            if (ariaLabel != null && !ariaLabel.isEmpty() && ariaLabel.length() > relativeTime.length()) {
+                                timestamp = ariaLabel;
+                            } else if (title != null && !title.isEmpty() && title.length() > relativeTime.length()) {
+                                timestamp = title;
+                            }
+                        }
+                        
+                        // If still no full date, check parent <a> tag
+                        if (timestamp.isEmpty()) {
+                            try {
+                                WebElement parentLink = timeElement.findElement(By.xpath("./ancestor::a[1]"));
+                                String linkAriaLabel = parentLink.getAttribute("aria-label");
+                                String linkTitle = parentLink.getAttribute("title");
+                                
+                                if (linkAriaLabel != null && linkAriaLabel.length() > relativeTime.length()) {
+                                    timestamp = linkAriaLabel;
+                                } else if (linkTitle != null && linkTitle.length() > relativeTime.length()) {
+                                    timestamp = linkTitle;
+                                }
+                            } catch (Exception e) {
+                                // No parent link
+                            }
+                        }
+                        
+                        // Fall back to relative time if no full date found
+                        if (timestamp.isEmpty()) {
+                            timestamp = relativeTime;
+                        }
+                        
+                    } catch (Exception e) {
+                        // Hover failed, use relative time
+                        timestamp = relativeTime;
+                    }
+                } else {
+                    timestamp = "";
                 }
             } catch (Exception e) {
                 timestamp = "";

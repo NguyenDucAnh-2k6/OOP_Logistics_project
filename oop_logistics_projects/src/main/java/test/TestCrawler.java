@@ -11,16 +11,16 @@ public class TestCrawler {
         FacebookCrawler crawler = null;
         
         try {
-            System.out.println("=== Facebook Comment Crawler v9 (CSV Export) ===\n");
+            System.out.println("=== Facebook Comment Crawler v11 (Enhanced Date Extraction) ===\n");
             
             // ============ ADJUSTABLE CONSTANTS ============
             // Increase these for more comments
-            FacebookCrawler.MAX_SCROLL_ATTEMPTS = 50;      // Default: 30 (try 40-50 for more)
+            FacebookCrawler.MAX_SCROLL_ATTEMPTS = 30;      // Default: 30 (try 40-50 for more)
             FacebookCrawler.SCROLL_PAUSE_TIME = 2000;       // Default: 2000ms (try 2500-3000 for stability)
             FacebookCrawler.BUTTON_CLICK_WAIT = 1500;       // Default: 1500ms (try 2000 for slow connections)
-            FacebookCrawler.MAX_UNCHANGED_ATTEMPTS = 10;     // Default: 5 (try 7-10 to be more persistent)
+            FacebookCrawler.MAX_UNCHANGED_ATTEMPTS = 5;     // Default: 5 (try 7-10 to be more persistent)
             FacebookCrawler.PAGE_LOAD_WAIT = 7000;          // Default: 7000ms (try 10000 for slow connections)
-            FacebookCrawler.REEL_COMMENTS_WAIT = 5000;      // Default: 4000ms (try 5000 for Reels)
+            FacebookCrawler.REEL_COMMENTS_WAIT = 4000;      // Default: 4000ms (try 5000 for Reels)
             // ==============================================
             
             System.out.println("Current Configuration:");
@@ -35,7 +35,7 @@ public class TestCrawler {
             String xs = "14%3A_3tWopl3qts-2g%3A2%3A1765898701%3A-1%3A-1%3A%3AAcxoaG_DEIT2YU-dAm--C8TVP9BBcqcCWanCHhnpUw";
             String fr = "1hqFmtFI3VKuxGTMG.AWeQkm8Oj4TiKT3IfOH2wcLWI4CWfTkZbG7QwZGbxn3Nokp3orA.BpQq_0..AAA.0.0.BpQq_0.AWczvMVsV2yYbsB7kkvkAGk6ois";
             
-            /*if (cUser.equals("your_c_user_value") || xs.equals("your_xs_value")) {
+            if (cUser.equals("your_c_user_value") || xs.equals("your_xs_value")) {
                 System.err.println("ERROR: Please update Facebook cookies in TestCrawler.java");
                 System.err.println("\nHow to get your cookies:");
                 System.err.println("1. Open Facebook in Chrome and login");
@@ -43,11 +43,11 @@ public class TestCrawler {
                 System.err.println("3. Go to 'Application' tab -> 'Cookies' -> 'https://www.facebook.com'");
                 System.err.println("4. Find and copy values for: c_user, xs, fr");
                 return;
-            }*/
+            }
             
             // Choose URL to crawl
-            //String postUrl = "https://www.facebook.com/share/p/17GAV3Q9ZA/";  // Regular post
-            String postUrl = "https://www.facebook.com/share/r/1CxN2uEcwh/";  // Reel
+            // String postUrl = "https://www.facebook.com/share/p/17GAV3Q9ZA/";  // Regular post
+            String postUrl = "https://www.facebook.com/share/p/1GYUos3v6x/";  // Reel
             
             crawler = new FacebookCrawler();
             

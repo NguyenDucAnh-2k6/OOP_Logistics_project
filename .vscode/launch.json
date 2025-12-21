@@ -5,6 +5,13 @@
             "type": "java",
             "name": "TestCrawler",
             "request": "launch",
+            "mainClass": "com.oop.logistics.gpt_crawler.TestCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestCrawler",
+            "request": "launch",
             "mainClass": "test.TestCrawler",
             "projectName": "oop_logistics_projects"
         },
