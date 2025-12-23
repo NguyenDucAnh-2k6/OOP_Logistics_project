@@ -27,8 +27,10 @@ public class PythonAnalysisClient implements AnalysisAPI {
     public PythonAnalysisClient(String apiUrl) {
         this.apiUrl = apiUrl;
         this.httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
-            .build();
+        .version(HttpClient.Version.HTTP_1_1)  // ép dùng HTTP/1.1
+        .connectTimeout(Duration.ofSeconds(30))
+        .build();
+        
         this.gson = new Gson();
     }
 
@@ -70,8 +72,17 @@ public class PythonAnalysisClient implements AnalysisAPI {
         return response.body();
     }
 
-    // --- GUI Methods (Keep these exactly as they were) ---
     public List<Map<String, Object>> getSentimentTimeSeries(List<String> texts, List<String> dates) throws Exception {
+        if (texts == null || texts.isEmpty()) {
+            System.err.println("ERROR: texts list is empty!");
+            throw new RuntimeException("No texts to analyze");
+        }
+        if (dates == null || dates.isEmpty()) {
+            System.err.println("WARNING: dates list is empty!");
+        }
+        
+        System.out.println("getSentimentTimeSeries: texts=" + texts.size() + ", dates=" + dates.size());
+        
         Map<String, Object> payload = new HashMap<>();
         payload.put("texts", texts);
         payload.put("dates", dates);
@@ -82,6 +93,13 @@ public class PythonAnalysisClient implements AnalysisAPI {
     }
 
     public List<String> getDamageClassification(List<String> texts) throws Exception {
+        if (texts == null || texts.isEmpty()) {
+            System.err.println("ERROR: texts list is empty!");
+            throw new RuntimeException("No texts to analyze");
+        }
+        
+        System.out.println("getDamageClassification: texts=" + texts.size());
+        
         Map<String, Object> payload = new HashMap<>();
         payload.put("texts", texts);
         String response = sendPost("/damage-classification", payload);
@@ -90,6 +108,13 @@ public class PythonAnalysisClient implements AnalysisAPI {
     }
 
     public Map<String, Map<String, Double>> getReliefSentiment(List<String> texts) throws Exception {
+        if (texts == null || texts.isEmpty()) {
+            System.err.println("ERROR: texts list is empty!");
+            throw new RuntimeException("No texts to analyze");
+        }
+        
+        System.out.println("getReliefSentiment: texts=" + texts.size());
+        
         Map<String, Object> payload = new HashMap<>();
         payload.put("texts", texts);
         String response = sendPost("/relief-sentiment", payload);
@@ -98,6 +123,16 @@ public class PythonAnalysisClient implements AnalysisAPI {
     }
 
     public List<Map<String, Object>> getReliefTimeSeries(List<String> texts, List<String> dates) throws Exception {
+        if (texts == null || texts.isEmpty()) {
+            System.err.println("ERROR: texts list is empty!");
+            throw new RuntimeException("No texts to analyze");
+        }
+        if (dates == null || dates.isEmpty()) {
+            System.err.println("WARNING: dates list is empty!");
+        }
+        
+        System.out.println("getReliefTimeSeries: texts=" + texts.size() + ", dates=" + dates.size());
+        
         Map<String, Object> payload = new HashMap<>();
         payload.put("texts", texts);
         payload.put("dates", dates);

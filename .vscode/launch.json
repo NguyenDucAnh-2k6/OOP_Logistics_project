@@ -3,6 +3,83 @@
     "configurations": [
         {
             "type": "java",
+            "name": "FixDateManually",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.FixDateManually",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "ProcessURLs",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.ProcessURLs",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "RemoveDuplicates",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.RemoveDuplicates",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "StripLevel",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.StripLevel",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "NewsPreprocess",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.NewsPreprocess",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "DetectCSVError",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.DetectCSVError",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "ProcessCSV",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.ProcessCSV",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "FixDateManually",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.gem_crawler.FixDateManually",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestSearch",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.core.TestSearch",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "DisasterFXApp_2",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.ui.DisasterFXApp_2",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestNewsCrawler",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.gem_crawler.TestNewsCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
             "name": "TestCrawler",
             "request": "launch",
             "mainClass": "com.oop.logistics.gem_crawler.TestCrawler",

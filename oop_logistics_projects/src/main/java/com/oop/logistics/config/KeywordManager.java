@@ -23,12 +23,11 @@ public class KeywordManager {
     private void initializeDefaultKeywords() {
         // Flood keywords
         addKeywords("Flood", Arrays.asList(
-            "lũ lụt", "flood", "flooding", "ngập lụt", "nước lũ"
-        ));
+            "lũ lụt", "cuốn", "trôi", "ngập", "tắc", "úng"        ));
         
         // Storm keywords
         addKeywords("Storm", Arrays.asList(
-            "bão", "storm", "hurricane", "typhoon", "cyclone"
+            "bão", "gió", "mưa", "dông", "đổ", "thổi", "tốc"
         ));
         
         // Earthquake keywords

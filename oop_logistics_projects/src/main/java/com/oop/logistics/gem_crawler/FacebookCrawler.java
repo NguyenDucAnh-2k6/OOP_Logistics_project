@@ -5,6 +5,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.NoSuchElementException;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,10 +19,11 @@ public class FacebookCrawler {
     private WebDriver driver;
     private WebDriverWait wait;
     private Actions actions;
-    private String outputCsv = "YagiComments.csv";
+    private String outputCsv = "YagiComments_fixed.csv";
     
     private Set<String> crawledIds = new HashSet<>();
     private int unknownIdCounter = 0;
+    private String crawlDate = null; // Date assigned to all comments from this crawl
 
     public FacebookCrawler() {
         ChromeOptions options = new ChromeOptions();
@@ -44,6 +46,15 @@ public class FacebookCrawler {
         sleep(3000);
     }
 
+    /**
+     * Set the date to assign to all comments crawled in this session.
+     * Format: dd/mm/yyyy (e.g., "07/09/2024")
+     */
+    public void setCrawlDate(String date) {
+        this.crawlDate = date;
+        System.out.println("✓ Crawl date set to: " + date);
+    }
+
     public void crawl(String url) {
         driver.get(url);
         sleep(5000); 
@@ -53,9 +64,13 @@ public class FacebookCrawler {
 
         selectFilterMode();
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(outputCsv))) {
-            writer.println("Date,Comment Text,Type"); 
-        } catch (IOException e) { e.printStackTrace(); }
+        // Ensure header exists
+        java.io.File f = new java.io.File(outputCsv);
+        if (!f.exists()) {
+            try (PrintWriter writer = new PrintWriter(new FileWriter(outputCsv))) {
+                writer.println("date,text"); 
+            } catch (IOException e) { e.printStackTrace(); }
+        }
 
         performDeepCrawl(isReel);
     }
@@ -89,37 +104,37 @@ public class FacebookCrawler {
         int totalCollected = 0;
         
         while (noNewDataCount < 20) {
-            
-            // 1. Expand Replies
             expandAllVisibleReplies();
-            
-            // 2. Scrape Data
+
+            // ⬇️ ĐỢI cho reply render xong
+            waitForCommentsToStabilize(15);
+
             int newFound = scrapeVisibleComments();
             totalCollected += newFound;
-            
+
             if (newFound > 0) {
-                System.out.println("\nCollected " + totalCollected + " comments so far...");
-                noNewDataCount = 0; 
+                noNewDataCount = 0;
+            System.out.println("\nCollected " + totalCollected);
             } else {
                 noNewDataCount++;
-                System.out.print("."); 
+            System.out.print(".");
             }
 
-            // 3. Scroll Logic
-            if (isReel) {
-               scrollReel(js);
-            } else {
-                js.executeScript("window.scrollBy(0, 600);"); 
-                sleep(500);
-                js.executeScript("window.scrollBy(0, -100);");
-            }
-            
-            // INCREASED SLEEP: Give 5 seconds for new comments to render
-            sleep(5000); 
+    // ⬇️ ĐỢI DOM yên lần nữa trước khi scroll
+        waitForCommentsToStabilize(10);
 
-            // 4. Click Pagination
-            clickMainPagination(js);
+    // CHỈ SCROLL KHI ĐÃ YÊN
+        if (isReel) {
+            scrollReel(js);
+        } else {
+            js.executeScript("window.scrollBy(0, 400);");
         }
+
+    // Pagination cũng cần đợi
+        clickMainPagination(js);
+        waitForCommentsToStabilize(10);
+    }
+
         System.out.println("\nFinished. Total: " + totalCollected);
     }
 
@@ -194,23 +209,21 @@ public class FacebookCrawler {
                         }
                     }
 
-                    if (!permalink.isEmpty()) {
-                        if (crawledIds.contains(permalink)) continue; 
-                        crawledIds.add(permalink);
-                    } else {
-                        if (commentText.length() < 2) continue; 
-                        unknownIdCounter++;
-                    }
+                    boolean reply = isReply(article);
+                    String type = reply ? "Reply" : "Top-level";
 
-                    // --- EXTRACT DATE (ROBUST METHOD) ---
-                    
                     String dateStr = extractDateFromArticle(article);
+                    String uid = buildUniqueId(commentText, dateStr, type);
 
+                    if (crawledIds.contains(uid)) continue;
+                    crawledIds.add(uid);
 
-                    // --- Type ---
-                    String type = permalink.contains("reply_comment_id") ? "Reply" : "Top-level";
-
-                    writer.println(String.format("\"%s\",\"%s\",\"%s\"", dateStr, commentText.replace("\"", "\"\""), type));
+                    writer.println(String.format(
+                        "\"%s\",\"%s\",\"%s\"",
+                    dateStr,
+                    commentText.replace("\"", "\"\""),
+                    type
+                    ));
                     count++;
 
                 } catch (Exception e) {}
@@ -242,16 +255,73 @@ public class FacebookCrawler {
 
     // NEW ROBUST DATE EXTRACTOR
     private String extractDateFromArticle(WebElement article) {
+        
+        // If crawlDate is set via setCrawlDate(), use it for all comments
+        if (crawlDate != null && !crawlDate.isEmpty()) {
+            return crawlDate;
+        }
+
+    // 1️⃣ abbr có title (tốt nhất)
     try {
         WebElement abbr = article.findElement(By.xpath(".//abbr[@title]"));
-        String fullDate = abbr.getAttribute("title");
-        return normalizeDate(fullDate);
-    } catch (Exception e) {
-        return "Unknown";
+        String title = abbr.getAttribute("title");
+        if (title != null && !title.isEmpty()) {
+            return normalizeDate(title);
         }
+    } catch (Exception ignored) {}
+
+    // 2️⃣ aria-label (Facebook dùng rất nhiều)
+    try {
+        WebElement aria = article.findElement(
+            By.xpath(".//*[@aria-label and contains(@aria-label,'tháng')]")
+        );
+        String ariaLabel = aria.getAttribute("aria-label");
+        if (ariaLabel != null && !ariaLabel.isEmpty()) {
+            return normalizeDate(ariaLabel);
+        }
+    } catch (Exception ignored) {}
+
+    // 3️⃣ relative time (2 giờ, 3 ngày, Hôm qua)
+    try {
+        WebElement rel = article.findElement(By.xpath(".//abbr"));
+        String txt = rel.getText().toLowerCase();
+        return parseRelativeTime(txt);
+    } catch (Exception ignored) {}
+
+    return "Unknown";
+    }
+    private String parseRelativeTime(String raw) {
+    if (raw == null) return "Unknown";
+
+    Calendar cal = Calendar.getInstance();
+
+    if (raw.contains("giờ")) {
+        int h = extractNumber(raw);
+        cal.add(Calendar.HOUR, -h);
+    } else if (raw.contains("ngày")) {
+        int d = extractNumber(raw);
+        cal.add(Calendar.DAY_OF_MONTH, -d);
+    } else if (raw.contains("tuần")) {
+        int w = extractNumber(raw);
+        cal.add(Calendar.WEEK_OF_YEAR, -w);
+    } else if (raw.contains("hôm qua")) {
+        cal.add(Calendar.DAY_OF_MONTH, -1);
+    } else {
+        return raw;
     }
 
+    return String.format(
+        "%02d-%02d-%d",
+        cal.get(Calendar.DAY_OF_MONTH),
+        cal.get(Calendar.MONTH) + 1,
+        cal.get(Calendar.YEAR)
+        );
+    }
 
+private int extractNumber(String s) {
+    Matcher m = Pattern.compile("(\\d+)").matcher(s);
+    return m.find() ? Integer.parseInt(m.group(1)) : 0;
+}
 
     private void expandTruncatedCommentText(JavascriptExecutor js, WebElement article) {
         try {
@@ -305,7 +375,39 @@ public class FacebookCrawler {
         } catch (Exception e) {}
         return "Unknown";
     }
+    private boolean isReply(WebElement article) {
+    try {
+        article.findElement(By.xpath("./ancestor::div[@role='article']"));
+        return true; // có cha → reply
+    } catch (NoSuchElementException e) {
+        return false; // không có cha → top-level
+    }
+    }
+    private String buildUniqueId(String text, String date, String type) {
+    return Integer.toHexString(
+        Objects.hash(text, date, type)
+    );
+    }
+    private void waitForCommentsToStabilize(int timeoutSec) {
+    long start = System.currentTimeMillis();
+    int lastCount = -1;
 
+    while ((System.currentTimeMillis() - start) < timeoutSec * 1000L) {
+        List<WebElement> articles =
+            driver.findElements(By.xpath("//div[@role='article']"));
+
+        int currentCount = articles.size();
+
+        if (currentCount == lastCount) {
+            // DOM ổn định
+            return;
+        }
+
+        lastCount = currentCount;
+        sleep(1000);
+    }
+    }
+    
     private void sleep(long millis) {
         try { Thread.sleep(millis); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
     }

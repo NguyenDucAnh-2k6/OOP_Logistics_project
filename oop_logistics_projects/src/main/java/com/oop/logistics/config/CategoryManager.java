@@ -23,36 +23,36 @@ public class CategoryManager {
     private void initializeDefaultCategories() {
         // Damage categories
         addCategory(new Category("Infrastructure", "DAMAGE", Arrays.asList(
-            "roads", "bridges", "buildings", "electricity", "water supply"
+            "đường", "cầu", "nhà", "điện", "nước", "cột", "kính"
         )));
         
         addCategory(new Category("Housing", "DAMAGE", Arrays.asList(
-            "homes destroyed", "homes damaged", "displacement", "homeless"
+            "phá", "hỏng", "dột", "tốc", "mái", "sập", "đổ"
         )));
         
         addCategory(new Category("Agriculture", "DAMAGE", Arrays.asList(
-            "crops", "livestock", "farmland", "agricultural loss"
+            "cây", "gia súc", "gia cầm", "nông", "vụ", "lúa", "ngô", "khoai", "sắn"
         )));
         
         addCategory(new Category("Human", "DAMAGE", Arrays.asList(
-            "casualties", "injuries", "deaths", "missing persons", "affected people"
+            "thương vong", "thiệt", "chết", "mất tích", "thương", "tử"
         )));
         
         // Relief item categories
         addCategory(new Category("Food", "RELIEF", Arrays.asList(
-            "rice", "instant noodles", "canned food", "drinking water", "food supplies"
+            "cơm", "mì", "đông", "đóng", "cung"
         )));
         
         addCategory(new Category("Medical", "RELIEF", Arrays.asList(
-            "medicine", "first aid", "bandages", "medical supplies", "healthcare"
+            "thuốc", "sơ cứu", "băng", "dược", "sức khỏe", "phục hồi"
         )));
         
         addCategory(new Category("Shelter", "RELIEF", Arrays.asList(
-            "tents", "blankets", "clothing", "mattresses", "temporary housing"
+            "lều", "chăn", "quần", "áo", "tạm thời"
         )));
         
         addCategory(new Category("Hygiene", "RELIEF", Arrays.asList(
-            "soap", "sanitizer", "toiletries", "clean water", "sanitation"
+            "xà phòng", "vệ sinh", "toa lét", "nước sạch", "sát khuẩn"
         )));
     }
     
