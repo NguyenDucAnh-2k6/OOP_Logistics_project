@@ -14,9 +14,26 @@ public class VnExpressCrawler extends NewsCrawler {
                     .timeout(15000)
                     .get();
 
-            String date = "Unknown";
-            Element time = doc.selectFirst("span.date");
-            if (time != null) date = time.text();
+            // 1. Try Meta Tags (VnExpress uses 'pubdate' and 'datePublished')
+            String date = getMetaContent(doc, "pubdate");
+            
+            if (date == null) {
+                date = getMetaContent(doc, "article:published_time");
+            }
+
+            // 2. Try span.date
+            if (date == null) {
+                Element time = doc.selectFirst("span.date");
+                if (time != null) date = time.text();
+            }
+            
+            // 3. Header content date
+            if (date == null) {
+                Element headerDate = doc.selectFirst(".header-content .date");
+                if (headerDate != null) date = headerDate.text();
+            }
+
+            if (date == null) date = "Unknown";
 
             StringBuilder text = new StringBuilder();
             for (Element p : doc.select("article.fck_detail p")) {

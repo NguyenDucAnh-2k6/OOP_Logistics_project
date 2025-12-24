@@ -14,9 +14,25 @@ public class ThanhNienCrawler extends NewsCrawler {
                     .timeout(15000)
                     .get();
 
-            String date = "Unknown";
-            Element time = doc.selectFirst("time");
-            if (time != null) date = time.attr("datetime");
+            // 1. Try Meta Tag (Standard ISO format)
+            String date = getMetaContent(doc, "article:published_time");
+            
+            // 2. Try time tag attribute
+            if (date == null) {
+                Element time = doc.selectFirst("time");
+                if (time != null) {
+                    // Prefer datetime attribute, fallback to text
+                    date = time.hasAttr("datetime") ? time.attr("datetime") : time.text();
+                }
+            }
+            
+            // 3. Try detail-time div
+            if (date == null) {
+                 Element detailTime = doc.selectFirst("div.detail-time");
+                 if (detailTime != null) date = detailTime.text();
+            }
+
+            if (date == null) date = "Unknown";
 
             StringBuilder text = new StringBuilder();
             for (Element p : doc.select("div.detail-content p")) {

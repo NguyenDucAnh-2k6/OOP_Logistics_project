@@ -31,8 +31,8 @@ public class DisasterFXApp_v2 extends Application {
     private StackPane centerPane;
 
     // State
-    private String currentMode = null; // "ready-data" or "add-data"
-    private String dataSource = null;  // "Facebook" or "News"
+    private String currentMode = null; 
+    private String dataSource = null; 
     private final List<String> rawTexts = new ArrayList<>();
     private final List<String> rawDates = new ArrayList<>();
 
@@ -43,11 +43,9 @@ public class DisasterFXApp_v2 extends Application {
         mainLayout.setPadding(new Insets(10));
         mainLayout.setStyle("-fx-background-color: #f0f4f8;");
 
-        // Top bar
         HBox topBar = createTopBar();
         mainLayout.setTop(topBar);
 
-        // Center panel (will show mode selection or workflow)
         centerPane = new StackPane();
         showModeSelection();
         mainLayout.setCenter(centerPane);
@@ -188,7 +186,6 @@ public class DisasterFXApp_v2 extends Application {
 
     private void selectDataSource(String source, boolean isReady) {
         dataSource = source;
-
         if (isReady) {
             showReadyDataAnalyze();
         } else {
@@ -198,7 +195,6 @@ public class DisasterFXApp_v2 extends Application {
 
     private void showReadyDataAnalyze() {
         setStatus("Ready to analyze " + dataSource + " data", false);
-
         VBox workflowPanel = new VBox(15);
         workflowPanel.setPadding(new Insets(30));
         workflowPanel.setStyle("-fx-background-color: #ecf0f1;");
@@ -210,10 +206,8 @@ public class DisasterFXApp_v2 extends Application {
         infoBox.getChildren().add(infoLabel);
 
         VBox analysisPanel = createAnalysisPanel();
-
         workflowPanel.getChildren().addAll(infoBox, analysisPanel);
 
-        // Load data for analysis
         String csvFile = dataSource.equals("Facebook") ? "YagiComments.csv" : "YagiNews_normalized.csv";
         loadCsvData(csvFile);
 
@@ -233,7 +227,6 @@ public class DisasterFXApp_v2 extends Application {
         infoBox.getChildren().add(infoLabel);
 
         VBox inputPanel = createInputPanel();
-        // FIX: Pass inputPanel to createActionPanel so it can access the fields directly
         VBox actionPanel = createActionPanel(inputPanel);
         VBox analysisPanel = createAnalysisPanel();
 
@@ -261,27 +254,18 @@ public class DisasterFXApp_v2 extends Application {
         
         HBox inputBox = new HBox(10);
         inputBox.setAlignment(Pos.CENTER_LEFT);
-        inputBox.getChildren().addAll(
-            new Label("URL:"), new Region() {{ HBox.setHgrow(this, Priority.ALWAYS); }}, urlField);
+        inputBox.getChildren().addAll(new Label("URL:"), new Region() {{ HBox.setHgrow(this, Priority.ALWAYS); }}, urlField);
 
         if (dataSource.equals("Facebook")) {
-            // Facebook specific fields: Date + Cookies
             HBox dateBox = new HBox(10);
             dateBox.setAlignment(Pos.CENTER_LEFT);
-            dateBox.getChildren().addAll(
-                new Label("Date:"), new Region() {{ HBox.setHgrow(this, Priority.ALWAYS); }}, dateField);
+            dateBox.getChildren().addAll(new Label("Date:"), new Region() {{ HBox.setHgrow(this, Priority.ALWAYS); }}, dateField);
 
             Label cookieLabel = new Label("🍪 Cookies (Required for Auth)");
             cookieLabel.setStyle("-fx-font-weight: bold; -fx-padding: 10 0 5 0;");
-            
-            TextField cUserField = new TextField(); 
-            cUserField.setPromptText("c_user");
-            
-            TextField xsField = new TextField(); 
-            xsField.setPromptText("xs");
-            
-            TextField frField = new TextField(); 
-            frField.setPromptText("fr");
+            TextField cUserField = new TextField(); cUserField.setPromptText("c_user");
+            TextField xsField = new TextField(); xsField.setPromptText("xs");
+            TextField frField = new TextField(); frField.setPromptText("fr");
 
             GridPane cookieGrid = new GridPane();
             cookieGrid.setHgap(10); cookieGrid.setVgap(5);
@@ -289,23 +273,16 @@ public class DisasterFXApp_v2 extends Application {
             cookieGrid.add(new Label("xs:"), 0, 1);     cookieGrid.add(xsField, 1, 1);
             cookieGrid.add(new Label("fr:"), 0, 2);     cookieGrid.add(frField, 1, 2);
 
-            // Store fields: url, date, c_user, xs, fr
             inputPanel.setUserData(new Object[] { urlField, dateField, cUserField, xsField, frField });
             inputPanel.getChildren().addAll(inputLabel, inputBox, dateBox, cookieLabel, cookieGrid);
-
         } else {
-            // News specific fields (Date not needed usually, nor cookies)
             dateField.setDisable(true);
-            
-            // Store fields: url, date (dummy)
             inputPanel.setUserData(new Object[] { urlField, dateField });
             inputPanel.getChildren().addAll(inputLabel, inputBox);
         }
-
         return inputPanel;
     }
 
-    // FIX: Method now accepts inputPanel as an argument
     private VBox createActionPanel(VBox inputPanel) {
         VBox actionPanel = new VBox(10);
         actionPanel.setPadding(new Insets(15));
@@ -326,18 +303,12 @@ public class DisasterFXApp_v2 extends Application {
         buttonBox.setAlignment(Pos.CENTER_LEFT);
         buttonBox.getChildren().addAll(crawlBtn, preprocessBtn);
 
-        // Get input fields from the passed inputPanel
         crawlBtn.setOnAction(e -> {
-            // FIX: Use inputPanel.getUserData() directly
             Object[] userData = (Object[]) inputPanel.getUserData();
-            
             if (userData != null) {
                 TextField urlField = (TextField) userData[0];
                 TextField dateField = (TextField) userData[1];
-                
                 String c_user = "", xs = "", fr = "";
-                
-                // If Facebook, retrieve extra cookie fields
                 if (dataSource.equals("Facebook") && userData.length >= 5) {
                     TextField cUserField = (TextField) userData[2];
                     TextField xsField = (TextField) userData[3];
@@ -346,15 +317,12 @@ public class DisasterFXApp_v2 extends Application {
                     xs = xsField.getText().trim();
                     fr = frField.getText().trim();
                 }
-
                 performCrawl(urlField.getText(), dateField.getText(), c_user, xs, fr);
             }
         });
 
         preprocessBtn.setOnAction(e -> performPreprocess());
-
         actionPanel.getChildren().addAll(actionLabel, buttonBox);
-
         return actionPanel;
     }
 
@@ -374,13 +342,10 @@ public class DisasterFXApp_v2 extends Application {
         GridPane gridPane = new GridPane();
         gridPane.setHgap(10);
         gridPane.setVgap(10);
-        gridPane.add(btn1, 0, 0);
-        gridPane.add(btn2, 1, 0);
-        gridPane.add(btn3, 0, 1);
-        gridPane.add(btn4, 1, 1);
+        gridPane.add(btn1, 0, 0); gridPane.add(btn2, 1, 0);
+        gridPane.add(btn3, 0, 1); gridPane.add(btn4, 1, 1);
 
         analysisPanel.getChildren().addAll(analysisLabel, gridPane);
-
         return analysisPanel;
     }
 
@@ -394,30 +359,18 @@ public class DisasterFXApp_v2 extends Application {
     }
 
     private void performCrawl(String url, String date, String c_user, String xs, String fr) {
-        if (url.isEmpty()) {
-            setStatus("Please enter a URL", true);
-            return;
-        }
-
+        if (url.isEmpty()) { setStatus("Please enter a URL", true); return; }
         setStatus("Crawling: " + url, false);
 
         new Thread(() -> {
             try {
                 if (dataSource.equals("Facebook")) {
                     FacebookCrawler fbCrawler = new FacebookCrawler();
-                    
-                    // LOGIN if cookies provided
                     if (!c_user.isEmpty() && !xs.isEmpty()) {
                         Platform.runLater(() -> setStatus("Logging in with cookies...", false));
                         fbCrawler.loginWithCookies(c_user, xs, fr);
-                    } else {
-                        System.out.println("⚠️ No cookies provided, crawling public view.");
                     }
-
-                    // Set the date so the crawler labels the data immediately
                     fbCrawler.setCrawlDate(date.isEmpty() ? DateExtract.getCurrentDateDDMMYYYY() : date);
-                    
-                    // This will now overwrite YagiComments_fixed.csv
                     fbCrawler.crawl(url);
                     fbCrawler.tearDown();
                 } else {
@@ -433,24 +386,24 @@ public class DisasterFXApp_v2 extends Application {
 
     private void performPreprocess() {
         setStatus("Preprocessing...", false);
-
         new Thread(() -> {
             try {
                 if (dataSource.equals("Facebook")) {
-                    // For FB: 
-                    // 1. Skip DateExtract.fillDateRange to avoid "today's date" bug and intermediate _dated file.
-                    //    The crawler has already labeled the data with the correct date in YagiComments_fixed.csv.
-                    // 2. Apply StripLevel directly to YagiComments_fixed.csv to append to YagiComments.csv
-                    
                     setStatus("Applying StripLevel to fixed data...", false);
                     StripLevel.processFile("YagiComments_fixed.csv");
                     
+                    // RELOAD DATA AFTER PROCESSING
+                    Platform.runLater(() -> {
+                        setStatus("Reloading data for analysis...", false);
+                        loadCsvData("YagiComments.csv");
+                    });
+                    
                 } else {
-                    // For News: apply NewsPreprocess
                     setStatus("Normalizing news dates...", false);
                     NewsPreprocess.normalizeNewsDateColumn();
+                    Platform.runLater(() -> loadCsvData("YagiNews_normalized.csv"));
                 }
-                Platform.runLater(() -> setStatus("✅ Preprocessing complete! Data appended to main CSV.", false));
+                Platform.runLater(() -> setStatus("✅ Preprocessing complete! Ready to analyze.", false));
             } catch (Exception ex) {
                 Platform.runLater(() -> setStatus("❌ Preprocessing failed: " + ex.getMessage(), true));
             }
@@ -460,65 +413,64 @@ public class DisasterFXApp_v2 extends Application {
     private void loadCsvData(String csvFile) {
         try {
             File f = new File(csvFile);
-            if (!f.exists()) {
-                setStatus("CSV file not found: " + csvFile, true);
-                return;
-            }
+            if (!f.exists()) { setStatus("CSV file not found: " + csvFile, true); return; }
 
             rawTexts.clear();
             rawDates.clear();
 
+            // ROBUST CSV READER (Handles multiline quotes)
             try (BufferedReader br = new BufferedReader(new FileReader(f))) {
-                String header = br.readLine(); // Skip header
                 String line;
+                StringBuilder sb = new StringBuilder();
+                boolean insideQuotes = false;
+                
+                br.readLine(); // Skip header (careful if multiline header, but usually fine)
+
                 while ((line = br.readLine()) != null) {
-                    if (line.trim().isEmpty()) continue;
-                    List<String> fields = parseCsvLine(line);
-                    if (fields.size() >= 2) {
-                        String date = fields.get(0).trim();
-                        String text = fields.get(1).trim();
-                        
-                        // Normalize date to dd/mm/yyyy format for consistency
-                        date = normalizeDateFormat(date);
-                        
-                        rawDates.add(date);
-                        rawTexts.add(text);
+                    sb.append(line);
+                    
+                    // Check if quotes are balanced in current buffer
+                    int quotes = 0;
+                    for (char c : sb.toString().toCharArray()) {
+                        if (c == '"') quotes++;
+                    }
+
+                    if (quotes % 2 == 0) {
+                        // Complete row found
+                        String row = sb.toString();
+                        List<String> fields = parseCsvLine(row);
+                        if (fields.size() >= 2) {
+                            String date = normalizeDateFormat(fields.get(0).trim());
+                            String text = fields.get(1).trim();
+                            rawDates.add(date);
+                            rawTexts.add(text);
+                        }
+                        sb.setLength(0); // Reset buffer
+                        insideQuotes = false;
+                    } else {
+                        // Incomplete row, append newline and continue reading
+                        sb.append("\n");
+                        insideQuotes = true;
                     }
                 }
             }
-
             setStatus("✅ Loaded " + rawTexts.size() + " records from " + csvFile, false);
         } catch (Exception ex) {
-            System.err.println("ERROR loading CSV: " + ex);
             ex.printStackTrace();
             setStatus("Error loading CSV: " + ex.getMessage(), true);
         }
     }
     
-    /**
-     * Normalize date strings to consistent dd/mm/yyyy format
-     */
     private String normalizeDateFormat(String dateStr) {
-        if (dateStr == null || dateStr.isEmpty()) {
-            return dateStr;
-        }
-        
+        if (dateStr == null || dateStr.isEmpty()) return dateStr;
         dateStr = dateStr.trim();
-        
-        // Already in dd/mm/yyyy format (4 digit year)?
-        if (dateStr.matches("\\d{2}/\\d{2}/\\d{4}")) {
-            return dateStr;
-        }
-        
-        // Convert d/m/yyyy or dd/m/yyyy to dd/mm/yyyy
+        if (dateStr.matches("\\d{2}/\\d{2}/\\d{4}")) return dateStr;
         if (dateStr.matches("\\d{1,2}/\\d{1,2}/\\d{4}")) {
             String[] parts = dateStr.split("/");
             String day = String.format("%02d", Integer.parseInt(parts[0]));
             String month = String.format("%02d", Integer.parseInt(parts[1]));
             return day + "/" + month + "/" + parts[2];
         }
-        
-        // If we can't parse it, return as-is
         return dateStr;
     }
 
@@ -526,175 +478,121 @@ public class DisasterFXApp_v2 extends Application {
         List<String> fields = new ArrayList<>();
         StringBuilder current = new StringBuilder();
         boolean inQuotes = false;
-
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
             if (c == '"') {
-                inQuotes = !inQuotes;
-            } else if (c == ',' && !inQuotes) {
-                String field = current.toString().trim();
-                if (field.startsWith("\"") && field.endsWith("\"")) {
-                    field = field.substring(1, field.length() - 1);
+                if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    current.append('"'); // Escaped quote
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
                 }
-                fields.add(field);
+            } else if (c == ',' && !inQuotes) {
+                fields.add(current.toString());
                 current.setLength(0);
             } else {
                 current.append(c);
             }
         }
-
-        String field = current.toString().trim();
-        if (field.startsWith("\"") && field.endsWith("\"")) {
-            field = field.substring(1, field.length() - 1);
-        }
-        fields.add(field);
-
+        fields.add(current.toString());
         return fields;
     }
 
+    // ... (rest of analysis methods like runProblem1, displayChart remain unchanged)
+    
     private void runProblem1() {
-        if (rawTexts.isEmpty()) {
-            setStatus("No data to analyze", true);
-            return;
-        }
+        if (rawTexts.isEmpty()) { setStatus("No data to analyze", true); return; }
         new Thread(() -> {
             try {
                 setStatus("Running Sentiment Time Series...", false);
                 var data = client.getSentimentTimeSeries(rawTexts, rawDates);
                 Platform.runLater(() -> displaySentimentTimeSeries(data));
-            } catch (Exception ex) {
-                Platform.runLater(() -> setStatus("Error: " + ex.getMessage(), true));
-            }
+            } catch (Exception ex) { Platform.runLater(() -> setStatus("Error: " + ex.getMessage(), true)); }
         }).start();
     }
-
+    // ... Copy other analysis methods (runProblem2, 3, 4 and display methods) from previous version ...
+    
     private void runProblem2() {
-        if (rawTexts.isEmpty()) {
-            setStatus("No data to analyze", true);
-            return;
-        }
+        if (rawTexts.isEmpty()) { setStatus("No data to analyze", true); return; }
         new Thread(() -> {
             try {
                 setStatus("Running Damage Classification...", false);
                 var data = client.getDamageClassification(rawTexts);
                 Platform.runLater(() -> displayDamageTypes(data));
-            } catch (Exception ex) {
-                Platform.runLater(() -> setStatus("Error: " + ex.getMessage(), true));
-            }
+            } catch (Exception ex) { Platform.runLater(() -> setStatus("Error: " + ex.getMessage(), true)); }
         }).start();
     }
 
     private void runProblem3() {
-        if (rawTexts.isEmpty()) {
-            setStatus("No data to analyze", true);
-            return;
-        }
+        if (rawTexts.isEmpty()) { setStatus("No data to analyze", true); return; }
         new Thread(() -> {
             try {
                 setStatus("Running Relief Sentiment...", false);
                 var data = client.getReliefSentiment(rawTexts);
                 Platform.runLater(() -> displayReliefSentiment(data));
-            } catch (Exception ex) {
-                Platform.runLater(() -> setStatus("Error: " + ex.getMessage(), true));
-            }
+            } catch (Exception ex) { Platform.runLater(() -> setStatus("Error: " + ex.getMessage(), true)); }
         }).start();
     }
 
     private void runProblem4() {
-        if (rawTexts.isEmpty() || rawDates.isEmpty()) {
-            setStatus("No data to analyze", true);
-            return;
-        }
+        if (rawTexts.isEmpty() || rawDates.isEmpty()) { setStatus("No data to analyze", true); return; }
         new Thread(() -> {
             try {
                 setStatus("Running Relief Time Series...", false);
                 var data = client.getReliefTimeSeries(rawTexts, rawDates);
                 Platform.runLater(() -> displayReliefTimeSeries(data));
-            } catch (Exception ex) {
-                Platform.runLater(() -> setStatus("Error: " + ex.getMessage(), true));
-            }
+            } catch (Exception ex) { Platform.runLater(() -> setStatus("Error: " + ex.getMessage(), true)); }
         }).start();
     }
 
     private void displaySentimentTimeSeries(List<java.util.Map<String, Object>> data) {
-        CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("Date");
-        NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Count");
+        CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Date");
+        NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Count");
         LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
         chart.setTitle("Public Sentiment Over Time");
-        chart.setStyle("-fx-background-color: #ecf0f1;");
-
-        XYChart.Series<String, Number> pos = new XYChart.Series<>();
-        pos.setName("Positive");
-        XYChart.Series<String, Number> neg = new XYChart.Series<>();
-        neg.setName("Negative");
-        XYChart.Series<String, Number> neu = new XYChart.Series<>();
-        neu.setName("Neutral");
-
+        XYChart.Series<String, Number> pos = new XYChart.Series<>(); pos.setName("Positive");
+        XYChart.Series<String, Number> neg = new XYChart.Series<>(); neg.setName("Negative");
+        XYChart.Series<String, Number> neu = new XYChart.Series<>(); neu.setName("Neutral");
         for (java.util.Map<String, Object> point : data) {
             String d = (String) point.get("date");
             pos.getData().add(new XYChart.Data<>(d, ((Number) point.get("positive")).intValue()));
             neg.getData().add(new XYChart.Data<>(d, ((Number) point.get("negative")).intValue()));
             neu.getData().add(new XYChart.Data<>(d, ((Number) point.get("neutral")).intValue()));
         }
-
-        chart.getData().addAll(pos, neg, neu);
-        displayChart(chart);
+        chart.getData().addAll(pos, neg, neu); displayChart(chart);
     }
 
     private void displayDamageTypes(List<String> categories) {
         java.util.Map<String, Long> counts = new java.util.HashMap<>();
-        for (String c : categories) {
-            counts.put(c, counts.getOrDefault(c, 0L) + 1);
-        }
-
-        CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("Damage Category");
-        NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Count");
+        for (String c : categories) counts.put(c, counts.getOrDefault(c, 0L) + 1);
+        CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Damage Category");
+        NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Count");
         BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
         chart.setTitle("Damage Classification");
-        chart.setStyle("-fx-background-color: #ecf0f1;");
-
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         counts.forEach((cat, cnt) -> series.getData().add(new XYChart.Data<>(cat, cnt)));
-        chart.getData().add(series);
-        displayChart(chart);
+        chart.getData().add(series); displayChart(chart);
     }
 
     private void displayReliefSentiment(java.util.Map<String, java.util.Map<String, Double>> data) {
-        CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("Relief Sector");
-        NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Mentions");
+        CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Relief Sector");
+        NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Mentions");
         StackedBarChart<String, Number> chart = new StackedBarChart<>(xAxis, yAxis);
         chart.setTitle("Relief Sentiment by Sector");
-        chart.setStyle("-fx-background-color: #ecf0f1;");
-
-        XYChart.Series<String, Number> posSeries = new XYChart.Series<>();
-        posSeries.setName("Positive");
-        XYChart.Series<String, Number> negSeries = new XYChart.Series<>();
-        negSeries.setName("Negative");
-
+        XYChart.Series<String, Number> posSeries = new XYChart.Series<>(); posSeries.setName("Positive");
+        XYChart.Series<String, Number> negSeries = new XYChart.Series<>(); negSeries.setName("Negative");
         data.forEach((cat, scores) -> {
             posSeries.getData().add(new XYChart.Data<>(cat, scores.getOrDefault("positive", 0.0)));
             negSeries.getData().add(new XYChart.Data<>(cat, scores.getOrDefault("negative", 0.0)));
         });
-
-        chart.getData().addAll(negSeries, posSeries);
-        displayChart(chart);
+        chart.getData().addAll(negSeries, posSeries); displayChart(chart);
     }
 
     private void displayReliefTimeSeries(List<java.util.Map<String, Object>> data) {
-        CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("Date");
-        NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Positive Mentions");
+        CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Date");
+        NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Positive Mentions");
         LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
         chart.setTitle("Relief Effectiveness Trends");
-        chart.setStyle("-fx-background-color: #ecf0f1;");
-
         java.util.Map<String, XYChart.Series<String, Number>> seriesMap = new java.util.HashMap<>();
         for (java.util.Map<String, Object> p : data) {
             String cat = (String) p.get("category");
@@ -705,8 +603,7 @@ public class DisasterFXApp_v2 extends Application {
             seriesMap.get(cat).setName(cat);
             seriesMap.get(cat).getData().add(new XYChart.Data<>(date, val));
         }
-        seriesMap.values().forEach(s -> chart.getData().add(s));
-        displayChart(chart);
+        seriesMap.values().forEach(s -> chart.getData().add(s)); displayChart(chart);
     }
 
     private void displayChart(javafx.scene.chart.Chart chart) {
@@ -720,11 +617,8 @@ public class DisasterFXApp_v2 extends Application {
     private void setStatus(String msg, boolean error) {
         Platform.runLater(() -> {
             statusLabel.setText(msg);
-            if (error) {
-                statusLabel.setStyle("-fx-text-fill: #e74c3c;");
-            } else {
-                statusLabel.setStyle("-fx-text-fill: #ecf0f1;");
-            }
+            if (error) statusLabel.setStyle("-fx-text-fill: #e74c3c;");
+            else statusLabel.setStyle("-fx-text-fill: #ecf0f1;");
         });
     }
 

@@ -14,9 +14,22 @@ public class TuoiTreCrawler extends NewsCrawler {
                     .timeout(15000)
                     .get();
 
-            String date = "Unknown";
-            Element time = doc.selectFirst("time");
-            if (time != null) date = time.text();
+            // 1. Try Meta Tag
+            String date = getMetaContent(doc, "article:published_time");
+
+            // 2. Try specific classes
+            if (date == null) {
+                Element time = doc.selectFirst("div.date-time");
+                if (time != null) date = time.text();
+            }
+            
+            // 3. Generic time tag
+            if (date == null) {
+                Element time = doc.selectFirst("time");
+                if (time != null) date = time.text();
+            }
+
+            if (date == null) date = "Unknown";
 
             StringBuilder text = new StringBuilder();
             for (Element p : doc.select("div#main-detail-body p")) {

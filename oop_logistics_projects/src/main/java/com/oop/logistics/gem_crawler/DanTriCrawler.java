@@ -14,9 +14,20 @@ public class DanTriCrawler extends NewsCrawler {
                     .timeout(15000)
                     .get();
 
-            String date = "Unknown";
-            Element time = doc.selectFirst("time.author-time");
-            if (time != null) date = time.text();
+            // 1. Try Meta Tag
+            String date = getMetaContent(doc, "article:published_time");
+
+            // 2. Try time tag with datetime attribute
+            if (date == null) {
+                Element time = doc.selectFirst("time.author-time");
+                if (time != null && time.hasAttr("datetime")) {
+                    date = time.attr("datetime");
+                } else if (time != null) {
+                    date = time.text();
+                }
+            }
+            
+            if (date == null) date = "Unknown";
 
             StringBuilder text = new StringBuilder();
             for (Element p : doc.select("div.singular-content p")) {

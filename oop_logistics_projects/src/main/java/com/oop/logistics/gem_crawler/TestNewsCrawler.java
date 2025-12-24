@@ -9,7 +9,7 @@ public class TestNewsCrawler {
 
     public static void main(String[] args) {
         // Read URLs from URL.csv
-        List<String> urls = readUrlsFromCsv("URL(1).csv");
+        List<String> urls = readUrlsFromCsv("URL.csv");
         
         System.out.println("📋 Total URLs to crawl: " + urls.size());
         

@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * NewsPreprocess: Utility to normalize dates in YagiNews.csv.
  * - Enforces a "date,text" header.
  * - Normalizes the Date column to dd/mm/yyyy.
- * - robustly handles multi-line text fields to prevent CSV corruption.
+ * - Robustly handles multi-line text fields to prevent CSV corruption.
  */
 public class NewsPreprocess {
 
@@ -93,7 +93,7 @@ public class NewsPreprocess {
         List<String> outputRow = new ArrayList<>();
         
         // 1. Normalize Date (Column 0)
-        // Extracts "28/9/2024" from string and converts to "28/09/2024"
+        // Handles multiple formats: ISO, raw slash, text mixed
         String originalDate = row.get(0);
         String normalizedDate = normalizeDate(originalDate);
         outputRow.add(normalizedDate);
@@ -108,33 +108,57 @@ public class NewsPreprocess {
     }
 
     /**
-     * Extracts date pattern (d/m/yyyy) and formats to dd/mm/yyyy.
-     * Returns just the date part.
+     * Extracts date patterns and formats to dd/mm/yyyy.
+     * Supports:
+     * - ISO-like: 2024-09-07 01:00 OR 2024-09-07T15:23...
+     * - Slash: 28/9/2024 OR Thứ bảy, 28/9/2024...
      */
     private static String normalizeDate(String rawDate) {
         if (rawDate == null || rawDate.trim().isEmpty()) {
             return "";
         }
 
-        // Regex to find patterns like d/m/yyyy or dd/mm/yyyy
-        // Matches: (1-2 digits) / (1-2 digits) / (4 digits)
-        Pattern pattern = Pattern.compile("(\\d{1,2})/(\\d{1,2})/(\\d{4})");
-        Matcher matcher = pattern.matcher(rawDate);
+        // Pattern 1: ISO 8601 / Dash format (e.g., 2024-09-07 or 2024-09-07T...)
+        // Matches: (4 digits) - (1-2 digits) - (1-2 digits)
+        Pattern isoPattern = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})");
+        Matcher isoMatcher = isoPattern.matcher(rawDate);
 
-        if (matcher.find()) {
+        if (isoMatcher.find()) {
             try {
-                int day = Integer.parseInt(matcher.group(1));
-                int month = Integer.parseInt(matcher.group(2));
-                String year = matcher.group(3);
+                String year = isoMatcher.group(1);
+                int month = Integer.parseInt(isoMatcher.group(2));
+                int day = Integer.parseInt(isoMatcher.group(3));
                 
-                // Return in dd/mm/yyyy format (padding with zeros)
+                // Return in dd/mm/yyyy format
+                return String.format("%02d/%02d/%s", day, month, year);
+            } catch (NumberFormatException e) {
+                // Continue to next pattern
+            }
+        }
+
+        // Pattern 2: Slash format (e.g., 28/9/2024 or Thứ bảy, 28/9/2024)
+        // Matches: (1-2 digits) / (1-2 digits) / (4 digits)
+        Pattern slashPattern = Pattern.compile("(\\d{1,2})/(\\d{1,2})/(\\d{4})");
+        Matcher slashMatcher = slashPattern.matcher(rawDate);
+
+        if (slashMatcher.find()) {
+            try {
+                int day = Integer.parseInt(slashMatcher.group(1));
+                int month = Integer.parseInt(slashMatcher.group(2));
+                String year = slashMatcher.group(3);
+                
+                // Return in dd/mm/yyyy format
                 return String.format("%02d/%02d/%s", day, month, year);
             } catch (NumberFormatException e) {
                 // Ignore parsing errors
             }
         }
 
-        // If no date pattern found, return original (or empty if you prefer)
+        // If no date pattern found, return original (or convert "Unknown" to empty)
+        if ("Unknown".equalsIgnoreCase(rawDate) || "null".equalsIgnoreCase(rawDate)) {
+            return "";
+        }
+
         return rawDate;
     }
 
