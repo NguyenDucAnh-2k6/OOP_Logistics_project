@@ -28,42 +28,58 @@ public class NewsPreprocess {
     public static void normalizeNewsDateColumn() {
         System.out.println("📋 Starting news date normalization...");
         int processed = 0;
+        
+        java.nio.file.Path inputPath = Paths.get(INPUT_FILE);
+        java.nio.file.Path outputPath = Paths.get(OUTPUT_FILE);
 
-        try (BufferedReader br = Files.newBufferedReader(Paths.get(INPUT_FILE), StandardCharsets.UTF_8);
-             BufferedWriter bw = Files.newBufferedWriter(Paths.get(OUTPUT_FILE), StandardCharsets.UTF_8)) {
+        if (!Files.exists(inputPath)) {
+            System.err.println("❌ Input file not found: " + INPUT_FILE);
+            return;
+        }
 
-            CsvReader reader = new CsvReader(br);
+        try {
+            // Check if we need to write a header (if file doesn't exist or is empty)
+            boolean needHeader = !Files.exists(outputPath) || Files.size(outputPath) == 0;
 
-            // 1. Force Write Header "date,text"
-            // We use the same write method to ensure consistent quoting/formatting
-            writeCsvRow(bw, Arrays.asList("date", "text"));
+            // Use CREATE and APPEND options to preserve existing data
+            try (BufferedReader br = Files.newBufferedReader(inputPath, StandardCharsets.UTF_8);
+                 BufferedWriter bw = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8, 
+                         java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND)) {
 
-            // 2. Read first row to check for existing header
-            List<String> firstRow = reader.readNextRow();
-            if (firstRow != null && !firstRow.isEmpty()) {
-                // Check if the first row looks like a header (contains "date")
-                String firstCol = firstRow.get(0).toLowerCase();
-                
-                if (firstCol.contains("date")) {
-                    System.out.println("ℹ️  Skipping existing header row in input.");
-                    // It is a header, so we skip processing it since we already wrote our own header.
-                } else {
-                    // It is NOT a header (it's data), so we process and write it.
-                    processAndWriteRow(bw, firstRow);
+                CsvReader reader = new CsvReader(br);
+
+                // 1. Write Header "date,text" ONLY if the file is new/empty
+                if (needHeader) {
+                    writeCsvRow(bw, Arrays.asList("date", "text"));
+                }
+
+                // 2. Read first row to check for existing header in the INPUT file
+                List<String> firstRow = reader.readNextRow();
+                if (firstRow != null && !firstRow.isEmpty()) {
+                    // Check if the first row looks like a header (contains "date")
+                    String firstCol = firstRow.get(0).toLowerCase();
+                    
+                    if (firstCol.contains("date")) {
+                        System.out.println("ℹ️  Skipping existing header row in input.");
+                        // It is a header, so we skip processing it
+                    } else {
+                        // It is NOT a header (it's data), so we process and write it
+                        processAndWriteRow(bw, firstRow);
+                        processed++;
+                    }
+                }
+
+                // 3. Process remaining Data Rows
+                List<String> row;
+                while ((row = reader.readNextRow()) != null) {
+                    processAndWriteRow(bw, row);
                     processed++;
                 }
-            }
 
-            // 3. Process remaining Data Rows
-            List<String> row;
-            while ((row = reader.readNextRow()) != null) {
-                processAndWriteRow(bw, row);
-                processed++;
+                System.out.println("\n✅ Normalization complete.");
+                System.out.println("   Processed rows: " + processed);
+                System.out.println("   Output appended to: " + OUTPUT_FILE);
             }
-
-            System.out.println("\n✅ Normalization complete.");
-            System.out.println("   Processed rows: " + processed);
-            System.out.println("   Output saved to: " + OUTPUT_FILE);
 
         } catch (IOException e) {
             System.err.println("❌ Error processing CSV: " + e.getMessage());

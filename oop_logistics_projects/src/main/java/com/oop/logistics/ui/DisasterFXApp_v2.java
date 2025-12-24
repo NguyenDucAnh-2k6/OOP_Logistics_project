@@ -233,7 +233,8 @@ public class DisasterFXApp_v2 extends Application {
         infoBox.getChildren().add(infoLabel);
 
         VBox inputPanel = createInputPanel();
-        VBox actionPanel = createActionPanel();
+        // FIX: Pass inputPanel to createActionPanel so it can access the fields directly
+        VBox actionPanel = createActionPanel(inputPanel);
         VBox analysisPanel = createAnalysisPanel();
 
         workflowPanel.getChildren().addAll(infoBox, inputPanel, actionPanel, analysisPanel);
@@ -255,32 +256,57 @@ public class DisasterFXApp_v2 extends Application {
         urlField.setPrefHeight(40);
 
         TextField dateField = new TextField();
-        dateField.setPromptText(dataSource.equals("Facebook") ? "Date (dd/mm/yyyy)" : "Date not needed for News");
+        dateField.setPromptText("Date (dd/mm/yyyy)");
         dateField.setPrefHeight(40);
-        dateField.setDisable(dataSource.equals("News"));
-
+        
         HBox inputBox = new HBox(10);
         inputBox.setAlignment(Pos.CENTER_LEFT);
         inputBox.getChildren().addAll(
             new Label("URL:"), new Region() {{ HBox.setHgrow(this, Priority.ALWAYS); }}, urlField);
 
         if (dataSource.equals("Facebook")) {
+            // Facebook specific fields: Date + Cookies
             HBox dateBox = new HBox(10);
             dateBox.setAlignment(Pos.CENTER_LEFT);
             dateBox.getChildren().addAll(
                 new Label("Date:"), new Region() {{ HBox.setHgrow(this, Priority.ALWAYS); }}, dateField);
-            inputPanel.getChildren().addAll(inputLabel, inputBox, dateBox);
+
+            Label cookieLabel = new Label("🍪 Cookies (Required for Auth)");
+            cookieLabel.setStyle("-fx-font-weight: bold; -fx-padding: 10 0 5 0;");
+            
+            TextField cUserField = new TextField(); 
+            cUserField.setPromptText("c_user");
+            
+            TextField xsField = new TextField(); 
+            xsField.setPromptText("xs");
+            
+            TextField frField = new TextField(); 
+            frField.setPromptText("fr");
+
+            GridPane cookieGrid = new GridPane();
+            cookieGrid.setHgap(10); cookieGrid.setVgap(5);
+            cookieGrid.add(new Label("c_user:"), 0, 0); cookieGrid.add(cUserField, 1, 0);
+            cookieGrid.add(new Label("xs:"), 0, 1);     cookieGrid.add(xsField, 1, 1);
+            cookieGrid.add(new Label("fr:"), 0, 2);     cookieGrid.add(frField, 1, 2);
+
+            // Store fields: url, date, c_user, xs, fr
+            inputPanel.setUserData(new Object[] { urlField, dateField, cUserField, xsField, frField });
+            inputPanel.getChildren().addAll(inputLabel, inputBox, dateBox, cookieLabel, cookieGrid);
+
         } else {
+            // News specific fields (Date not needed usually, nor cookies)
+            dateField.setDisable(true);
+            
+            // Store fields: url, date (dummy)
+            inputPanel.setUserData(new Object[] { urlField, dateField });
             inputPanel.getChildren().addAll(inputLabel, inputBox);
         }
-
-        // Store fields in a way we can retrieve them
-        inputPanel.setUserData(new Object[] { urlField, dateField });
 
         return inputPanel;
     }
 
-    private VBox createActionPanel() {
+    // FIX: Method now accepts inputPanel as an argument
+    private VBox createActionPanel(VBox inputPanel) {
         VBox actionPanel = new VBox(10);
         actionPanel.setPadding(new Insets(15));
         actionPanel.setStyle("-fx-background-color: white; -fx-border-color: #bdc3c7; -fx-border-radius: 5;");
@@ -300,13 +326,28 @@ public class DisasterFXApp_v2 extends Application {
         buttonBox.setAlignment(Pos.CENTER_LEFT);
         buttonBox.getChildren().addAll(crawlBtn, preprocessBtn);
 
-        // Get input fields
+        // Get input fields from the passed inputPanel
         crawlBtn.setOnAction(e -> {
-            Object[] userData = (Object[]) actionPanel.getParent().lookup("VBox[style*='input']").getUserData();
+            // FIX: Use inputPanel.getUserData() directly
+            Object[] userData = (Object[]) inputPanel.getUserData();
+            
             if (userData != null) {
                 TextField urlField = (TextField) userData[0];
                 TextField dateField = (TextField) userData[1];
-                performCrawl(urlField.getText(), dateField.getText());
+                
+                String c_user = "", xs = "", fr = "";
+                
+                // If Facebook, retrieve extra cookie fields
+                if (dataSource.equals("Facebook") && userData.length >= 5) {
+                    TextField cUserField = (TextField) userData[2];
+                    TextField xsField = (TextField) userData[3];
+                    TextField frField = (TextField) userData[4];
+                    c_user = cUserField.getText().trim();
+                    xs = xsField.getText().trim();
+                    fr = frField.getText().trim();
+                }
+
+                performCrawl(urlField.getText(), dateField.getText(), c_user, xs, fr);
             }
         });
 
@@ -352,7 +393,7 @@ public class DisasterFXApp_v2 extends Application {
         return btn;
     }
 
-    private void performCrawl(String url, String date) {
+    private void performCrawl(String url, String date, String c_user, String xs, String fr) {
         if (url.isEmpty()) {
             setStatus("Please enter a URL", true);
             return;
@@ -364,14 +405,26 @@ public class DisasterFXApp_v2 extends Application {
             try {
                 if (dataSource.equals("Facebook")) {
                     FacebookCrawler fbCrawler = new FacebookCrawler();
+                    
+                    // LOGIN if cookies provided
+                    if (!c_user.isEmpty() && !xs.isEmpty()) {
+                        Platform.runLater(() -> setStatus("Logging in with cookies...", false));
+                        fbCrawler.loginWithCookies(c_user, xs, fr);
+                    } else {
+                        System.out.println("⚠️ No cookies provided, crawling public view.");
+                    }
+
+                    // Set the date so the crawler labels the data immediately
                     fbCrawler.setCrawlDate(date.isEmpty() ? DateExtract.getCurrentDateDDMMYYYY() : date);
+                    
+                    // This will now overwrite YagiComments_fixed.csv
                     fbCrawler.crawl(url);
                     fbCrawler.tearDown();
                 } else {
                     NewsCrawler newsCrawler = NewsCrawlerFactory.getCrawler(url);
                     newsCrawler.crawl(url);
                 }
-                Platform.runLater(() -> setStatus("✅ Crawl complete!", false));
+                Platform.runLater(() -> setStatus("✅ Crawl complete! Data saved to fixed file.", false));
             } catch (Exception ex) {
                 Platform.runLater(() -> setStatus("❌ Crawl failed: " + ex.getMessage(), true));
             }
@@ -384,19 +437,20 @@ public class DisasterFXApp_v2 extends Application {
         new Thread(() -> {
             try {
                 if (dataSource.equals("Facebook")) {
-                    // For FB: apply DateExtract then StripLevel
-                    setStatus("Applying DateExtract...", false);
-                    // Assuming user will set the date range - for now use simple range
-                    DateExtract.fillDateRange("YagiComments_fixed.csv", "YagiComments_fixed_dated.csv", 1, 999, DateExtract.getCurrentDateDDMMYYYY());
+                    // For FB: 
+                    // 1. Skip DateExtract.fillDateRange to avoid "today's date" bug and intermediate _dated file.
+                    //    The crawler has already labeled the data with the correct date in YagiComments_fixed.csv.
+                    // 2. Apply StripLevel directly to YagiComments_fixed.csv to append to YagiComments.csv
                     
-                    setStatus("Applying StripLevel...", false);
-                    StripLevel.processFile("YagiComments_fixed_dated.csv");
+                    setStatus("Applying StripLevel to fixed data...", false);
+                    StripLevel.processFile("YagiComments_fixed.csv");
+                    
                 } else {
                     // For News: apply NewsPreprocess
                     setStatus("Normalizing news dates...", false);
                     NewsPreprocess.normalizeNewsDateColumn();
                 }
-                Platform.runLater(() -> setStatus("✅ Preprocessing complete!", false));
+                Platform.runLater(() -> setStatus("✅ Preprocessing complete! Data appended to main CSV.", false));
             } catch (Exception ex) {
                 Platform.runLater(() -> setStatus("❌ Preprocessing failed: " + ex.getMessage(), true));
             }
