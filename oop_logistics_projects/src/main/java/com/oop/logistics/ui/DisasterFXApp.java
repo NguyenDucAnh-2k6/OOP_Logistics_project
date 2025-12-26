@@ -2,12 +2,15 @@ package com.oop.logistics.ui;
 
 import com.oop.logistics.ui.components.*;
 import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
+import javafx.scene.control.Label;
 public class DisasterFXApp extends Application {
 
     private final DisasterContext context = new DisasterContext();
@@ -46,8 +49,43 @@ public class DisasterFXApp extends Application {
     }
 
     private void showDataSourceSelection(boolean isReadyMode) {
-        // Simple VBox with buttons to choose "Facebook" or "News"
-        // On click -> context.setDataSource("Facebook"); showMainWorkflow(isReadyMode);
+        // 1. Create the container layout
+        VBox selectionLayout = new VBox(20); // 20px spacing
+        selectionLayout.setAlignment(Pos.CENTER);
+        selectionLayout.setPadding(new Insets(40));
+
+        // 2. Create UI Elements
+        Label instructions = new Label("Select Data Source:");
+        instructions.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+        Button btnFacebook = new Button("Facebook Data");
+        Button btnNews = new Button("News Data");
+
+        // Style the buttons for better visibility
+        String btnStyle = "-fx-font-size: 14px; -fx-padding: 10 20; -fx-base: #3498db; -fx-text-fill: white;";
+        btnFacebook.setStyle(btnStyle);
+        btnNews.setStyle(btnStyle);
+        btnFacebook.setMinWidth(150);
+        btnNews.setMinWidth(150);
+
+        // 3. Add Actions
+        // When clicked, set the source in 'context' and move to the next screen
+        btnFacebook.setOnAction(e -> {
+            context.setDataSource("Facebook");
+            showMainWorkflow(isReadyMode);
+        });
+
+        btnNews.setOnAction(e -> {
+            context.setDataSource("News");
+            showMainWorkflow(isReadyMode);
+        });
+
+        // 4. Assemble
+        selectionLayout.getChildren().addAll(instructions, btnFacebook, btnNews);
+
+        // 5. Update the Center Pane (Important!)
+        // This replaces the previous view (ModeSelection) with this new buttons view
+        centerPane.getChildren().setAll(selectionLayout);
     }
     
     private void showMainWorkflow(boolean isReadyMode) {
