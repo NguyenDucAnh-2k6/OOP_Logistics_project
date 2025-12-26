@@ -3,6 +3,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "App",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.App",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
             "name": "FixDateManually",
             "request": "launch",
             "mainClass": "com.oop.logistics.preprocessing.FixDateManually",

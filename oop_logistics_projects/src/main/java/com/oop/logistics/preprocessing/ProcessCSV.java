@@ -30,13 +30,6 @@ public class ProcessCSV {
     "ko", "k", "dc", "j", "vs", "ak", "ah", "u", "thế", "vậy", "sao", "gì", "chứ"
     );
 
-    public static void main(String[] args) {
-        // Input and Output are the same file as requested (processed in place via temp file)
-        String inputFile = "YagiComments_fixed.csv";
-        String outputFile = "YagiComments_fixed.csv";
-        
-        processFile(inputFile, outputFile);
-    }
 
     public static void processFile(String inputFile, String outputFile) {
         File tempFile = new File(outputFile + ".tmp");

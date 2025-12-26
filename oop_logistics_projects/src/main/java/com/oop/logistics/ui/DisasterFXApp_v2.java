@@ -1,9 +1,9 @@
 package com.oop.logistics.ui;
 
 import com.oop.logistics.analysis.PythonAnalysisClient;
-import com.oop.logistics.gem_crawler.FacebookCrawler;
-import com.oop.logistics.gem_crawler.NewsCrawlerFactory;
-import com.oop.logistics.gem_crawler.NewsCrawler;
+import com.oop.logistics.crawler.FacebookCrawler;
+import com.oop.logistics.crawler.NewsCrawler;
+import com.oop.logistics.crawler.NewsCrawlerFactory;
 import com.oop.logistics.preprocessing.DateExtract;
 import com.oop.logistics.preprocessing.StripLevel;
 import com.oop.logistics.preprocessing.NewsPreprocess;

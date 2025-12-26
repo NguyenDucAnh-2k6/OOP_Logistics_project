@@ -21,9 +21,7 @@ public class NewsPreprocess {
     private static final String INPUT_FILE = "YagiNews.csv";
     private static final String OUTPUT_FILE = "YagiNews_normalized.csv";
 
-    public static void main(String[] args) {
-        normalizeNewsDateColumn();
-    }
+    
 
     public static void normalizeNewsDateColumn() {
         System.out.println("📋 Starting news date normalization...");
