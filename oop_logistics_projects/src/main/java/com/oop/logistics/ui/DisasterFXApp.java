@@ -1,5 +1,7 @@
 package com.oop.logistics.ui;
+import java.io.IOException;
 
+import com.oop.logistics.config.*;
 import com.oop.logistics.ui.components.*;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -16,9 +18,11 @@ public class DisasterFXApp extends Application {
     private final DisasterContext context = new DisasterContext();
     private BorderPane root;
     private StackPane centerPane;
-
+    private final KeywordManager keywordManager = new KeywordManager();
+    private final CategoryManager categoryManager = new CategoryManager();
     @Override
     public void start(Stage stage) {
+        loadConfigurations();
         root = new BorderPane();
         root.setStyle("-fx-background-color: #f0f4f8;");
         centerPane = new StackPane();
@@ -36,7 +40,20 @@ public class DisasterFXApp extends Application {
         stage.setTitle("Disaster Analysis Modular");
         stage.show();
     }
+    private void loadConfigurations() {
+    try {
+        // Use relative paths or absolute paths to your config folder
+        keywordManager.loadFromJson("external config/disasters.json");
+        System.out.println("✅ Loaded " + keywordManager.getAllKeywords().size() + " disaster keywords.");
 
+        categoryManager.loadFromJson("external config/impact_categories.json");
+        System.out.println("✅ Loaded " + categoryManager.getAllCategoryNames().size() + " categories.");
+        
+    } catch (IOException e) {
+        System.err.println("⚠ Could not load external config. Using hardcoded defaults.");
+        e.printStackTrace();
+    }
+}
     private void resetApp() {
         context.clearData();
         showModeSelection();
