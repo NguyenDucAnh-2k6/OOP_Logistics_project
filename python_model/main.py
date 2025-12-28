@@ -32,23 +32,9 @@ def damage_classification(req: DamageRequest):
     """
     Bài toán 2: Xác định loại thiệt hại phổ biến.
     Input: danh sách texts
-    Output: {
-        "counts": {category: mention_count, ...},
-        "classifications": [[cat1, cat2, ...], ...] (per text)
-    }
-    
-    Logic: If a text mentions keywords from multiple damage categories,
-    ALL those categories get +1 mention count.
+    Output: list[ "HouseDamage", "InfrastructureDamage", ... ]
     """
-    from services.damage_service import classify_damage_batch, get_damage_counts
-    
-    classifications = classify_damage_batch(req.texts)
-    counts = get_damage_counts(req.texts)
-    
-    return {
-        "counts": counts,
-        "classifications": classifications
-    }
+    return classify_damage_batch(req.texts)
 
 
 @app.post("/relief-sentiment")
