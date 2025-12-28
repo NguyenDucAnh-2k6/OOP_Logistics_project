@@ -4,6 +4,8 @@ import com.oop.logistics.analysis.PythonAnalysisClient;
 import com.oop.logistics.preprocessing.DateExtract;
 import com.oop.logistics.ui.components.KeywordContributionPanel;
 import javafx.application.Platform;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import javafx.scene.control.Label;
 import java.io.BufferedReader;
 import java.io.File;
@@ -128,12 +130,28 @@ public class DisasterContext {
 
     // --- Keyword Contribution Feature ---
     public void openKeywordContribution() {
-        try {
-            KeywordContributionPanel panel = new KeywordContributionPanel();
-            panel.show();
-        } catch (Exception e) {
-            setStatus("Error opening keyword contribution: " + e.getMessage(), true);
-            e.printStackTrace();
-        }
+        // Ensure UI updates happen on the JavaFX Application Thread
+        Platform.runLater(() -> {
+            try {
+                // 1. Create a new Window (Stage)
+                Stage popupStage = new Stage();
+                popupStage.setTitle("Contribute Keywords");
+
+                // 2. Initialize the Panel
+                // The argument () -> popupStage.close() defines what happens when "Back" is clicked
+                KeywordContributionPanel panel = new KeywordContributionPanel(() -> popupStage.close());
+
+                // 3. Create Scene and Show
+                Scene scene = new Scene(panel.getView(), 600, 500); // Set explicit size
+                popupStage.setScene(scene);
+                
+                // 4. Show the window
+                popupStage.show();
+                
+            } catch (Exception e) {
+                System.err.println("Error opening keyword contribution: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
     }
 }

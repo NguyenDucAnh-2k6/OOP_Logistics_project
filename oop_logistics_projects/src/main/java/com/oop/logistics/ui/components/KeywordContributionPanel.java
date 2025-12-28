@@ -1,303 +1,188 @@
 package com.oop.logistics.ui.components;
 
-import com.oop.logistics.config.CategoryManager;
 import com.oop.logistics.config.KeywordManager;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class KeywordContributionPanel {
-    private final Stage stage;
-    private final Map<String, String> configFiles = new HashMap<>();
-    private final Map<String, KeywordManager> keywordManagers = new HashMap<>();
-    private final Map<String, CategoryManager> categoryManagers = new HashMap<>();
-    private ComboBox<String> configComboBox;
-    private ComboBox<String> categoryComboBox;
-    private TextArea keywordsTextArea;
+
+    // Helper manager to handle reading/writing JSON
+    private final KeywordManager helperManager = new KeywordManager();
+    private final Runnable onBackAction;
+
+    // UI Components - Declared here, Initialized in getView()
+    private ComboBox<ConfigTarget> fileSelector;
+    private ComboBox<String> categorySelector;
+    private TextField txtKeyword;
     private Label statusLabel;
-    private String currentSelectedConfig;
 
-    public KeywordContributionPanel() {
-        this.stage = new Stage();
-        setupConfigFiles();
-        setupUI();
+    // Enum to map readable names to physical file paths
+    private enum ConfigTarget {
+        DISASTERS("Disaster Types", "oop_logistics_projects/external config/disasters.json"),
+        DAMAGE("Damage Keywords", "oop_logistics_projects/external config/damage_keywords.json"),
+        RELIEF("Relief Keywords", "oop_logistics_projects/external config/relief_keywords.json"),
+        SENTIMENT("Sentiment Keywords", "oop_logistics_projects/external config/sentiment_keywords.json");
+
+        final String label;
+        final String filePath;
+
+        ConfigTarget(String label, String filePath) {
+            this.label = label;
+            this.filePath = filePath;
+        }
+
+        @Override
+        public String toString() { return label; }
     }
 
-    private void setupConfigFiles() {
-        // Define all available config files
-        String baseDir = "external config/";
-        configFiles.put("Damage Keywords", baseDir + "damage_keywords.json");
-        configFiles.put("Disasters", baseDir + "disasters.json");
-        configFiles.put("Relief Keywords", baseDir + "relief_keywords.json");
-        configFiles.put("Sentiment Keywords", baseDir + "sentiment_keywords.json");
+    public KeywordContributionPanel(Runnable onBackAction) {
+        this.onBackAction = onBackAction;
     }
 
-    private void setupUI() {
-        stage.setTitle("Add Personal Keywords");
-        stage.setWidth(650);
-        stage.setHeight(550);
-        stage.initModality(Modality.APPLICATION_MODAL);
+    public Parent getView() {
+        VBox layout = new VBox(20);
+        layout.setPadding(new Insets(30));
+        layout.setAlignment(Pos.TOP_CENTER);
+        layout.setStyle("-fx-background-color: white;");
 
-        VBox root = new VBox(15);
-        root.setPadding(new Insets(20));
-        root.setStyle("-fx-background-color: #f0f4f8;");
+        // --- 1. Header ---
+        Label title = new Label("Contribute Knowledge");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+        
+        Label subtitle = new Label("Select a configuration file to add new keywords to the system.");
+        subtitle.setStyle("-fx-font-size: 14px; -fx-text-fill: #7f8c8d;");
 
-        // Title
-        Label titleLabel = new Label("Contribute Keywords to Analysis");
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+        // --- 2. Initialize Components (FIXES NULL POINTER EXCEPTION) ---
+        fileSelector = new ComboBox<>();
+        categorySelector = new ComboBox<>();
+        txtKeyword = new TextField();
+        statusLabel = new Label();
 
-        // Config File Selection
-        VBox configSection = createConfigSection();
+        // --- 3. Configure File Selector ---
+        fileSelector.getItems().addAll(ConfigTarget.values());
+        fileSelector.setPromptText("Select Configuration File");
+        fileSelector.setMinWidth(350);
+        fileSelector.setOnAction(e -> loadSelectedFile());
 
-        // Category Selection
-        VBox categorySection = createCategorySection();
+        // --- 4. Configure Category Selector ---
+        categorySelector.setEditable(true); // Allow user to type new categories
+        categorySelector.setPromptText("Select Existing or Type New Category");
+        categorySelector.setMinWidth(350);
 
-        // Keywords Input
-        VBox keywordsSection = createKeywordsSection();
+        // --- 5. Configure Input ---
+        txtKeyword.setPromptText("Enter new keyword (e.g., 'ngập lụt', 'sập cầu')");
+        txtKeyword.setMinWidth(350);
 
-        // Buttons
-        HBox buttonBox = createButtonBox();
+        // --- 6. Buttons ---
+        Button btnSave = new Button("Save Keyword");
+        btnSave.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20;");
+        btnSave.setMinWidth(150);
+        btnSave.setOnAction(e -> saveAction());
 
-        // Status Label
-        statusLabel = new Label("");
-        statusLabel.setWrapText(true);
-        statusLabel.setStyle("-fx-text-fill: #27ae60;");
+        Button btnBack = new Button("← Back to Menu");
+        btnBack.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-padding: 10 20;");
+        btnBack.setMinWidth(150);
+        btnBack.setOnAction(e -> {
+            if (onBackAction != null) onBackAction.run();
+        });
 
-        root.getChildren().addAll(
-            titleLabel,
-            new Separator(),
-            configSection,
-            categorySection,
-            keywordsSection,
-            buttonBox,
-            statusLabel
+        // --- 7. Layout Assembly ---
+        VBox form = new VBox(10);
+        form.setAlignment(Pos.CENTER);
+        form.setMaxWidth(400);
+        form.getChildren().addAll(
+            new Label("1. Target File:"), fileSelector,
+            new Label("2. Category:"), categorySelector,
+            new Label("3. Keyword:"), txtKeyword
         );
 
-        Scene scene = new Scene(root);
-        stage.setScene(scene);
+        layout.getChildren().addAll(
+            title, subtitle, 
+            new Separator(), 
+            form, 
+            btnSave, 
+            statusLabel, 
+            new Separator(), 
+            btnBack
+        );
+
+        return layout;
     }
 
-    private VBox createConfigSection() {
-        VBox section = new VBox(8);
-        
-        Label label = new Label("Select Configuration File:");
-        label.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
-        
-        configComboBox = new ComboBox<>();
-        configComboBox.setMinWidth(250);
-        configComboBox.getItems().addAll(configFiles.keySet());
-        configComboBox.getSelectionModel().selectFirst();
-        
-        // Load first config on startup
-        if (!configComboBox.getItems().isEmpty()) {
-            currentSelectedConfig = configComboBox.getValue();
-            loadConfig(currentSelectedConfig);
-        }
-        
-        // When user changes config file, reload categories
-        configComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && !newVal.equals(oldVal)) {
-                currentSelectedConfig = newVal;
-                loadConfig(newVal);
-            }
-        });
-        
-        section.getChildren().addAll(label, configComboBox);
-        return section;
-    }
+    private void loadSelectedFile() {
+        ConfigTarget target = fileSelector.getValue();
+        if (target == null) return;
 
-    private VBox createCategorySection() {
-        VBox section = new VBox(8);
-        
-        Label label = new Label("Select Category:");
-        label.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
-        
-        categoryComboBox = new ComboBox<>();
-        categoryComboBox.setMinWidth(250);
-        
-        section.getChildren().addAll(label, categoryComboBox);
-        return section;
-    }
+        statusLabel.setText("Loading...");
+        statusLabel.setStyle("-fx-text-fill: black;");
 
-    private VBox createKeywordsSection() {
-        VBox section = new VBox(8);
-        
-        Label label = new Label("Enter Keywords (one per line):");
-        label.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
-        
-        keywordsTextArea = new TextArea();
-        keywordsTextArea.setWrapText(true);
-        keywordsTextArea.setPrefRowCount(8);
-        keywordsTextArea.setStyle("-fx-font-size: 11px; -fx-control-inner-background: #ecf0f1;");
-        keywordsTextArea.setPromptText("Example:\nkeyword1\nkeyword2\nkeyword3");
-        
-        section.getChildren().addAll(label, keywordsTextArea);
-        return section;
-    }
-
-    private HBox createButtonBox() {
-        HBox box = new HBox(10);
-        box.setAlignment(Pos.CENTER_RIGHT);
-        
-        Button submitBtn = new Button("Add Keywords");
-        submitBtn.setStyle("-fx-font-size: 12px; -fx-padding: 8 20; -fx-base: #27ae60; -fx-text-fill: white;");
-        submitBtn.setOnAction(e -> addKeywords());
-        
-        Button cancelBtn = new Button("Close");
-        cancelBtn.setStyle("-fx-font-size: 12px; -fx-padding: 8 20; -fx-base: #95a5a6; -fx-text-fill: white;");
-        cancelBtn.setOnAction(e -> stage.close());
-        
-        box.getChildren().addAll(submitBtn, cancelBtn);
-        return box;
-    }
-
-    private void loadConfig(String configName) {
         try {
-            String configPath = configFiles.get(configName);
-            System.out.println("Loading config: " + configName + " from " + configPath);
+            // Load data using the manager
+            helperManager.loadFromJson(target.filePath);
             
-            // Check if file exists
-            File f = resolveFile(configPath);
-            if (f == null) {
-                showError("Config file not found: " + configPath);
-                categoryComboBox.getItems().clear();
-                return;
-            }
+            // Populate category dropdown
+            categorySelector.getItems().clear();
+            categorySelector.getItems().addAll(helperManager.getCategories());
             
-            configPath = f.getAbsolutePath();
-            System.out.println("Resolved absolute path: " + configPath);
-            
-            // Create managers for this config if not already created
-            if (!keywordManagers.containsKey(configName)) {
-                KeywordManager km = new KeywordManager();
-                CategoryManager cm = new CategoryManager();
-                km.loadFromJson(configPath);
-                cm.loadFromJson(configPath);
-                keywordManagers.put(configName, km);
-                categoryManagers.put(configName, cm);
-            }
-            
-            // Update category combo box
-            KeywordManager km = keywordManagers.get(configName);
-            categoryComboBox.getItems().clear();
-            categoryComboBox.getItems().addAll(km.getCategories());
-            
-            if (!categoryComboBox.getItems().isEmpty()) {
-                categoryComboBox.getSelectionModel().selectFirst();
-                showSuccess("Loaded " + km.getCategories().size() + " categories from " + configName);
-            } else {
-                showError("No categories found in " + configName);
-            }
+            statusLabel.setText("✅ Loaded " + helperManager.getAllKeywords().size() + " categories from " + target.label);
+            statusLabel.setStyle("-fx-text-fill: green;");
             
         } catch (IOException e) {
+            statusLabel.setText("❌ Error loading file: " + e.getMessage());
+            statusLabel.setStyle("-fx-text-fill: red;");
             e.printStackTrace();
-            showError("Failed to load config: " + e.getMessage());
-            categoryComboBox.getItems().clear();
         }
     }
 
-    private File resolveFile(String filePath) {
-        String[] possiblePaths = {
-            filePath,
-            "oop_logistics_projects/" + filePath,
-            System.getProperty("user.dir") + "/" + filePath,
-            System.getProperty("user.dir") + "/oop_logistics_projects/" + filePath
-        };
-        
-        for (String path : possiblePaths) {
-            File f = new File(path);
-            if (f.exists()) {
-                System.out.println("Found file at: " + f.getAbsolutePath());
-                return f;
-            }
-        }
-        
-        System.out.println("File not found in any of these locations:");
-        for (String path : possiblePaths) {
-            System.out.println("  - " + new File(path).getAbsolutePath());
-        }
-        
-        return null;
-    }
+    private void saveAction() {
+        ConfigTarget target = fileSelector.getValue();
+        String cat = categorySelector.getValue();
+        String word = txtKeyword.getText();
 
-    private void addKeywords() {
-        if (currentSelectedConfig == null || currentSelectedConfig.isEmpty()) {
-            showError("Please select a configuration file");
+        // Validation
+        if (target == null) {
+            statusLabel.setText("⚠ Please select a file first.");
+            statusLabel.setStyle("-fx-text-fill: orange;");
             return;
         }
-        
-        String selectedCategory = categoryComboBox.getValue();
-        String keywordsText = keywordsTextArea.getText().trim();
-        
-        if (selectedCategory == null || selectedCategory.isEmpty()) {
-            showError("Please select a category");
+        if (cat == null || cat.trim().isEmpty()) {
+            statusLabel.setText("⚠ Please select or type a category.");
+            statusLabel.setStyle("-fx-text-fill: orange;");
             return;
         }
-        
-        if (keywordsText.isEmpty()) {
-            showError("Please enter at least one keyword");
+        if (word == null || word.trim().isEmpty()) {
+            statusLabel.setText("⚠ Please enter a keyword.");
+            statusLabel.setStyle("-fx-text-fill: orange;");
             return;
         }
-        
+
         try {
-            String[] keywords = keywordsText.split("\n");
-            List<String> addedKeywords = new ArrayList<>();
+            // Add to memory
+            helperManager.addKeyword(cat.trim(), word.trim());
             
-            KeywordManager km = keywordManagers.get(currentSelectedConfig);
-            CategoryManager cm = categoryManagers.get(currentSelectedConfig);
+            // Save to disk
+            helperManager.saveChanges();
             
-            for (String keyword : keywords) {
-                String trimmed = keyword.trim().toLowerCase();
-                if (!trimmed.isEmpty()) {
-                    km.addKeyword(selectedCategory, trimmed);
-                    cm.addKeywordToCategory(selectedCategory, trimmed);
-                    addedKeywords.add(trimmed);
-                }
+            statusLabel.setText("✅ Saved '" + word + "' to category [" + cat + "]");
+            statusLabel.setStyle("-fx-text-fill: green;");
+            
+            // Update dropdown if it was a new category
+            if (!categorySelector.getItems().contains(cat.trim())) {
+                categorySelector.getItems().add(cat.trim());
+                categorySelector.getSelectionModel().select(cat.trim());
             }
             
-            if (!addedKeywords.isEmpty()) {
-                km.saveChanges();
-                cm.saveChanges();
-                showSuccess("✅ Added " + addedKeywords.size() + " keyword(s) to " + selectedCategory);
-                keywordsTextArea.clear();
-            } else {
-                showError("No valid keywords to add");
-            }
+            txtKeyword.clear();
+            
         } catch (IOException e) {
+            statusLabel.setText("❌ Save failed: " + e.getMessage());
+            statusLabel.setStyle("-fx-text-fill: red;");
             e.printStackTrace();
-            showError("Failed to save keywords: " + e.getMessage());
-        }
-    }
-
-    private void showSuccess(String message) {
-        statusLabel.setText(message);
-        statusLabel.setStyle("-fx-text-fill: #27ae60;");
-    }
-
-    private void showError(String message) {
-        statusLabel.setText("❌ " + message);
-        statusLabel.setStyle("-fx-text-fill: #e74c3c;");
-    }
-
-    public void show() {
-        try {
-            System.out.println("Opening KeywordContributionPanel...");
-            stage.showAndWait();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error showing KeywordContributionPanel: " + e.getMessage());
         }
     }
 }
