@@ -1,37 +1,14 @@
-from typing import List, Dict
+from config import SENTIMENT_CONFIG
+import json
+from typing import List,Dict
+with open(SENTIMENT_CONFIG, "r", encoding="utf-8") as f:
+    cfg = json.load(f)
 
-POSITIVE_WORDS = [
-    # Hope & Safety (Common in your CSV)
-    "bình an", "cầu mong", "mong", "nguyện cầu", "không sao", 
-    "qua nhanh", "nhẹ nhàng", "may mắn", "đỡ khổ", "yên tâm",
-    
-    # Relief & Support
-    "hỗ trợ", "cứu hộ", "giúp đỡ", "kịp thời", "cảm ơn", 
-    "ấm lòng", "tình người", "đoàn kết", "an toàn"
-]
-
-NEGATIVE_WORDS = [
-    # Fear & Horror
-    "khủng khiếp", "sợ", "khiếp", "kinh", "dã man", "sợ hãi", 
-    "lo quá", "bàng hoàng", "xót xa", "đau xót", "ghê", "ác",
-    
-    # Damage & Loss descriptions
-    "tan hoang", "tàn phá", "thiệt hại", "mất mát", "thương tâm",
-    "hư hỏng", "đổ nát", "chia cắt", "cô lập", "kêu cứu",
-    "mất điện", "mất nước", "mất sóng", "không liên lạc"
-]
-
-# ... rest of your file (predict_sentiment function etc.) ...
-
+POSITIVE_WORDS = cfg["positive"]
+NEGATIVE_WORDS = cfg["negative"]
 
 def predict_sentiment(text: str) -> str:
-    """
-    Dự đoán sentiment cho 1 đoạn text:
-    - 'positive'
-    - 'negative'
-    - 'neutral'
-    """
-    if text is None:
+    if not text:
         return "neutral"
 
     text_lower = text.lower()
@@ -40,7 +17,6 @@ def predict_sentiment(text: str) -> str:
     for w in POSITIVE_WORDS:
         if w in text_lower:
             score += 1
-
     for w in NEGATIVE_WORDS:
         if w in text_lower:
             score -= 1
@@ -49,10 +25,7 @@ def predict_sentiment(text: str) -> str:
         return "positive"
     elif score < 0:
         return "negative"
-    else:
-        return "neutral"
-
-
+    return "neutral"
 def aggregate_by_date(texts: List[str], dates: List[str]) -> List[Dict]:
     """
     Gom nhóm sentiment theo ngày cho bài toán 1.

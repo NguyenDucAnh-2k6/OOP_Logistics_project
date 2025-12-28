@@ -1,0 +1,31 @@
+{
+  "Food_Water": [
+    "gạo", "mì tôm", "lương thực", "đồ ăn", "bánh chưng", "sữa", "nhịn đói", 
+    "đói", "cơm", "bánh mì", "thực phẩm","nước sạch", "nước uống", "khát", "thiếu nước", "nước đóng chai", "bình nước"
+  ],
+  
+  "Shelter": [
+    "chỗ ở", "trú ẩn", "lánh nạn", "nhà văn hóa",
+    "trường học", "nhà bạt", "tấm lợp"
+  ],
+  "Transportation": [
+    "xuồng", "thuyền", "cano", "áo phao",
+    "di chuyển", "đón", "xe", "thông đường"
+  ],
+  "Cash_Financial": [
+    "tiền", "ủng hộ", "quyên góp", "ngân hàng",
+    "chuyển khoản", "tài trợ", "kinh phí"
+  ],
+  "Utilities": [
+    "điện lực", "thợ điện", "có điện lại",
+    "nối dây", "khôi phục",
+    "viettel", "vinaphone", "mạng","áo phao", "đèn pin", "sạc dự phòng", "quần áo", "chăn màn", "xăng dầu", "nến", "bật lửa"
+  ],
+  "Medical": [
+    "thuốc", "y tế", "bác sĩ", "cấp cứu", "bông băng", "đau ốm", "thuốc men", "dầu gió"
+  ],
+  "Rescue": [
+    "cứu hộ", "thuyền", "ca nô", "ứng cứu", "khẩn cấp", "sos", "cứu trợ", 
+    "hỗ trợ", "giải cứu", "tình nguyện"
+  ]
+}
