@@ -2,6 +2,7 @@ package com.oop.logistics.ui;
 
 import com.oop.logistics.analysis.PythonAnalysisClient;
 import com.oop.logistics.preprocessing.DateExtract;
+import com.oop.logistics.ui.components.KeywordContributionPanel;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import java.io.BufferedReader;
@@ -18,6 +19,7 @@ public class DisasterContext {
     private String dataSource;
     private Label statusLabel;
     private Consumer<Runnable> uiCallback; // To run actions on Main Thread
+    private String currentKeywordConfigPath; // Track which config file to use
 
     public DisasterContext() {
         this.client = new PythonAnalysisClient("http://127.0.0.1:8000");
@@ -122,5 +124,16 @@ public class DisasterContext {
             return String.format("%02d/%02d/%s", Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), parts[2]);
         }
         return dateStr;
+    }
+
+    // --- Keyword Contribution Feature ---
+    public void openKeywordContribution() {
+        try {
+            KeywordContributionPanel panel = new KeywordContributionPanel();
+            panel.show();
+        } catch (Exception e) {
+            setStatus("Error opening keyword contribution: " + e.getMessage(), true);
+            e.printStackTrace();
+        }
     }
 }

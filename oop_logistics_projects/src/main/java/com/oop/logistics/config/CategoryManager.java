@@ -1,119 +1,104 @@
 package com.oop.logistics.config;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import java.io.*;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.*;
 
-/**
- * Manages damage categories and relief item categories
- * Allows easy updates and modifications
- */
 public class CategoryManager {
-    
-    private Map<String, Category> categories;
-    private final Gson gson;
-    
-    public CategoryManager() {
-        this.gson = new Gson();
-        this.categories = new HashMap<>();
-        initializeDefaultCategories();
-    }
-    
-    private void initializeDefaultCategories() {
-        // Damage categories
-        addCategory(new Category("Infrastructure", "DAMAGE", Arrays.asList(
-            "đường", "cầu", "nhà", "điện", "nước", "cột", "kính"
-        )));
-        
-        addCategory(new Category("Housing", "DAMAGE", Arrays.asList(
-            "phá", "hỏng", "dột", "tốc", "mái", "sập", "đổ"
-        )));
-        
-        addCategory(new Category("Agriculture", "DAMAGE", Arrays.asList(
-            "cây", "gia súc", "gia cầm", "nông", "vụ", "lúa", "ngô", "khoai", "sắn"
-        )));
-        
-        addCategory(new Category("Human", "DAMAGE", Arrays.asList(
-            "thương vong", "thiệt", "chết", "mất tích", "thương", "tử"
-        )));
-        
-        // Relief item categories
-        addCategory(new Category("Food", "RELIEF", Arrays.asList(
-            "cơm", "mì", "đông", "đóng", "cung"
-        )));
-        
-        addCategory(new Category("Medical", "RELIEF", Arrays.asList(
-            "thuốc", "sơ cứu", "băng", "dược", "sức khỏe", "phục hồi"
-        )));
-        
-        addCategory(new Category("Shelter", "RELIEF", Arrays.asList(
-            "lều", "chăn", "quần", "áo", "tạm thời"
-        )));
-        
-        addCategory(new Category("Hygiene", "RELIEF", Arrays.asList(
-            "xà phòng", "vệ sinh", "toa lét", "nước sạch", "sát khuẩn"
-        )));
-    }
-    
-    public void addCategory(Category category) {
-        categories.put(category.getName(), category);
-    }
-    
-    public Category getCategory(String name) {
-        return categories.get(name);
-    }
-    
-    public List<Category> getCategoriesByType(String type) {
-        List<Category> result = new ArrayList<>();
-        for (Category category : categories.values()) {
-            if (category.getType().equalsIgnoreCase(type)) {
-                result.add(category);
+    // Internal storage remains as Category objects to support the rest of the app
+    private Map<String, Category> categoryMap = new HashMap<>();
+    private String currentFilePath;
+
+    /**
+     * Loads from a simple dictionary JSON (damage_keywords.json).
+     * Format: { "Infrastructure": ["word1", "word2"], "People": ["word3"] }
+     */
+    public void loadFromJson(String filePath) throws IOException {
+        this.currentFilePath = filePath;
+        Gson gson = new Gson();
+
+        try (FileReader reader = new FileReader(filePath)) {
+            // 1. Read as a Map of Lists (Simple Format)
+            Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
+            Map<String, List<String>> rawMap = gson.fromJson(reader, type);
+
+            if (rawMap == null) rawMap = new HashMap<>();
+
+            // 2. Convert to Category Objects
+            categoryMap.clear();
+            for (Map.Entry<String, List<String>> entry : rawMap.entrySet()) {
+                String name = entry.getKey();
+                List<String> keywords = entry.getValue();
+
+                // Create a Category object automatically
+                // We default the type to "DAMAGE" since we are loading damage keywords
+                Category cat = new Category();
+                cat.setName(name);
+                cat.setType("DAMAGE"); 
+                cat.setKeywords(keywords);
+                cat.setDescription("Auto-loaded from " + name);
+
+                categoryMap.put(name, cat);
             }
         }
-        return result;
+    }
+
+    /**
+     * Saves changes back to the simple JSON format.
+     */
+    public void saveChanges() throws IOException {
+        if (currentFilePath == null) return;
+
+        // 1. Convert back to simple map for saving
+        Map<String, List<String>> simpleMap = new LinkedHashMap<>();
+        for (Map.Entry<String, Category> entry : categoryMap.entrySet()) {
+            simpleMap.put(entry.getKey(), entry.getValue().getKeywords());
+        }
+
+        // 2. Write to file
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        try (FileWriter writer = new FileWriter(currentFilePath)) {
+            gson.toJson(simpleMap, writer);
+        }
+    }
+
+    public void addKeywordToCategory(String categoryName, String newKeyword) {
+        Category cat = categoryMap.get(categoryName);
+        if (cat != null) {
+            List<String> keywords = cat.getKeywords();
+            if (keywords == null) keywords = new ArrayList<>();
+            
+            if (!keywords.contains(newKeyword.toLowerCase())) {
+                keywords.add(newKeyword.toLowerCase());
+                cat.setKeywords(keywords);
+            }
+        } else {
+            // Optional: Create new category if it doesn't exist
+            Category newCat = new Category();
+            newCat.setName(categoryName);
+            newCat.setType("DAMAGE");
+            newCat.setKeywords(new ArrayList<>(Collections.singletonList(newKeyword.toLowerCase())));
+            categoryMap.put(categoryName, newCat);
+        }
+    }
+
+    // --- Getters ---
+
+    public Category getCategory(String name) {
+        return categoryMap.get(name);
+    }
+
+    public List<Category> getAllCategories() {
+        return new ArrayList<>(categoryMap.values());
     }
     
     public Set<String> getAllCategoryNames() {
-        return categories.keySet();
+        return categoryMap.keySet();
     }
-    
-    /**
-     * Detect which categories are mentioned in text
-     */
-    public Map<String, Integer> detectCategoriesInText(String text) {
-        Map<String, Integer> categoryMatches = new HashMap<>();
-        if (text == null) return categoryMatches;
-        
-        String lowerText = text.toLowerCase();
-        
-        for (Category category : categories.values()) {
-            int matchCount = 0;
-            for (String keyword : category.getKeywords()) {
-                if (lowerText.contains(keyword.toLowerCase())) {
-                    matchCount++;
-                }
-            }
-            if (matchCount > 0) {
-                categoryMatches.put(category.getName(), matchCount);
-            }
-        }
-        
-        return categoryMatches;
-    }
-    
-    public void loadFromJson(String filePath) throws IOException {
-        try (Reader reader = new FileReader(filePath)) {
-            java.lang.reflect.Type type = new TypeToken<Map<String, Category>>(){}.getType();
-            this.categories = gson.fromJson(reader, type);
-        }
-    }
-    
-    public void saveToJson(String filePath) throws IOException {
-        try (Writer writer = new FileWriter(filePath)) {
-            gson.toJson(categories, writer);
-        }
-    }
-    
-    
 }

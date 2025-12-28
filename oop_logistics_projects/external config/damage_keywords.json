@@ -1,4 +1,16 @@
 {
+  "Economic": [
+    "biển quảng cáo",
+    "biển cửa hàng",
+    "nhà xưởng",
+    "kho",
+    "ô tô",
+    "xe máy",
+    "tài sản",
+    "thiệt hại",
+    "bè cá",
+    "lồng bè"
+  ],
   "Infrastructure": [
     "mất điện",
     "cắt điện",
@@ -19,7 +31,35 @@
     "cống",
     "đê điều",
     "vỡ đê",
-    "cháy nhà"
+    "cháy nhà",
+    "tường nhà"
+  ],
+  "People": [
+    "bị thương",
+    "tử vong",
+    "mất tích",
+    "người dân",
+    "lật thuyền",
+    "nạn nhân",
+    "kêu cứu",
+    "mắc kẹt",
+    "cô lập",
+    "trôi người",
+    "đuối nước"
+  ],
+  "Environment": [
+    "cây đổ",
+    "gãy cây",
+    "bật gốc",
+    "cây xanh",
+    "đổ ngổn ngang",
+    "hoa màu",
+    "lúa",
+    "ngập úng",
+    "gia súc",
+    "gia cầm",
+    "trôi lợn",
+    "trôi bò"
   ],
   "Housing": [
     "tốc mái",
@@ -37,44 +77,5 @@
     "nhà sập",
     "bay tôn",
     "mái tôn"
-  ],
-  "Environment": [
-    "cây đổ",
-    "gãy cây",
-    "bật gốc",
-    "cây xanh",
-    "đổ ngổn ngang",
-    "hoa màu",
-    "lúa",
-    "ngập úng",
-    "gia súc",
-    "gia cầm",
-    "trôi lợn",
-    "trôi bò"
-  ],
-  "People": [
-    "bị thương",
-    "tử vong",
-    "mất tích",
-    "người dân",
-    "lật thuyền",
-    "nạn nhân",
-    "kêu cứu",
-    "mắc kẹt",
-    "cô lập",
-    "trôi người",
-    "đuối nước"
-  ],
-  "Economic": [
-    "biển quảng cáo",
-    "biển cửa hàng",
-    "nhà xưởng",
-    "kho",
-    "ô tô",
-    "xe máy",
-    "tài sản",
-    "thiệt hại",
-    "bè cá",
-    "lồng bè"
   ]
 }

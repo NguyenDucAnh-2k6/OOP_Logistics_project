@@ -13,6 +13,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 public class DisasterFXApp extends Application {
 
     private final DisasterContext context = new DisasterContext();
@@ -62,6 +63,7 @@ public class DisasterFXApp extends Application {
 
         Button btnFacebook = new Button("Facebook Data");
         Button btnNews = new Button("News Data");
+        Button btnContributeKeywords = new Button("Add Personal Keywords");
 
         // Style the buttons for better visibility
         String btnStyle = "-fx-font-size: 14px; -fx-padding: 10 20; -fx-base: #3498db; -fx-text-fill: white;";
@@ -69,6 +71,11 @@ public class DisasterFXApp extends Application {
         btnNews.setStyle(btnStyle);
         btnFacebook.setMinWidth(150);
         btnNews.setMinWidth(150);
+
+        // Style the contribute button differently
+        String contributeBtnStyle = "-fx-font-size: 14px; -fx-padding: 10 20; -fx-base: #e67e22; -fx-text-fill: white;";
+        btnContributeKeywords.setStyle(contributeBtnStyle);
+        btnContributeKeywords.setMinWidth(150);
 
         // 3. Add Actions
         // When clicked, set the source in 'context' and move to the next screen
@@ -82,8 +89,18 @@ public class DisasterFXApp extends Application {
             showMainWorkflow(isReadyMode);
         });
 
+        btnContributeKeywords.setOnAction(e -> {
+            context.openKeywordContribution();
+        });
+
         // 4. Assemble
-        selectionLayout.getChildren().addAll(instructions, btnFacebook, btnNews);
+        selectionLayout.getChildren().addAll(
+            instructions, 
+            btnFacebook, 
+            btnNews, 
+            new Separator(),
+            btnContributeKeywords
+        );
 
         // 5. Update the Center Pane (Important!)
         // This replaces the previous view (ModeSelection) with this new buttons view
