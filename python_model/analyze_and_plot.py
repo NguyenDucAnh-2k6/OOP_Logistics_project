@@ -131,13 +131,14 @@ def plot_problem_2():
     try:
         response = requests.post(url, json={"texts": texts})
         response.raise_for_status()
-        categories = response.json() # List of strings
+        data = response.json()
     except Exception as e:
         print(f"API Error (Prob 2): {e}")
         return
 
-    # Count frequencies
-    counts = Counter(categories)
+    # Extract counts from response
+    # Response format: {"counts": {category: count, ...}, "classifications": [...]}
+    counts = data.get("counts", {})
     
     # Remove 'Other' if you want to focus on specific damages
     if "Other" in counts:
@@ -148,6 +149,24 @@ def plot_problem_2():
         return
 
     labels = list(counts.keys())
+    values = list(counts.values())
+
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(labels, values, color='#e74c3c') # Red for damage
+    
+    plt.title('Most Common Types of Damage (Problem 2)\n(Each category gets +1 if text mentions multiple damages)')
+    plt.xlabel('Damage Category')
+    plt.ylabel('Number of Mentions')
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    # Add counts on top of bars
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height,
+                 f'{int(height)}', ha='center', va='bottom')
+    
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
     values = list(counts.values())
 
     plt.figure(figsize=(10, 6))
