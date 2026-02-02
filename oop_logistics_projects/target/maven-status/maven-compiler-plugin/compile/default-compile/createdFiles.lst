@@ -23,6 +23,7 @@ com\oop\logistics\ui\components\KeywordContributionPanel$ConfigTarget.class
 com\oop\logistics\crawler\NewsCrawler.class
 com\oop\logistics\search\BingRssStrategy.class
 com\oop\logistics\crawler\NewsResult.class
+com\oop\logistics\ui\components\KeywordContributionPanel$ManagerType.class
 com\oop\logistics\Launcher.class
 com\oop\logistics\models\AnalysisResponse$SentimentResult.class
 com\oop\logistics\preprocessing\NewsPreprocess.class
