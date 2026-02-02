@@ -1,0 +1,73 @@
+{
+  "Flood": [
+    "lũ",
+    "flood",
+    "flooding",
+    "ngập lụt",
+    "nước lũ",
+    "inundation",
+    "đập vỡ",
+    "dam breach",
+    "cuốn trôi",
+    "thiệt hại",
+    "phá hủy",
+    "ngập",
+    "chìm"
+  ],
+  "Storm": [
+    "bão",
+    "storm",
+    "hurricane",
+    "typhoon",
+    "cyclone",
+    "tempest",
+    "gió bão",
+    "tropical storm"
+  ],
+  "Earthquake": [
+    "động đất",
+    "earthquake",
+    "seismic",
+    "chấn động",
+    "tremor",
+    "quake"
+  ],
+  "Fire": [
+    "cháy",
+    "fire",
+    "hỏa hoạn",
+    "cháy rừng",
+    "wildfire",
+    "forest fire",
+    "cháy nhà",
+    "house fire"
+  ],
+  "Landslide": [
+    "sạt lở",
+    "landslide",
+    "sạt lở đất",
+    "lở đất",
+    "mudslide",
+    "rockslide",
+    "katrina"
+  ],
+  "Drought": [
+    "hạn hán",
+    "drought",
+    "dry season",
+    "water shortage",
+    "thiếu nước"
+  ],
+  "Emergency": [
+    "thiên tai",
+    "disaster",
+    "cứu trợ",
+    "relief",
+    "khẩn cấp",
+    "emergency",
+    "cứu hộ",
+    "rescue",
+    "evacuation",
+    "sơ tán"
+  ]
+}

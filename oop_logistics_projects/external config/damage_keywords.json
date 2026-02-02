@@ -1,0 +1,28 @@
+{
+  "Infrastructure": [
+    "mất điện", "cắt điện", "trạm điện", "cột điện", "dây điện", "lưới điện", "sự cố điện",
+    "mất sóng", "mất mạng", "liên lạc", "viễn thông", "cáp quang",
+    "tắc đường", "ngập", "chia cắt", "sạt lở", "cầu", "cống", "đê điều", "vỡ đê",
+    "hạ tầng", "giao thông", "quốc lộ", "tuyến đường", "ách tắc"
+  ],
+  "Housing": [
+    "tốc mái", "bay mái", "sập", "đổ tường", "vỡ kính", "bung cửa",
+    "hư hỏng nhà", "ngập vào nhà", "nhà cửa", "tan hoang", "nhà sập",
+    "công trình", "trụ sở", "trường học", "nhà dân", "kiên cố"
+  ],
+  "Environment": [
+    "cây đổ", "gãy cây", "bật gốc", "cây xanh", "đổ ngổn ngang",
+    "hoa màu", "lúa", "ngập úng", "gia súc", "gia cầm", "trôi lợn",
+    "nông nghiệp", "hecta", "ha lúa", "thuỷ sản", "rừng trồng"
+  ],
+  "People": [
+    "bị thương", "tử vong", "mất tích", "người dân", "chết",
+    "lật thuyền", "nạn nhân", "kêu cứu", "mắc kẹt", "cô lập",
+    "thương vong", "thiệt hại về người", "sơ tán", "di dời"
+  ],
+  "Economic": [
+    "tài sản",
+    "bè cá", "lồng bè", "ngàn tỷ", "tỷ đồng", "ước tính", "kinh tế",
+    "thiệt hại nặng nề", "tổn thất"
+  ]
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry excluding="oop_logistics_projects/src/main/java/com/oop/logistics/ui/|oop_logistics_projects/src/main/java/|oop_logistics_projects/src/main/java/com/oop/logistics/utils/|oop_logistics_projects/test/java/" kind="src" path=""/>
+	<classpathentry excluding="com/oop/logistics/ui/|com/oop/logistics/utils/" kind="src" path="oop_logistics_projects/src/main/java"/>
+	<classpathentry kind="src" path="oop_logistics_projects/src/main/java/com/oop/logistics/ui"/>
+	<classpathentry kind="src" path="oop_logistics_projects/src/main/java/com/oop/logistics/utils"/>
+	<classpathentry kind="src" path="oop_logistics_projects/test/java"/>
+	<classpathentry kind="output" path="oop_logistics_projects/target/classes"/>
+</classpath>

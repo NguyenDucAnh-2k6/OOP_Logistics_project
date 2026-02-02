@@ -1,0 +1,174 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "App",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.App",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "FixDateManually",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.FixDateManually",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "ProcessURLs",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.ProcessURLs",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "RemoveDuplicates",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.RemoveDuplicates",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "StripLevel",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.StripLevel",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "NewsPreprocess",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.NewsPreprocess",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "DetectCSVError",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.DetectCSVError",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "ProcessCSV",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.preprocessing.ProcessCSV",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "FixDateManually",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.gem_crawler.FixDateManually",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestSearch",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.core.TestSearch",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "DisasterFXApp_2",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.ui.DisasterFXApp_2",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestNewsCrawler",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.gem_crawler.TestNewsCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestCrawler",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.gem_crawler.TestCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "FacebookCrawler",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.scraping.FacebookCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestCrawler",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.gpt_crawler.TestCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestCrawler",
+            "request": "launch",
+            "mainClass": "test.TestCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "Launcher",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.ui.Launcher",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "DisasterFXApp",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.ui.DisasterFXApp",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "FacebookCrawler",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.crawler.FacebookCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "TestCrawler",
+            "request": "launch",
+            "mainClass": "TestCrawler",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "hello",
+            "request": "launch",
+            "mainClass": "hello",
+            "projectName": "OOP_Logistics_project"
+        },
+        {
+            "type": "java",
+            "name": "DisasterFXApp",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.DisasterFXApp",
+            "projectName": "oop_logistics_projects",
+            "cwd": "${workspaceFolder}/oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "CommandLineRunner",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.CommandLineRunner",
+            "projectName": "oop_logistics_projects"
+        },
+        {
+            "type": "java",
+            "name": "Run Disaster Logistics GUI",
+            "request": "launch",
+            "mainClass": "com.oop.logistics.Launcher",
+            "projectName": "oop_logistics_projects"
+        }
+    ]
+}

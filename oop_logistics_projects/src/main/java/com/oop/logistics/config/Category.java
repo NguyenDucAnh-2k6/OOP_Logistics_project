@@ -1,0 +1,33 @@
+package com.oop.logistics.config;
+import java.util.*;
+public class Category {
+        private String name;
+        private String type; // "DAMAGE" or "RELIEF"
+        private List<String> keywords;
+        private String description;
+        
+        public Category() {}
+        
+        public Category(String name, String type, List<String> keywords) {
+            this.name = name;
+            this.type = type;
+            this.keywords = new ArrayList<>(keywords);
+        }
+        
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+        
+        public List<String> getKeywords() { return keywords; }
+        public void setKeywords(List<String> keywords) { this.keywords = keywords; }
+        
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+        
+        public void addKeyword(String keyword) {
+            if (keywords == null) keywords = new ArrayList<>();
+            keywords.add(keyword);
+        }
+    }
