@@ -12,6 +12,6 @@ __pycache__/
 # --- IDE Settings (Optional but recommended) ---
 .vscode/
 .idea/
-*.classpath
-*.project
+.classpath
+.project
 *.settings/
