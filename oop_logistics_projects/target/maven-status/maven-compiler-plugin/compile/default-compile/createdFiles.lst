@@ -4,7 +4,6 @@ com\oop\logistics\search\DuckDuckGoStrategy.class
 com\oop\logistics\crawler\FacebookCrawler.class
 com\oop\logistics\preprocessing\StripLevel.class
 com\oop\logistics\analysis\PythonAnalysisClient$3.class
-com\oop\logistics\config\AppConfig.class
 com\oop\logistics\ui\components\TopBar.class
 com\oop\logistics\models\AnalysisResponse.class
 com\oop\logistics\ui\components\AnalysisPanel.class
