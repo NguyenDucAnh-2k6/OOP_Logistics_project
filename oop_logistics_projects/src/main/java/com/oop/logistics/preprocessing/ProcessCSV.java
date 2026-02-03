@@ -3,33 +3,40 @@ package com.oop.logistics.preprocessing;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 
 public class ProcessCSV {
 
-    // List of common Vietnamese stop words ("naive words") that don't help in sentiment analysis
-    private static final Set<String> STOP_WORDS = Set.of(
-    // Common Vietnamese particles and conjunctions
-    "là", "có", "thì", "mà", "và", "nhưng", "hoặc", "nếu", "vì", "do", "tại", 
-    "của", "ở", "với", "cho", "để", "về", "từ", "lên", "xuống", "ra", "vào", 
-    "đến", "đi", "lại", "qua",
+    // Danh sách từ dừng sẽ được nạp từ file stopwords.txt
+    private static final Set<String> STOP_WORDS = new HashSet<>();
 
-    // Pronouns and classifiers
-    "tôi", "ta", "mình", "bạn", "nó", "họ", "chúng", "ông", "bà", "anh", "chị", "em",
-    "cái", "con", "chiếc", "những", "các", "mọi", "người", "nhà", 
-    "này", "kia", "đó", "ấy", "đây", "đâu", "nào",
+    // Khối static này sẽ chạy một lần duy nhất khi lớp được nạp
+    static {
+        loadStopWords();
+    }
 
-    // Adverbs and auxiliary verbs
-    "đã", "đang", "sẽ", "vừa", "mới", "từng", 
-    "rất", "quá", "lắm", "hơi", "khá", 
-    "không", "chẳng", "chưa", "được", "bị", "phải", "nên", "cần",
-    "rồi", "xong", "luôn", "ngay", "thôi", "như", "giống", "bằng", 
-
-    // Colloquial/Slang found in the file
-    "ko", "k", "dc", "j", "vs", "ak", "ah", "u", "thế", "vậy", "sao", "gì", "chứ"
-    );
-
+    private static void loadStopWords() {
+        // Tên file nằm trong src/main/resources/
+        String fileName = "stopwords.txt";
+        
+        try (InputStream is = ProcessCSV.class.getClassLoader().getResourceAsStream(fileName)) {
+            if (is == null) {
+                System.err.println("⚠ Cảnh báo: Không tìm thấy file " + fileName + " trong resources. Sử dụng danh sách rỗng.");
+                return;
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String word = line.trim().toLowerCase();
+                    if (!word.isEmpty()) {
+                        STOP_WORDS.add(word);
+                    }
+                }
+            }
+            System.out.println("✅ Đã nạp " + STOP_WORDS.size() + " từ dừng (stopwords).");
+        } catch (IOException e) {
+            System.err.println("⚠ Lỗi khi đọc file stopwords: " + e.getMessage());
+        }
+    }
 
     public static void processFile(String inputFile, String outputFile) {
         File tempFile = new File(outputFile + ".tmp");
@@ -40,7 +47,7 @@ public class ProcessCSV {
             PrintWriter pw = new PrintWriter(
                 new OutputStreamWriter(new FileOutputStream(tempFile), StandardCharsets.UTF_8))
         ) {
-            System.out.println("Processing " + inputFile + "...");
+            System.out.println("Đang xử lý file: " + inputFile);
 
             String rawLine;
             StringBuilder buffer = new StringBuilder();
@@ -50,61 +57,53 @@ public class ProcessCSV {
                 if (buffer.length() > 0) buffer.append('\n');
                 buffer.append(rawLine);
 
-                // Check if the CSV record is complete (even number of quotes)
+                // Kiểm tra xem bản ghi CSV đã đầy đủ chưa (số lượng dấu ngoặc kép chẵn)
                 if (isRecordComplete(buffer.toString())) {
                     String fullRecord = buffer.toString();
                     
                     if (isHeader) {
-                        // Write header as is, or normalize it
                         pw.println(fullRecord); 
                         isHeader = false;
                     } else {
-                        // 1. Parse columns
                         List<String> columns = parseCsvRow(fullRecord);
                         
-                        // 2. Process the 'Text' column (assuming it's the 3rd column: Date, URL, Text)
+                        // Giả sử cột nội dung là cột thứ 3 (index 2)
                         if (columns.size() >= 3) {
                             String originalText = columns.get(2);
                             String cleanedText = cleanText(originalText);
                             columns.set(2, cleanedText);
                         }
 
-                        // 3. Write back safely
                         pw.println(toCsvRow(columns));
                     }
-                    
-                    // Clear buffer for next record
-                    buffer.setLength(0);
+                    buffer.setLength(0); // Xóa buffer cho dòng tiếp theo
                 }
             }
             
-            // Handle any remaining content (malformed last line)
             if (buffer.length() > 0) {
                 pw.println(buffer.toString());
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Error processing CSV file", e);
+            // In lỗi rõ ràng hơn thay vì ném RuntimeException
+            System.err.println("❌ Lỗi xử lý file CSV: " + e.getMessage());
+            e.printStackTrace();
+            return;
         }
 
-        // Replace original file with temp file
+        // Đổi tên file tạm thành file chính thức
         File original = new File(outputFile);
-        if (original.exists()) {
-            if (!original.delete()) {
-                System.err.println("⚠ Could not delete original file. output saved to " + tempFile.getName());
-                return;
-            }
+        if (original.exists() && !original.delete()) {
+            System.err.println("⚠ Không thể xóa file cũ. Kết quả lưu tại: " + tempFile.getName());
+            return;
         }
         if (!tempFile.renameTo(original)) {
-            System.err.println("⚠ Could not rename temp file to " + outputFile);
+            System.err.println("⚠ Không thể đổi tên file tạm thành: " + outputFile);
         } else {
-            System.out.println("✅ Finished. Output saved to " + outputFile);
+            System.out.println("✅ Hoàn tất. Kết quả lưu tại: " + outputFile);
         }
     }
 
-    /**
-     * Checks if a CSV buffer has an even number of quotes, indicating a closed record.
-     */
     private static boolean isRecordComplete(String s) {
         int quotes = 0;
         for (char c : s.toCharArray()) {
@@ -113,9 +112,6 @@ public class ProcessCSV {
         return quotes % 2 == 0;
     }
 
-    /**
-     * Parses a single CSV row (handling quoted fields with commas/newlines).
-     */
     private static List<String> parseCsvRow(String row) {
         List<String> columns = new ArrayList<>();
         StringBuilder field = new StringBuilder();
@@ -123,15 +119,13 @@ public class ProcessCSV {
         
         for (int i = 0; i < row.length(); i++) {
             char c = row.charAt(i);
-            
             if (inQuotes) {
                 if (c == '"') {
-                    // Check for escaped quote ("")
                     if (i + 1 < row.length() && row.charAt(i + 1) == '"') {
                         field.append('"');
-                        i++; // Skip next quote
+                        i++;
                     } else {
-                        inQuotes = false; // End of quoted field
+                        inQuotes = false;
                     }
                 } else {
                     field.append(c);
@@ -147,59 +141,37 @@ public class ProcessCSV {
                 }
             }
         }
-        columns.add(field.toString()); // Add last column
+        columns.add(field.toString());
         return columns;
     }
 
-    /**
-     * Converts a list of strings back to a valid CSV row.
-     * Always wraps fields in quotes to avoid CSVLint errors.
-     */
     private static String toCsvRow(List<String> columns) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < columns.size(); i++) {
             String field = columns.get(i);
             if (field == null) field = "";
-            
-            // Escape double quotes inside the string: " -> ""
             field = field.replace("\"", "\"\"");
-            
-            // Wrap in quotes
             sb.append('"').append(field).append('"');
-            
-            if (i < columns.size() - 1) {
-                sb.append(",");
-            }
+            if (i < columns.size() - 1) sb.append(",");
         }
         return sb.toString();
     }
 
-    /**
-     * Cleans the text content:
-     * 1. Removes emojis and symbols.
-     * 2. Removes stop words.
-     * 3. Normalizes whitespace.
-     */
     private static String cleanText(String text) {
         if (text == null || text.isEmpty()) return "";
 
-        // 1. Remove Emojis and non-text symbols
-        // Keep: Letters (\p{L}), Numbers (\p{N}), Punctuation (\p{P}), Whitespace (\p{Z})
-        // This regex removes emojis, dingbats, and other symbols.
+        // 1. Loại bỏ ký tự đặc biệt (giữ lại chữ, số, dấu câu cơ bản)
         String noEmoji = text.replaceAll("[^\\p{L}\\p{N}\\p{P}\\p{Z}]", " ");
 
-        // 2. Normalize whitespace (tabs/newlines -> space, multiple spaces -> single space)
+        // 2. Chuẩn hóa khoảng trắng
         String normalized = noEmoji.replaceAll("\\s+", " ").trim();
 
-        // 3. Remove Naive/Stop Words
-        // We split by space, check against dictionary, and rebuild
+        // 3. Loại bỏ Stop Words
         String[] words = normalized.split(" ");
         StringBuilder cleanBuilder = new StringBuilder();
         
         for (String word : words) {
-            // Remove punctuation from the word to check against stop list (e.g., "và," -> "và")
             String rawWord = word.replaceAll("[^\\p{L}\\p{N}]", "").toLowerCase();
-            
             if (!STOP_WORDS.contains(rawWord) && !rawWord.isEmpty()) {
                 cleanBuilder.append(word).append(" ");
             }
