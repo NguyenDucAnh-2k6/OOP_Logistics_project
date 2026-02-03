@@ -1,0 +1,17 @@
+# --- Java / Maven ---
+# Ignores the 'target' folder anywhere in the project (including inside oop_logistics_projects)
+target/
+*.class
+
+# --- Python ---
+# Ignores __pycache__ directories anywhere (including python_model and its subfolders)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- IDE Settings (Optional but recommended) ---
+.vscode/
+.idea/
+*.classpath
+*.project
+*.settings/
