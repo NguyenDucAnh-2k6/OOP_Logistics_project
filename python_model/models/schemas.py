@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-
-class SentimentTimeSeriesRequest(BaseModel):
+class BaseRequest(BaseModel):
+    texts: List[str]
+    model_type: str = "ai"  # Options: "ai" (default), "keyword"
+class SentimentTimeSeriesRequest(BaseRequest):
     """
     Request cho bài toán 1: sentiment theo thời gian.
     - texts: danh sách bài post/comment
@@ -12,7 +14,7 @@ class SentimentTimeSeriesRequest(BaseModel):
     dates: List[str]
 
 
-class DamageRequest(BaseModel):
+class DamageRequest(BaseRequest):
     """
     Request cho bài toán 2: phân loại loại thiệt hại.
     - texts: danh sách bài post/comment mô tả thiệt hại
@@ -20,7 +22,7 @@ class DamageRequest(BaseModel):
     texts: List[str]
 
 
-class ReliefSentimentRequest(BaseModel):
+class ReliefSentimentRequest(BaseRequest):
     """
     Request cho bài toán 3 + 4: phân tích hàng cứu trợ.
     - texts: danh sách bài post/comment

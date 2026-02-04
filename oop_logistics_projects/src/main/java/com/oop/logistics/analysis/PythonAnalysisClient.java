@@ -15,7 +15,6 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.oop.logistics.models.AnalysisRequest;
-import com.oop.logistics.models.AnalysisResponse;
 
 public class PythonAnalysisClient implements AnalysisAPI { 
     
@@ -26,117 +25,97 @@ public class PythonAnalysisClient implements AnalysisAPI {
     public PythonAnalysisClient(String apiUrl) {
         this.apiUrl = apiUrl;
         this.httpClient = HttpClient.newBuilder()
-        .version(HttpClient.Version.HTTP_1_1)  // ép dùng HTTP/1.1
-        .connectTimeout(Duration.ofSeconds(30))
-        .build();
-        
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofSeconds(60)) // Increased timeout for AI models
+            .build();
         this.gson = new Gson();
     }
 
-    // ... (Keep existing Interface methods: getProviderName, isAvailable, etc.) ...
     @Override
     public String getProviderName() { return "Python FastAPI Backend"; }
     @Override
     public String getConfiguration() { return "URL: " + apiUrl; }
     @Override
-    public boolean isAvailable() { return true; } // Simplified for speed
-    @Override
-    public AnalysisResponse analyzeSentiment(AnalysisRequest request) { return new AnalysisResponse(); }
-
-    // --- CORE HTTP LOGIC ---
-    private String sendPost(String endpoint, Object payload) throws Exception {
-        String json = gson.toJson(payload);
-        
-        // FIX 2: Convert to bytes manually to ensure UTF-8 before transmission
-        byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
-
-        // DEBUG: Verify clean output
-        System.out.println("DEBUG POST " + endpoint + " Payload size: " + jsonBytes.length + " bytes");
-
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(new URI(apiUrl + endpoint))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
-            .build();
-
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println("JSON SENT:");
-        System.out.println(json);
-        if (response.statusCode() != 200) {
-            System.err.println("API ERROR: " + response.statusCode());
-            System.err.println("BODY: " + response.body());
-            throw new RuntimeException("API Error " + response.statusCode() + ": " + response.body());
+    public boolean isAvailable() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl + "/"))
+                .GET()
+                .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            return response.statusCode() == 200;
+        } catch (Exception e) {
+            return false;
         }
-
-        return response.body();
     }
 
-    public List<Map<String, Object>> getSentimentTimeSeries(List<String> texts, List<String> dates) throws Exception {
-        if (texts == null || texts.isEmpty()) {
-            System.err.println("ERROR: texts list is empty!");
-            throw new RuntimeException("No texts to analyze");
-        }
-        if (dates == null || dates.isEmpty()) {
-            System.err.println("WARNING: dates list is empty!");
-        }
+    // --- Problem 1: Sentiment Time Series ---
+    @Override
+    public List<Map<String, Object>> getSentimentTimeSeries(List<String> texts, List<String> dates, String modelType) throws Exception {
+        if (texts == null || texts.isEmpty()) throw new RuntimeException("No texts to analyze");
         
-        System.out.println("getSentimentTimeSeries: texts=" + texts.size() + ", dates=" + dates.size());
+        AnalysisRequest req = new AnalysisRequest(texts, dates);
+        req.setModelType(modelType); // Pass the selection
         
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("texts", texts);
-        payload.put("dates", dates);
-        
-        String response = sendPost("/sentiment-time-series", payload);
+        String response = sendPost("/analyze/sentiment_timeseries", req);
         Type listType = new TypeToken<ArrayList<Map<String, Object>>>(){}.getType();
         return gson.fromJson(response, listType);
     }
 
-    public List<String> getDamageClassification(List<String> texts) throws Exception {
-        if (texts == null || texts.isEmpty()) {
-            System.err.println("ERROR: texts list is empty!");
-            throw new RuntimeException("No texts to analyze");
-        }
-        
-        System.out.println("getDamageClassification: texts=" + texts.size());
-        
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("texts", texts);
-        String response = sendPost("/damage-classification", payload);
+    // --- Problem 2: Damage Classification ---
+    @Override
+    public List<String> getDamageClassification(List<String> texts, String modelType) throws Exception {
+        if (texts == null || texts.isEmpty()) throw new RuntimeException("No texts to analyze");
+
+        AnalysisRequest req = new AnalysisRequest(texts, null);
+        req.setModelType(modelType); // Pass the selection
+
+        String response = sendPost("/analyze/damage", req);
         Type listType = new TypeToken<ArrayList<String>>(){}.getType();
         return gson.fromJson(response, listType);
     }
 
-    public Map<String, Map<String, Double>> getReliefSentiment(List<String> texts) throws Exception {
-        if (texts == null || texts.isEmpty()) {
-            System.err.println("ERROR: texts list is empty!");
-            throw new RuntimeException("No texts to analyze");
-        }
-        
-        System.out.println("getReliefSentiment: texts=" + texts.size());
-        
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("texts", texts);
-        String response = sendPost("/relief-sentiment", payload);
+    // --- Problem 3: Relief Sentiment ---
+    @Override
+    public Map<String, Map<String, Double>> getReliefSentiment(List<String> texts, String modelType) throws Exception {
+        if (texts == null || texts.isEmpty()) throw new RuntimeException("No texts to analyze");
+
+        AnalysisRequest req = new AnalysisRequest(texts, null);
+        req.setModelType(modelType); // Pass the selection
+
+        String response = sendPost("/analyze/relief_sentiment", req);
         Type mapType = new TypeToken<Map<String, Map<String, Double>>>(){}.getType();
         return gson.fromJson(response, mapType);
     }
 
-    public List<Map<String, Object>> getReliefTimeSeries(List<String> texts, List<String> dates) throws Exception {
-        if (texts == null || texts.isEmpty()) {
-            System.err.println("ERROR: texts list is empty!");
-            throw new RuntimeException("No texts to analyze");
-        }
-        if (dates == null || dates.isEmpty()) {
-            System.err.println("WARNING: dates list is empty!");
-        }
-        
-        System.out.println("getReliefTimeSeries: texts=" + texts.size() + ", dates=" + dates.size());
-        
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("texts", texts);
-        payload.put("dates", dates);
-        String response = sendPost("/relief-time-series", payload);
+    // --- Problem 4: Relief Time Series ---
+    @Override
+    public List<Map<String, Object>> getReliefTimeSeries(List<String> texts, List<String> dates, String modelType) throws Exception {
+        if (texts == null || texts.isEmpty()) throw new RuntimeException("No texts to analyze");
+
+        AnalysisRequest req = new AnalysisRequest(texts, dates);
+        req.setModelType(modelType); // Pass the selection
+
+        String response = sendPost("/analyze/relief_timeseries", req);
         Type listType = new TypeToken<ArrayList<Map<String, Object>>>(){}.getType();
         return gson.fromJson(response, listType);
+    }
+
+    // --- Helper ---
+    private String sendPost(String endpoint, Object requestObject) throws Exception {
+        String jsonBody = gson.toJson(requestObject);
+        
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl + endpoint))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("API Error (" + response.statusCode() + "): " + response.body());
+        }
+        return response.body();
     }
 }

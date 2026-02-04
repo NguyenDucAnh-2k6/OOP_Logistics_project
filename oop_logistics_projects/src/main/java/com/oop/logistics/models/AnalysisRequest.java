@@ -1,85 +1,23 @@
 package com.oop.logistics.models;
 
-import com.google.gson.annotations.SerializedName;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Request model for analysis APIs
- */
 public class AnalysisRequest {
-    private String region;
-    private int month;
-    private int year;
-
-    
-    @SerializedName("text")
-    private String text;
-    
-    @SerializedName("texts")
     private List<String> texts;
-    
-    @SerializedName("language")
-    private String language; // "en", "vi", etc.
-    
-    @SerializedName("model")
-    private String model; // specific model to use
-    
-    @SerializedName("parameters")
-    private Map<String, Object> parameters;
-    
-    public AnalysisRequest() {}
-    
-    public AnalysisRequest(String text) {
-        this.text = text;
-        this.language = "vi"; // default Vietnamese
-    }
-    
-    public AnalysisRequest(List<String> texts) {
+    private List<String> dates;
+    private String model_type; // Exact name matching Python Pydantic model
+
+    public AnalysisRequest(List<String> texts, List<String> dates) {
         this.texts = texts;
-        this.language = "vi";
+        this.dates = dates;
+        this.model_type = "ai"; // Default
     }
-    
-    // Getters and Setters
-    public String getText() { return text; }
-    public void setText(String text) { this.text = text; }
-    
+
+    public void setModelType(String type) {
+        this.model_type = type;
+    }
+
     public List<String> getTexts() { return texts; }
-    public void setTexts(List<String> texts) { this.texts = texts; }
-    
-    public String getLanguage() { return language; }
-    public void setLanguage(String language) { this.language = language; }
-    
-    public String getModel() { return model; }
-    public void setModel(String model) { this.model = model; }
-    
-    public Map<String, Object> getParameters() { return parameters; }
-    public void setParameters(Map<String, Object> parameters) { this.parameters = parameters; }
-    public String getRegion() {
-        return region;
-    }
-
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public int getMonth() {
-        return month;
-    }
-
-    public void setMonth(int month) {
-        this.month = month;
-    }
-
-    public int getYear() {
-        return year;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
-    }
+    public List<String> getDates() { return dates; }
+    public String getModelType() { return model_type; }
 }
-
-/**
- * Response model from analysis APIs
- */

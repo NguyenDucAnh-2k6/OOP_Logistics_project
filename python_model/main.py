@@ -1,10 +1,15 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+import uvicorn
 
+# Import request models
 from models.schemas import (
     SentimentTimeSeriesRequest,
     DamageRequest,
     ReliefSentimentRequest,
 )
+
+# Import service logic
 from services.sentiment_service import aggregate_by_date
 from services.damage_service import classify_damage_batch
 from services.relief_service import (
@@ -14,62 +19,71 @@ from services.relief_service import (
 
 app = FastAPI(title="Humanitarian Logistics Analysis API")
 
+# --- ROOT CHECK ---
+@app.get("/")
+def health_check():
+    return {"status": "running", "message": "Python Analysis Backend is Active"}
 
-@app.post("/sentiment-time-series")
-def sentiment_time_series(req: SentimentTimeSeriesRequest):
+# --- 1. SENTIMENT TIME SERIES ---
+# Java sends: /analyze/sentiment_timeseries
+@app.post("/analyze/sentiment_timeseries")
+def analyze_sentiment_timeseries(req: SentimentTimeSeriesRequest):
     """
-    Bài toán 1: Theo dõi tâm lý công chúng theo thời gian.
-    Input: danh sách texts + dates
-    Output: list[ {date, positive, negative, neutral} ]
+    Problem 1: Sentiment trend over time.
     """
-    print(">>> ĐÃ NHẬN REQ SENTIMENT TIME SERIES")
-    print(req.model_dump())
-    return aggregate_by_date(req.texts, req.dates)
+    print(f"📊 [Problem 1] Sentiment Request ({req.model_type})")
+    try:
+        return aggregate_by_date(req.texts, req.dates, req.model_type)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
+# --- 2. DAMAGE CLASSIFICATION ---
+# Java sends: /analyze/damage
+@app.post("/analyze/damage")
+def analyze_damage(req: DamageRequest):
+    """
+    Problem 2: Classify damage types.
+    """
+    print(f"🏚️ [Problem 2] Damage Request ({req.model_type})")
+    try:
+        return classify_damage_batch(req.texts, req.model_type)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
-@app.post("/damage-classification")
-def damage_classification(req: DamageRequest):
+# --- 3. RELIEF SENTIMENT ---
+# Java sends: /analyze/relief_sentiment
+@app.post("/analyze/relief_sentiment")
+def analyze_relief_sentiment(req: ReliefSentimentRequest):
     """
-    Bài toán 2: Xác định loại thiệt hại phổ biến.
-    Input: danh sách texts
-    Output: list[ "HouseDamage", "InfrastructureDamage", ... ]
+    Problem 3: Sentiment by relief category.
     """
-    return classify_damage_batch(req.texts)
+    print(f"💊 [Problem 3] Relief Sentiment Request ({req.model_type})")
+    try:
+        return aggregate_relief_sentiment(req.texts, req.model_type)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
-
-@app.post("/relief-sentiment")
-def relief_sentiment(req: ReliefSentimentRequest):
+# --- 4. RELIEF TIME SERIES ---
+# Java sends: /analyze/relief_timeseries
+@app.post("/analyze/relief_timeseries")
+def analyze_relief_timeseries(req: ReliefSentimentRequest):
     """
-    Bài toán 3: Mức độ hài lòng / không hài lòng theo từng loại hàng cứu trợ.
-    Input: texts
-    Output: {
-      "Food": {"positive": x, "negative": y, "neutral": z},
-      ...
-    }
+    Problem 4: Relief needs over time.
     """
-    return aggregate_relief_sentiment(req.texts)
-
-
-@app.post("/relief-time-series")
-def relief_time_series(req: ReliefSentimentRequest):
-    """
-    Bài toán 4: Tâm lý theo từng loại hàng cứu trợ theo thời gian.
-    Yêu cầu có `dates`.
-    Output: list[ {date, category, positive, negative, neutral} ]
-    """
+    print(f"📈 [Problem 4] Relief Trend Request ({req.model_type})")
     if req.dates is None:
-        raise ValueError("Trường 'dates' là bắt buộc cho API /relief-time-series")
-    return aggregate_relief_time_series(req.texts, req.dates)
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    body = await request.body()
-    print("\n========== RAW REQUEST BODY ==========")
-    print(body[:500], "...")   # tránh in quá dài
-    print("=====================================\n")
-    response = await call_next(request)
-    return response
+        return JSONResponse(status_code=400, content={"error": "Dates are required for time-series analysis"})
+        
+    try:
+        return aggregate_relief_time_series(req.texts, req.dates, req.model_type)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
-# Chạy trực tiếp bằng: python main.py
+# --- STARTUP ---
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    print("🚀 Starting Python Backend on Port 8000...")
+    uvicorn.run(app, host="127.0.0.1", port=8000)

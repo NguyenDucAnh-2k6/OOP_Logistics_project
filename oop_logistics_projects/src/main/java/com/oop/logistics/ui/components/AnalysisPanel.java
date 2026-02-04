@@ -7,9 +7,11 @@ import javafx.scene.chart.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-
+import javafx.scene.control.ComboBox;
+import javafx.collections.FXCollections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +19,8 @@ import java.util.Map;
 public class AnalysisPanel extends VBox {
     private final DisasterContext context;
     private final VBox chartContainer; // Dedicated area for charts
-
+    private ComboBox<String> modelSelector;
+    
     public AnalysisPanel(DisasterContext context) {
         this.context = context;
         this.setPadding(new Insets(15));
@@ -33,19 +36,28 @@ public class AnalysisPanel extends VBox {
     }
 
     private void setupUI() {
-        Label label = new Label("📊 Analysis");
-        label.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+        Label lblTitle = new Label("Analytics Dashboard");
+        lblTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        GridPane grid = new GridPane();
-        grid.setHgap(10); 
-        grid.setVgap(10);
+        // 1. Initialize Selector
+        modelSelector = new ComboBox<>(FXCollections.observableArrayList(
+            "AI Model (Accurate - Slower)", 
+            "Keyword Search (Instant)"
+        ));
+        modelSelector.getSelectionModel().select(0); // Default to AI
+        modelSelector.setStyle("-fx-font-size: 12px; -fx-pref-width: 200px;");
 
-        grid.add(createBtn("1️⃣ Sentiment Time Series", this::runProblem1), 0, 0);
-        grid.add(createBtn("2️⃣ Damage Classification", this::runProblem2), 1, 0);
-        grid.add(createBtn("3️⃣ Relief Sentiment", this::runProblem3), 0, 1);
-        grid.add(createBtn("4️⃣ Relief Time Series", this::runProblem4), 1, 1);
+        // 2. Add to Controls Layout
+        Button btn1 = createBtn("1. Sentiment Trend", this::runProblem1);
+        Button btn2 = createBtn("2. Damage Class", this::runProblem2);
+        Button btn3 = createBtn("3. Relief Sentiment", this::runProblem3);
+        Button btn4 = createBtn("4. Relief Needs Trend", this::runProblem4);
 
-        this.getChildren().addAll(label, grid, chartContainer);
+        HBox controls = new HBox(10, modelSelector, btn1, btn2, btn3, btn4);
+        controls.setPadding(new Insets(0, 0, 10, 0));
+        controls.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        this.getChildren().addAll(lblTitle, controls, chartContainer);
     }
 
     private Button createBtn(String text, Runnable action) {
@@ -61,16 +73,18 @@ public class AnalysisPanel extends VBox {
     // PROBLEM 1: Sentiment Time Series
     // =================================================================================
     private void runProblem1() {
-        if (checkData(true)) return; // Requires dates
+        if (checkData(true)) return;
         new Thread(() -> {
             try {
-                context.setStatus("Running Sentiment Time Series...", false);
-                var data = context.getClient().getSentimentTimeSeries(context.getTexts(), context.getDates());
+                String type = getModelType();
+                context.setStatus("Running Sentiment Time Series (" + type + ")...", false);
+                // PASS 'type' TO CLIENT
+                var data = context.getClient().getSentimentTimeSeries(context.getTexts(), context.getDates(), type);
                 Platform.runLater(() -> displaySentimentTimeSeries(data));
             } catch (Exception e) { context.setStatus("Error: " + e.getMessage(), true); }
         }).start();
     }
-
+    
     private void displaySentimentTimeSeries(List<Map<String, Object>> data) {
         CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Date");
         NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Count");
@@ -95,19 +109,17 @@ public class AnalysisPanel extends VBox {
     // PROBLEM 2: Damage Classification
     // =================================================================================
     private void runProblem2() {
-        if (checkData(false)) return; // Text only
+        if (checkData(false)) return;
         new Thread(() -> {
             try {
-                context.setStatus("Running Damage Classification...", false);
-                // Expecting List<String> of categories returned by Python
-                List<String> data = context.getClient().getDamageClassification(context.getTexts());
+                String type = getModelType();
+                context.setStatus("Running Damage Classification (" + type + ")...", false);
+                // PASS 'type' TO CLIENT
+                var data = context.getClient().getDamageClassification(context.getTexts(), type);
                 Platform.runLater(() -> displayDamageTypes(data));
-            } catch (Exception ex) { 
-                context.setStatus("Error: " + ex.getMessage(), true); 
-            }
+            } catch (Exception ex) { context.setStatus("Error: " + ex.getMessage(), true); }
         }).start();
     }
-
     private void displayDamageTypes(List<String> categories) {
         Map<String, Long> counts = new HashMap<>();
         for (String c : categories) counts.put(c, counts.getOrDefault(c, 0L) + 1);
@@ -129,16 +141,15 @@ public class AnalysisPanel extends VBox {
     // PROBLEM 3: Relief Sentiment
     // =================================================================================
     private void runProblem3() {
-        if (checkData(false)) return; // Text only
+        if (checkData(false)) return;
         new Thread(() -> {
             try {
-                context.setStatus("Running Relief Sentiment...", false);
-                // Expecting Map<Category, Map<Sentiment, Score>>
-                var data = context.getClient().getReliefSentiment(context.getTexts());
+                String type = getModelType();
+                context.setStatus("Running Relief Sentiment (" + type + ")...", false);
+                // PASS 'type' TO CLIENT
+                var data = context.getClient().getReliefSentiment(context.getTexts(), type);
                 Platform.runLater(() -> displayReliefSentiment(data));
-            } catch (Exception ex) { 
-                context.setStatus("Error: " + ex.getMessage(), true); 
-            }
+            } catch (Exception ex) { context.setStatus("Error: " + ex.getMessage(), true); }
         }).start();
     }
 
@@ -164,16 +175,15 @@ public class AnalysisPanel extends VBox {
     // PROBLEM 4: Relief Time Series
     // =================================================================================
     private void runProblem4() {
-        if (checkData(true)) return; // Requires dates
+        if (checkData(true)) return;
         new Thread(() -> {
             try {
-                context.setStatus("Running Relief Time Series...", false);
-                // Expecting List of points with {category, date, positive_score}
-                var data = context.getClient().getReliefTimeSeries(context.getTexts(), context.getDates());
+                String type = getModelType();
+                context.setStatus("Running Relief Time Series (" + type + ")...", false);
+                // PASS 'type' TO CLIENT
+                var data = context.getClient().getReliefTimeSeries(context.getTexts(), context.getDates(), type);
                 Platform.runLater(() -> displayReliefTimeSeries(data));
-            } catch (Exception ex) { 
-                context.setStatus("Error: " + ex.getMessage(), true); 
-            }
+            } catch (Exception ex) { context.setStatus("Error: " + ex.getMessage(), true); }
         }).start();
     }
 
@@ -215,7 +225,10 @@ public class AnalysisPanel extends VBox {
         }
         return false;
     }
-
+    private String getModelType() {
+        String selection = modelSelector.getSelectionModel().getSelectedItem();
+        return (selection != null && selection.contains("Keyword")) ? "keyword" : "ai";
+    }
     private void displayChart(Chart chart) {
         chartContainer.getChildren().clear();
         // Allow chart to grow

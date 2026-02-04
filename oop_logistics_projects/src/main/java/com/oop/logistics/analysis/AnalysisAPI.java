@@ -1,36 +1,19 @@
 package com.oop.logistics.analysis;
 
-import com.oop.logistics.models.AnalysisRequest;
-import com.oop.logistics.models.AnalysisResponse;
+import java.util.List;
+import java.util.Map;
 
-/**
- * Interface for analysis APIs (can be Python-based or Java-based)
- * This abstraction allows easy swapping of analysis implementations
- */
 public interface AnalysisAPI {
-    
-    /**
-     * Perform sentiment analysis on text
-     * @param request Analysis request containing text and parameters
-     * @return Analysis response with sentiment scores
-     */
-    AnalysisResponse analyzeSentiment(AnalysisRequest request);
-    
-    /**
-     * Get the name of this analysis provider
-     * @return Provider name
-     */
     String getProviderName();
-    
-    /**
-     * Check if the API is available
-     * @return true if API can be used
-     */
-    boolean isAvailable();
-    
-    /**
-     * Get API configuration information
-     * @return Configuration details
-     */
     String getConfiguration();
+    boolean isAvailable();
+
+    // Updated methods to include 'modelType'
+    List<Map<String, Object>> getSentimentTimeSeries(List<String> texts, List<String> dates, String modelType) throws Exception;
+    
+    List<String> getDamageClassification(List<String> texts, String modelType) throws Exception;
+    
+    Map<String, Map<String, Double>> getReliefSentiment(List<String> texts, String modelType) throws Exception;
+    
+    List<Map<String, Object>> getReliefTimeSeries(List<String> texts, List<String> dates, String modelType) throws Exception;
 }
