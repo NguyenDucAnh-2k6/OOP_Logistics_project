@@ -17,11 +17,12 @@ A comprehensive data collection, preprocessing, and analysis platform for humani
 
 ## Project Overview
 
-This application solves three key problems for humanitarian logistics:
+This application solves four key problems for humanitarian logistics:
 
 1. **Problem 1: Sentiment Time Series Analysis** - Track sentiment trends over time to identify community needs
 2. **Problem 2: Damage Classification** - Automatically categorize disaster damage by type (infrastructure, people, etc.)
 3. **Problem 3: Relief Sentiment Aggregation** - Analyze sentiment around relief efforts and resource allocation
+4. **Problem 4: Resource Allocation & Prioritization** - Combine damage classification, sentiment signals, and geographic clustering to recommend where to allocate resources and prioritize relief efforts (e.g., routing, supply distribution, and responder assignment).
 
 The system combines:
 - **Java backend**: Data crawling, preprocessing, UI management
@@ -65,7 +66,7 @@ pip install -r requirements.txt
 
 ```bash
 # From python_model directory
-python main.py
+uvicorn main:app --reload
 ```
 
 This starts a FastAPI server on `http://localhost:8000`
@@ -397,7 +398,7 @@ OOP_Logistics_project/
 ```bash
 cd python_model
 source venv/bin/activate  # or venv\Scripts\activate on Windows
-python main.py
+uvicorn main:app --reload
 ```
 **Output**: `Uvicorn running on http://127.0.0.1:8000`
 
@@ -415,17 +416,15 @@ mvn clean install
 
 #### Step 4: Run Java Application
 ```bash
-mvn javafx:run
-# OR compile and run JAR:
 mvn package
-java -jar target/oop_logistics_projects-1.0-SNAPSHOT.jar
+mvn exec:java -Dexec.mainClass="com.oop.logistics.Launcher"
 ```
 
 #### Step 5: Use the GUI
 - Click "Crawl News" to collect data from Vietnamese news sources
 - Select preprocessing options (remove duplicates, extract dates, etc.)
-- Run analysis (Sentiment, Damage Classification, Relief Sentiment)
 - View results and export to CSV
+- Run analysis (Sentiment, Damage Classification, Relief Sentiment)
 
 ### Maven Commands
 
@@ -473,28 +472,29 @@ print(response.json())
 #### `external config/damage_keywords.json`
 ```json
 {
-  "Infrastructure": ["building", "road", "bridge", "power"],
-  "People": ["injury", "death", "missing"],
-  "Environment": ["flooding", "landslide", "fire"]
+  "Infrastructure": ["..."],
+  "People": ["..."],
+  "Environment": ["..."]
 }
 ```
 
 #### `external config/relief_keywords.json`
 ```json
 {
-  "Medical": ["hospital", "medicine", "doctor"],
-  "Food": ["rice", "water", "supplies"],
-  "Shelter": ["tent", "housing", "evacuation"]
+  "Medical": ["..."],
+  "Food": ["..."],
+  "Shelter": ["..."]
 }
 ```
 
 #### `external config/sentiment_keywords.json`
 ```json
 {
-  "Positive": ["help", "hope", "support"],
-  "Negative": ["crisis", "disaster", "tragedy"]
+  "Positive": ["..."],
+  "Negative": ["..."]
 }
-```
+``` 
+#### `external config/disasters.json`
 
 ### Python Configuration
 
