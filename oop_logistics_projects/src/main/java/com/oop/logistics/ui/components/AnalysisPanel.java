@@ -12,6 +12,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.ComboBox;
 import javafx.collections.FXCollections;
+import javafx.scene.control.ProgressBar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,8 @@ public class AnalysisPanel extends VBox {
     private final DisasterContext context;
     private final VBox chartContainer; // Dedicated area for charts
     private ComboBox<String> modelSelector;
-    
+    private ProgressBar progressBar;       // NEW
+    private Label progressLabel;
     public AnalysisPanel(DisasterContext context) {
         this.context = context;
         this.setPadding(new Insets(15));
@@ -39,27 +41,38 @@ public class AnalysisPanel extends VBox {
         Label lblTitle = new Label("Analytics Dashboard");
         lblTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        // 1. Initialize Selector
         modelSelector = new ComboBox<>(FXCollections.observableArrayList(
             "AI Model (Accurate - Slower)", 
             "Keyword Search (Instant)"
         ));
-        modelSelector.getSelectionModel().select(0); // Default to AI
-        modelSelector.setStyle("-fx-font-size: 12px; -fx-pref-width: 200px;");
+        modelSelector.getSelectionModel().select(0);
+        
+        // --- PROGRESS BAR SETUP ---
+        progressBar = new ProgressBar(0);
+        progressBar.setPrefWidth(200);
+        progressLabel = new Label("0%");
+        progressLabel.setStyle("-fx-font-weight: bold;");
+        
+        VBox progressBox = new VBox(5, new Label("Analysis Progress:"), new HBox(10, progressBar, progressLabel));
+        progressBox.setPadding(new Insets(0, 0, 0, 20)); // Add some spacing
+        // --------------------------
 
-        // 2. Add to Controls Layout
         Button btn1 = createBtn("1. Sentiment Trend", this::runProblem1);
         Button btn2 = createBtn("2. Damage Class", this::runProblem2);
         Button btn3 = createBtn("3. Relief Sentiment", this::runProblem3);
         Button btn4 = createBtn("4. Relief Needs Trend", this::runProblem4);
 
         HBox controls = new HBox(10, modelSelector, btn1, btn2, btn3, btn4);
-        controls.setPadding(new Insets(0, 0, 10, 0));
         controls.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        
+        // Add progressBox to the main layout
+        HBox topBar = new HBox(20, controls, progressBox);
+        topBar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
-        this.getChildren().addAll(lblTitle, controls, chartContainer);
+        this.getChildren().addAll(lblTitle, topBar, chartContainer);
     }
 
+    // Helper to update progress from background thread
     private Button createBtn(String text, Runnable action) {
         Button btn = new Button(text);
         btn.setPrefSize(180, 50);
@@ -68,18 +81,28 @@ public class AnalysisPanel extends VBox {
         btn.setOnAction(e -> action.run());
         return btn;
     }
-
+    private void updateProgress(double p) {
+        Platform.runLater(() -> {
+            progressBar.setProgress(p);
+            progressLabel.setText(String.format("%.0f%%", p * 100));
+        });
+    }
     // =================================================================================
     // PROBLEM 1: Sentiment Time Series
     // =================================================================================
     private void runProblem1() {
         if (checkData(true)) return;
+        updateProgress(0); // Reset
         new Thread(() -> {
             try {
                 String type = getModelType();
-                context.setStatus("Running Sentiment Time Series (" + type + ")...", false);
-                // PASS 'type' TO CLIENT
-                var data = context.getClient().getSentimentTimeSeries(context.getTexts(), context.getDates(), type);
+                context.setStatus("Processing Problem 1 (" + type + ")...", false);
+                
+                // Pass 'this::updateProgress'
+                var data = context.getClient().getSentimentTimeSeries(
+                    context.getTexts(), context.getDates(), type, this::updateProgress
+                );
+                
                 Platform.runLater(() -> displaySentimentTimeSeries(data));
             } catch (Exception e) { context.setStatus("Error: " + e.getMessage(), true); }
         }).start();
@@ -108,18 +131,6 @@ public class AnalysisPanel extends VBox {
     // =================================================================================
     // PROBLEM 2: Damage Classification
     // =================================================================================
-    private void runProblem2() {
-        if (checkData(false)) return;
-        new Thread(() -> {
-            try {
-                String type = getModelType();
-                context.setStatus("Running Damage Classification (" + type + ")...", false);
-                // PASS 'type' TO CLIENT
-                var data = context.getClient().getDamageClassification(context.getTexts(), type);
-                Platform.runLater(() -> displayDamageTypes(data));
-            } catch (Exception ex) { context.setStatus("Error: " + ex.getMessage(), true); }
-        }).start();
-    }
     private void displayDamageTypes(List<String> categories) {
         Map<String, Long> counts = new HashMap<>();
         for (String c : categories) counts.put(c, counts.getOrDefault(c, 0L) + 1);
@@ -140,19 +151,36 @@ public class AnalysisPanel extends VBox {
     // =================================================================================
     // PROBLEM 3: Relief Sentiment
     // =================================================================================
-    private void runProblem3() {
+    private void runProblem2() {
         if (checkData(false)) return;
+        updateProgress(0);
         new Thread(() -> {
             try {
                 String type = getModelType();
-                context.setStatus("Running Relief Sentiment (" + type + ")...", false);
-                // PASS 'type' TO CLIENT
-                var data = context.getClient().getReliefSentiment(context.getTexts(), type);
+                context.setStatus("Processing Problem 2 (" + type + ")...", false);
+                
+                var data = context.getClient().getDamageClassification(
+                    context.getTexts(), type, this::updateProgress
+                );
+                
+                Platform.runLater(() -> displayDamageTypes(data));
+            } catch (Exception ex) { context.setStatus("Error: " + ex.getMessage(), true); }
+        }).start();
+    }
+    private void runProblem3() {
+        if (checkData(false)) return;
+        updateProgress(0);
+        new Thread(() -> {
+            try {
+                String type = getModelType();
+                context.setStatus("Processing Problem 3...", false);
+                var data = context.getClient().getReliefSentiment(
+                    context.getTexts(), type, this::updateProgress
+                );
                 Platform.runLater(() -> displayReliefSentiment(data));
             } catch (Exception ex) { context.setStatus("Error: " + ex.getMessage(), true); }
         }).start();
     }
-
     private void displayReliefSentiment(Map<String, Map<String, Double>> data) {
         CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Relief Sector");
         NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Mentions");
@@ -176,12 +204,14 @@ public class AnalysisPanel extends VBox {
     // =================================================================================
     private void runProblem4() {
         if (checkData(true)) return;
+        updateProgress(0);
         new Thread(() -> {
             try {
                 String type = getModelType();
-                context.setStatus("Running Relief Time Series (" + type + ")...", false);
-                // PASS 'type' TO CLIENT
-                var data = context.getClient().getReliefTimeSeries(context.getTexts(), context.getDates(), type);
+                context.setStatus("Processing Problem 4...", false);
+                var data = context.getClient().getReliefTimeSeries(
+                    context.getTexts(), context.getDates(), type, this::updateProgress
+                );
                 Platform.runLater(() -> displayReliefTimeSeries(data));
             } catch (Exception ex) { context.setStatus("Error: " + ex.getMessage(), true); }
         }).start();
