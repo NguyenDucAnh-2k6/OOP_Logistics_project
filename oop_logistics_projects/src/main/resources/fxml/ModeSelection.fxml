@@ -4,25 +4,25 @@
 
 <VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.oop.logistics.ui.controllers.ModeSelectionController"
-      alignment="CENTER" spacing="30">
+      alignment="CENTER" spacing="40">
 
     <Label text="Choose Your Workflow" styleClass="header-label"/>
 
-    <HBox spacing="40" alignment="CENTER">
-        <Button onAction="#handleReadyData" styleClass="card-pane" minWidth="250" minHeight="150">
+    <HBox spacing="50" alignment="CENTER">
+        <Button onAction="#handleReadyData" styleClass="workflow-btn, workflow-ready" minWidth="280" minHeight="180">
             <graphic>
-                <VBox alignment="CENTER" spacing="10">
-                    <Label text="📁 Use Ready-Data" style="-fx-font-weight: bold; -fx-font-size: 16;"/>
-                    <Label text="Analyze existing CSV files immediately" style="-fx-text-fill: grey;" wrapText="true"/>
+                <VBox alignment="CENTER" spacing="15">
+                    <Label text="📁 Use Ready-Data" styleClass="workflow-text-title"/>
+                    <Label text="Analyze existing CSV files immediately" styleClass="workflow-text-desc"/>
                 </VBox>
             </graphic>
         </Button>
 
-        <Button onAction="#handleAddData" styleClass="card-pane" minWidth="250" minHeight="150">
+        <Button onAction="#handleAddData" styleClass="workflow-btn, workflow-add" minWidth="280" minHeight="180">
             <graphic>
-                <VBox alignment="CENTER" spacing="10">
-                    <Label text="➕ Add Data" style="-fx-font-weight: bold; -fx-font-size: 16;"/>
-                    <Label text="Crawl new data from Facebook or News sites" style="-fx-text-fill: grey;" wrapText="true"/>
+                <VBox alignment="CENTER" spacing="15">
+                    <Label text="➕ Add Data" styleClass="workflow-text-title"/>
+                    <Label text="Crawl new data from Facebook or News sites" styleClass="workflow-text-desc"/>
                 </VBox>
             </graphic>
         </Button>

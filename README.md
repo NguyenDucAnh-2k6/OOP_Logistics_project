@@ -191,6 +191,50 @@ Each class has one reason to change.
 - New search strategies added by implementing `SearchStrategy` interface
 - No modification to existing code needed
 
+### 7. **Model-View-Controller (MVC) Pattern** (JavaFX UI)
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    MVC Architecture                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  View (FXML + JavaFX Components)                           │
+│  ├── MainView.fxml          - Application main layout      │
+│  ├── InputPanel.fxml        - User input interface         │
+│  ├── DataSourceSelection.fxml - Data source selection     │
+│  ├── AnalysisPanel.fxml     - Analysis results display    │
+│  ├── ModeSelection.fxml     - Mode selection interface    │
+│  └── KeywordContribution.fxml - Keyword contribution view │
+│                                                             │
+│  ▲                                                         │
+│  │ Updates UI                                             │
+│  │                                                         │
+│  │ User Interactions                                       │
+│  │                                                         │
+│  ▼                                                         │
+│                                                             │
+│  Controller (UI Controllers)                               │
+│  ├── Handles user events (button clicks, form inputs)     │
+│  ├── Updates Model based on user actions                  │
+│  ├── Retrieves data from Model to update View             │
+│  └── Coordinates between View and Model                   │
+│                                                             │
+│  ▲                                                         │
+│  │ Queries & Updates                                      │
+│  │                                                         │
+│  ▼                                                         │
+│                                                             │
+│  Model (Business Logic & Data)                             │
+│  ├── AnalysisAPI - Analysis interface                     │
+│  ├── PythonAnalysisClient - Data access                   │
+│  ├── CategoryManager - Configuration management           │
+│  ├── Crawler objects - News data models                   │
+│  └── NewsResult - Data model for results                  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Benefit**: Clear separation of concerns; UI, business logic, and data are independent; easy to test and maintain; UI can be updated without affecting business logic.
+
 ---
 
 ## Dependencies & Libraries
