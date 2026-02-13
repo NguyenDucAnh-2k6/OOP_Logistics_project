@@ -1,4 +1,4 @@
-package com.oop.logistics.ui.components;
+package com.oop.logistics.ui.controllers;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

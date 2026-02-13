@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.oop.logistics.ui.controllers.AnalysisController"
+      spacing="15" styleClass="card-pane" VBox.vgrow="ALWAYS">
+
+    <HBox spacing="15" alignment="CENTER_LEFT">
+        <Label text="Analytics Dashboard" styleClass="header-label" style="-fx-font-size: 18px;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        
+        <Label text="Progress:"/>
+        <ProgressBar fx:id="progressBar" prefWidth="150" progress="0.0"/>
+        <Label fx:id="progressLabel" text="0%"/>
+    </HBox>
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <ComboBox fx:id="modelSelector" prefWidth="200">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="AI Model (Accurate - Slower)"/>
+                    <String fx:value="Keyword Search (Instant)"/>
+                </FXCollections>
+            </items>
+            <value>
+                <String fx:value="AI Model (Accurate - Slower)"/>
+            </value>
+        </ComboBox>
+
+        <Button text="1. Sentiment Trend" onAction="#runProblem1" styleClass="button, button-success"/>
+        <Button text="2. Damage Class" onAction="#runProblem2" styleClass="button, button-success"/>
+        <Button text="3. Relief Sentiment" onAction="#runProblem3" styleClass="button, button-success"/>
+        <Button text="4. Relief Needs" onAction="#runProblem4" styleClass="button, button-success"/>
+    </HBox>
+
+    <VBox fx:id="chartContainer" VBox.vgrow="ALWAYS" style="-fx-border-color: #ecf0f1; -fx-border-width: 2px; -fx-padding: 10;">
+        <Label text="Select an analysis above to generate charts." style="-fx-text-fill: grey;" alignment="CENTER"/>
+    </VBox>
+
+</VBox>

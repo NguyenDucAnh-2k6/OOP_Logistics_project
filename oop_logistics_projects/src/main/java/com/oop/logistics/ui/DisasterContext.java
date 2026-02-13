@@ -1,11 +1,7 @@
 package com.oop.logistics.ui;
 
 import com.oop.logistics.analysis.PythonAnalysisClient;
-import com.oop.logistics.preprocessing.DateExtract;
-import com.oop.logistics.ui.components.KeywordContributionPanel;
 import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
 import javafx.scene.control.Label;
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,8 +16,8 @@ public class DisasterContext {
     private final List<String> rawDates = new ArrayList<>();
     private String dataSource;
     private Label statusLabel;
-    private Consumer<Runnable> uiCallback; // To run actions on Main Thread
-    private String currentKeywordConfigPath; // Track which config file to use
+    
+    // Removed unused uiCallback and currentKeywordConfigPath if they aren't used elsewhere
 
     public DisasterContext() {
         this.client = new PythonAnalysisClient("http://127.0.0.1:8000");
@@ -60,7 +56,6 @@ public class DisasterContext {
                     rawTexts.clear();
                     rawDates.clear();
                     
-                    // Robust CSV Reading Logic
                     try (BufferedReader br = new BufferedReader(new FileReader(f))) {
                         String line;
                         StringBuilder sb = new StringBuilder();
@@ -89,7 +84,7 @@ public class DisasterContext {
         }).start();
     }
 
-    // --- Helper Methods (Moved from App) ---
+    // --- Helper Methods ---
     private int countQuotes(String s) {
         int count = 0;
         for (char c : s.toCharArray()) if (c == '"') count++;
@@ -128,30 +123,6 @@ public class DisasterContext {
         return dateStr;
     }
 
-    // --- Keyword Contribution Feature ---
-    public void openKeywordContribution() {
-        // Ensure UI updates happen on the JavaFX Application Thread
-        Platform.runLater(() -> {
-            try {
-                // 1. Create a new Window (Stage)
-                Stage popupStage = new Stage();
-                popupStage.setTitle("Contribute Keywords");
-
-                // 2. Initialize the Panel
-                // The argument () -> popupStage.close() defines what happens when "Back" is clicked
-                KeywordContributionPanel panel = new KeywordContributionPanel(() -> popupStage.close());
-
-                // 3. Create Scene and Show
-                Scene scene = new Scene(panel.getView(), 600, 500); // Set explicit size
-                popupStage.setScene(scene);
-                
-                // 4. Show the window
-                popupStage.show();
-                
-            } catch (Exception e) {
-                System.err.println("Error opening keyword contribution: " + e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
+    // REMOVED: openKeywordContribution() method. 
+    // Navigation is now handled by MainController.
 }

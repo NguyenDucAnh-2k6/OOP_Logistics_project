@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.oop.logistics.ui.controllers.InputController"
+      spacing="15" styleClass="card-pane">
+
+    <Label text="📝 Data Input" styleClass="header-label" style="-fx-font-size: 18px;"/>
+
+    <GridPane hgap="10" vgap="10">
+        <Label text="URL:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <TextField fx:id="urlField" promptText="Paste URL here..." GridPane.columnIndex="1" GridPane.rowIndex="0" HBox.hgrow="ALWAYS" prefWidth="400"/>
+        
+        <Label fx:id="lblDate" text="Date:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <TextField fx:id="dateField" promptText="dd/mm/yyyy" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        
+        <Label fx:id="lblCookies" text="Cookies:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+        <HBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="2" fx:id="cookieBox">
+            <TextField fx:id="cUserField" promptText="c_user"/>
+            <TextField fx:id="xsField" promptText="xs"/>
+            <TextField fx:id="frField" promptText="fr"/>
+        </HBox>
+    </GridPane>
+
+    <HBox spacing="15">
+        <Button text="🔗 Crawl" onAction="#handleCrawl" styleClass="button, button-primary"/>
+        <Button text="⚙️ Preprocess" onAction="#handlePreprocess" styleClass="button, button-action"/>
+    </HBox>
+</VBox>

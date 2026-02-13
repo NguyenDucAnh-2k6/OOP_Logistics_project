@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.oop.logistics.ui.controllers.ModeSelectionController"
+      alignment="CENTER" spacing="30">
+
+    <Label text="Choose Your Workflow" styleClass="header-label"/>
+
+    <HBox spacing="40" alignment="CENTER">
+        <Button onAction="#handleReadyData" styleClass="card-pane" minWidth="250" minHeight="150">
+            <graphic>
+                <VBox alignment="CENTER" spacing="10">
+                    <Label text="📁 Use Ready-Data" style="-fx-font-weight: bold; -fx-font-size: 16;"/>
+                    <Label text="Analyze existing CSV files immediately" style="-fx-text-fill: grey;" wrapText="true"/>
+                </VBox>
+            </graphic>
+        </Button>
+
+        <Button onAction="#handleAddData" styleClass="card-pane" minWidth="250" minHeight="150">
+            <graphic>
+                <VBox alignment="CENTER" spacing="10">
+                    <Label text="➕ Add Data" style="-fx-font-weight: bold; -fx-font-size: 16;"/>
+                    <Label text="Crawl new data from Facebook or News sites" style="-fx-text-fill: grey;" wrapText="true"/>
+                </VBox>
+            </graphic>
+        </Button>
+    </HBox>
+</VBox>

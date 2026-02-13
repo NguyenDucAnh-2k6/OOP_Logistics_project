@@ -1,4 +1,4 @@
-package com.oop.logistics.ui.components;
+package com.oop.logistics.ui.controllers;
 
 import com.oop.logistics.crawler.FacebookCrawler;
 import com.oop.logistics.crawler.NewsCrawler;
@@ -8,56 +8,33 @@ import com.oop.logistics.preprocessing.NewsPreprocess;
 import com.oop.logistics.preprocessing.StripLevel;
 import com.oop.logistics.ui.DisasterContext;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Button;
+import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
 
-public class InputPanel extends VBox {
-    private final DisasterContext context;
-    private final TextField urlField = new TextField();
-    private final TextField dateField = new TextField();
-    private final TextField cUserField = new TextField();
-    private final TextField xsField = new TextField();
-    private final TextField frField = new TextField();
+public class InputController {
+    @FXML private TextField urlField, dateField, cUserField, xsField, frField;
+    @FXML private Label lblDate, lblCookies;
+    @FXML private HBox cookieBox;
 
-    public InputPanel(DisasterContext context) {
+    private DisasterContext context;
+
+    public void setContext(DisasterContext context) {
         this.context = context;
-        this.setPadding(new Insets(15));
-        this.setSpacing(10);
-        this.setStyle("-fx-background-color: white; -fx-border-color: #bdc3c7; -fx-border-radius: 5;");
-        
-        setupUI();
+        updateVisibility();
     }
 
-    private void setupUI() {
-        Label inputLabel = new Label("📝 Input");
-        inputLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-        
-        urlField.setPromptText("Paste URL here...");
-        dateField.setPromptText("Date (dd/mm/yyyy)");
-        
-        this.getChildren().addAll(inputLabel, new Label("URL:"), urlField);
-
-        if ("Facebook".equals(context.getDataSource())) {
-            this.getChildren().addAll(new Label("Date:"), dateField, new Label("Cookies (c_user, xs, fr):"), cUserField, xsField, frField);
-        }
-
-        Button crawlBtn = new Button("🔗 Crawl");
-        crawlBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white;");
-        crawlBtn.setOnAction(e -> performCrawl());
-
-        Button processBtn = new Button("⚙️ Preprocess");
-        processBtn.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white;");
-        processBtn.setOnAction(e -> performPreprocess());
-
-        HBox actions = new HBox(10, crawlBtn, processBtn);
-        this.getChildren().add(actions);
+    private void updateVisibility() {
+        boolean isFb = "Facebook".equals(context.getDataSource());
+        lblDate.setVisible(isFb); lblDate.setManaged(isFb);
+        dateField.setVisible(isFb); dateField.setManaged(isFb);
+        lblCookies.setVisible(isFb); lblCookies.setManaged(isFb);
+        cookieBox.setVisible(isFb); cookieBox.setManaged(isFb);
     }
 
-    private void performCrawl() {
+    @FXML
+    private void handleCrawl() {
         String url = urlField.getText();
         context.setStatus("Crawling: " + url, false);
         
@@ -79,7 +56,8 @@ public class InputPanel extends VBox {
         }).start();
     }
 
-    private void performPreprocess() {
+    @FXML
+    private void handlePreprocess() {
         context.setStatus("Preprocessing...", false);
         new Thread(() -> {
             try {

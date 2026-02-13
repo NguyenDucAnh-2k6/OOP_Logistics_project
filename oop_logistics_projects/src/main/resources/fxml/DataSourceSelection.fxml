@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.oop.logistics.ui.controllers.DataSourceController"
+      alignment="CENTER" spacing="20" styleClass="card-pane" maxWidth="500">
+
+    <Label text="Select Data Source" styleClass="header-label"/>
+    
+    <VBox spacing="15" alignment="CENTER">
+        <Button text="Facebook Data" onAction="#selectFacebook" 
+                styleClass="button, button-primary" prefWidth="200"/>
+                
+        <Button text="News Data" onAction="#selectNews" 
+                styleClass="button, button-primary" prefWidth="200"/>
+                
+        <Separator/>
+        
+        <Button text="Add Personal Keywords" onAction="#openKeywords" 
+                styleClass="button, button-action" prefWidth="200"/>
+    </VBox>
+</VBox>
