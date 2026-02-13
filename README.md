@@ -26,7 +26,7 @@ This application solves four key problems for humanitarian logistics:
 
 The system combines:
 - **Java backend**: Data crawling, preprocessing, UI management
-- **Python ML services**: Deep learning models for sentiment and damage analysis
+- **Python ML services**: Keyword search/ML/DL models for sentiment and damage analysis
 - **JavaFX GUI**: User-friendly desktop application interface
 
 ---
