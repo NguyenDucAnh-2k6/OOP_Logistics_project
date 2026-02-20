@@ -11,7 +11,7 @@ public class Launcher {
         DatabaseManager.initializeDatabase(); 
 
         // 2. RUN THE MIGRATION (Delete or comment this out after you run the app once!)
-        DatabaseMigrator.migrateLegacyData();
+        //DatabaseMigrator.migrateLegacyData();
 
         // 3. Start the UI
         DisasterFXApp.main(args);

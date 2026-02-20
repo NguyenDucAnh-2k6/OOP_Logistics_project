@@ -195,7 +195,13 @@ public class FacebookCrawler {
                     }
                 }
                 if (commentText.isEmpty()) continue;
-
+                //Extract author
+                String author = "Facebook User";
+                try {
+                    WebElement authorEl = article.findElement(By.xpath(".//span[@dir='auto']//strong | .//h3[@dir='auto'] | .//a[@role='link']/span"));
+                    if (authorEl != null) author = authorEl.getText();
+                } catch (Exception ignored) {}
+                // -----------------------------------------
                 // --- Extract ID ---
                 String permalink = "";
                 WebElement dateLink = null;
@@ -220,7 +226,7 @@ public class FacebookCrawler {
 
                 // --- SAVE TO OBJECT INSTEAD OF CSV ---
                 // We add the scraped comment to our FacebookResult list
-                result.comments.add(commentText);
+                result.comments.add(new FacebookResult.CommentData(author, commentText, dateStr));
                 count++;
 
             } catch (Exception e) {}
@@ -252,68 +258,76 @@ public class FacebookCrawler {
 
     // NEW ROBUST DATE EXTRACTOR
     private String extractDateFromArticle(WebElement article) {
-        
-        // If crawlDate is set via setCrawlDate(), use it for all comments
-        if (crawlDate != null && !crawlDate.isEmpty()) {
-            return crawlDate;
-        }
-
-        // 1️⃣ abbr có title (tốt nhất)
+        // 1️⃣ Find the "a" tag that links to the comment itself. 
+        // Facebook almost always places the timestamp text directly inside this link.
         try {
-            WebElement abbr = article.findElement(By.xpath(".//abbr[@title]"));
-            String title = abbr.getAttribute("title");
-            if (title != null && !title.isEmpty()) {
-                return normalizeDate(title);
+            List<WebElement> links = article.findElements(By.tagName("a"));
+            for (WebElement link : links) {
+                String href = link.getAttribute("href");
+                if (href != null && (href.contains("comment_id=") || href.contains("&cid=") || href.contains("reply_comment_id="))) {
+                    String timeText = link.getText().trim();
+                    if (!timeText.isEmpty()) {
+                        return parseRelativeTime(timeText.toLowerCase());
+                    }
+                }
             }
         } catch (Exception ignored) {}
 
-        // 2️⃣ aria-label (Facebook dùng rất nhiều)
+        // 2️⃣ Fallback: Look for spans containing time-related Vietnamese keywords
         try {
-            WebElement aria = article.findElement(
-                By.xpath(".//*[@aria-label and contains(@aria-label,'tháng')]")
-            );
-            String ariaLabel = aria.getAttribute("aria-label");
-            if (ariaLabel != null && !ariaLabel.isEmpty()) {
-                return normalizeDate(ariaLabel);
+            WebElement timeSpan = article.findElement(By.xpath(".//span[contains(text(), 'giờ') or contains(text(), 'phút') or contains(text(), 'giây') or contains(text(), 'ngày') or contains(text(), 'hôm qua') or contains(text(), 'tuần') or contains(text(), 'năm')]"));
+            if (timeSpan != null) {
+                return parseRelativeTime(timeSpan.getText().trim().toLowerCase());
             }
-        } catch (Exception ignored) {}
-
-        // 3️⃣ relative time (2 giờ, 3 ngày, Hôm qua)
-        try {
-            WebElement rel = article.findElement(By.xpath(".//abbr"));
-            String txt = rel.getText().toLowerCase();
-            return parseRelativeTime(txt);
         } catch (Exception ignored) {}
 
         return "Unknown";
     }
 
     private String parseRelativeTime(String raw) {
-        if (raw == null) return "Unknown";
+        if (raw == null || raw.isEmpty()) return "Unknown";
 
-        Calendar cal = Calendar.getInstance();
+        java.time.LocalDate now = java.time.LocalDate.now();
+        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-        if (raw.contains("giờ")) {
-            int h = extractNumber(raw);
-            cal.add(Calendar.HOUR, -h);
-        } else if (raw.contains("ngày")) {
-            int d = extractNumber(raw);
-            cal.add(Calendar.DAY_OF_MONTH, -d);
-        } else if (raw.contains("tuần")) {
-            int w = extractNumber(raw);
-            cal.add(Calendar.WEEK_OF_YEAR, -w);
-        } else if (raw.contains("hôm qua")) {
-            cal.add(Calendar.DAY_OF_MONTH, -1);
-        } else {
-            return raw;
-        }
+        try {
+            // "vừa xong", "15 phút", "2 giờ"
+            if (raw.contains("vừa xong") || raw.contains("phút") || raw.contains("giây") || raw.contains("giờ") || raw.contains("hr") || raw.contains("min") || raw.matches(".*\\d+h.*") || raw.matches(".*\\d+m.*")) {
+                return now.format(dtf);
+            } 
+            // "hôm qua"
+            else if (raw.contains("hôm qua") || raw.contains("yesterday")) {
+                return now.minusDays(1).format(dtf);
+            } 
+            // "3 ngày" or "3d"
+            else if (raw.contains("ngày") || raw.matches(".*\\d+\\s*d.*")) {
+                int d = extractNumber(raw);
+                if (d > 0) return now.minusDays(d).format(dtf);
+            } 
+            // "2 tuần" or "2w"
+            else if (raw.contains("tuần") || raw.matches(".*\\d+\\s*w.*")) {
+                int w = extractNumber(raw);
+                if (w > 0) return now.minusWeeks(w).format(dtf);
+            } 
+            // "1 năm" or "1y"
+            else if (raw.contains("năm") || raw.matches(".*\\d+\\s*y.*")) {
+                int y = extractNumber(raw);
+                if (y > 0) return now.minusYears(y).format(dtf);
+            }
+            
+            // Explicit dates like "28 tháng 9, 2024", "28 tháng 9", "28/09/2024"
+            java.util.regex.Matcher mDate = java.util.regex.Pattern.compile("(\\d{1,2})[\\/\\-\\s]+(?:tháng\\s+)?(\\d{1,2})(?:[\\/\\-\\s,]+(?:năm\\s+)?(\\d{4}))?").matcher(raw);
+            if (mDate.find()) {
+                int day = Integer.parseInt(mDate.group(1));
+                int month = Integer.parseInt(mDate.group(2));
+                int year = mDate.group(3) != null ? Integer.parseInt(mDate.group(3)) : now.getYear();
+                return String.format("%02d/%02d/%04d", day, month, year);
+            }
+            
+        } catch (Exception e) {}
 
-        return String.format(
-            "%02d-%02d-%d",
-            cal.get(Calendar.DAY_OF_MONTH),
-            cal.get(Calendar.MONTH) + 1,
-            cal.get(Calendar.YEAR)
-        );
+        // If it failed to parse exactly but we got this far, it's safer to default to today rather than "Unknown"
+        return now.format(dtf); 
     }
 
     private int extractNumber(String s) {
@@ -338,17 +352,21 @@ public class FacebookCrawler {
 
     private void clickMainPagination(JavascriptExecutor js) {
         try {
-            List<WebElement> viewMore = driver.findElements(By.xpath("//span[contains(text(), 'View more comments') or contains(text(), 'Xem thêm bình luận') or contains(text(), 'Xem các bình luận trước')]"));
+            // Broadened XPath to catch <div> buttons and multiple text variations
+            List<WebElement> viewMore = driver.findElements(By.xpath(
+                "//div[@role='button']//span[contains(text(), 'View more') or contains(text(), 'Xem thêm') or contains(text(), 'bình luận') or contains(text(), 'previous comments') or contains(text(), 'ẩn')]"
+            ));
+            
             for(WebElement vm : viewMore) {
                 if(vm.isDisplayed()) {
+                    js.executeScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", vm);
                     js.executeScript("arguments[0].click();", vm);
-                    // INCREASED SLEEP: 5s for heavy load
-                    sleep(5000);
+                    // INCREASED SLEEP: 5s for heavy load of hundreds of comments
+                    sleep(5000); 
                 }
             }
         } catch (Exception e) {}
     }
-
     private void scrollReel(JavascriptExecutor js) {
         try {
             List<WebElement> articles = driver.findElements(By.xpath("//div[@role='article']"));

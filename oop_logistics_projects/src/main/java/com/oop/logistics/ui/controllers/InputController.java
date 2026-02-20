@@ -70,8 +70,9 @@ public class InputController {
                         
                         // Save all extracted comments linked to this post
                         if (newsId != -1 && fbData.comments != null) {
-                            for (String comment : fbData.comments) {
-                                repo.saveComment(newsId, comment, "Facebook User", date);
+                            // UPDATED: Now loops through CommentData objects to get specific dates/authors
+                            for (FacebookResult.CommentData comment : fbData.comments) {
+                                repo.saveComment(newsId, comment.text, comment.author, comment.date);
                             }
                         }
                     }
@@ -100,7 +101,6 @@ public class InputController {
             }
         }).start();
     }
-
     @FXML
     private void handlePreprocess() {
         // Preprocessing now just fetches clean data from SQLite
