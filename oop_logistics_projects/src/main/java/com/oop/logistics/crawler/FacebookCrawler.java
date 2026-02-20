@@ -19,7 +19,7 @@ public class FacebookCrawler {
     private WebDriver driver;
     private WebDriverWait wait;
     private Actions actions;
-    private String outputCsv = "YagiComments_fixed.csv";
+    //private String outputCsv = "YagiComments_fixed.csv";
     
     private Set<String> crawledIds = new HashSet<>();
     private int unknownIdCounter = 0;
@@ -56,7 +56,7 @@ public class FacebookCrawler {
         System.out.println("✓ Crawl date set to: " + date);
     }
 
-    public void crawl(String url) {
+    public FacebookResult crawlAndReturn(String url) {
         driver.get(url);
         sleep(5000); 
 
@@ -65,16 +65,9 @@ public class FacebookCrawler {
 
         selectFilterMode();
 
-        // OVERWRITE MODE: Always delete and recreate the file with header
-        // This prevents appending to old data from previous sessions
-        try (PrintWriter writer = new PrintWriter(new FileWriter(outputCsv, false))) {
-            writer.println("date,text,type"); 
-            System.out.println("✓ Created new " + outputCsv + " (Overwrite mode)");
-        } catch (IOException e) { 
-            e.printStackTrace(); 
-        }
-
-        performDeepCrawl(isReel);
+        // No more CSV Overwrite mode here!
+        
+        return performDeepCrawl(isReel); // Return the result from the deep crawl
     }
 
     private void setupReelContext() {
@@ -99,19 +92,21 @@ public class FacebookCrawler {
         }
     }
 
-    private void performDeepCrawl(boolean isReel) {
+    private FacebookResult performDeepCrawl(boolean isReel) {
         System.out.println("Starting Deep Crawl...");
         JavascriptExecutor js = (JavascriptExecutor) driver;
         int noNewDataCount = 0;
         int totalCollected = 0;
         
+        FacebookResult result = new FacebookResult();
+        result.content = "Facebook Post/Reel Video"; // Default content text for the main post
+
         while (noNewDataCount < 20) {
             expandAllVisibleReplies();
-
-            // ⬇️ Wait for replies to render
             waitForCommentsToStabilize(15);
 
-            int newFound = scrapeVisibleComments();
+            // Pass the result object so the scraper can add comments to it
+            int newFound = scrapeVisibleComments(result); 
             totalCollected += newFound;
 
             if (newFound > 0) {
@@ -122,22 +117,20 @@ public class FacebookCrawler {
                 System.out.print(".");
             }
 
-            // ⬇️ Wait for DOM to stabilize before scroll
             waitForCommentsToStabilize(10);
 
-            // Scroll logic
             if (isReel) {
                 scrollReel(js);
             } else {
                 js.executeScript("window.scrollBy(0, 400);");
             }
 
-            // Pagination
             clickMainPagination(js);
             waitForCommentsToStabilize(10);
         }
 
         System.out.println("\nFinished. Total: " + totalCollected);
+        return result; // Return the final collected data
     }
 
     private void expandAllVisibleReplies() {
@@ -183,60 +176,56 @@ public class FacebookCrawler {
         }
     }
 
-    private int scrapeVisibleComments() {
+    private int scrapeVisibleComments(FacebookResult result) {
         int count = 0;
         JavascriptExecutor js = (JavascriptExecutor) driver;
         List<WebElement> articles = driver.findElements(By.xpath("//div[@role='article']"));
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(outputCsv, true))) { 
-            for (WebElement article : articles) {
-                try {
-                    expandTruncatedCommentText(js, article);
+        for (WebElement article : articles) {
+            try {
+                expandTruncatedCommentText(js, article);
 
-                    // --- Extract Text ---
-                    String commentText = "";
-                    List<WebElement> textDivs = article.findElements(By.xpath(".//div[@dir='auto']"));
-                    for (WebElement div : textDivs) {
-                        if (div.findElements(By.tagName("a")).isEmpty()) {
-                            commentText = div.getText().trim();
-                            if (!commentText.isEmpty()) break;
-                        }
+                // --- Extract Text ---
+                String commentText = "";
+                List<WebElement> textDivs = article.findElements(By.xpath(".//div[@dir='auto']"));
+                for (WebElement div : textDivs) {
+                    if (div.findElements(By.tagName("a")).isEmpty()) {
+                        commentText = div.getText().trim();
+                        if (!commentText.isEmpty()) break;
                     }
-                    if (commentText.isEmpty()) continue;
+                }
+                if (commentText.isEmpty()) continue;
 
-                    // --- Extract ID ---
-                    String permalink = "";
-                    WebElement dateLink = null;
-                    List<WebElement> links = article.findElements(By.tagName("a"));
-                    for (WebElement link : links) {
-                        String href = link.getAttribute("href");
-                        if (href != null && (href.contains("comment_id=") || href.contains("&cid="))) {
-                            permalink = href;
-                            dateLink = link;
-                            if (href.contains("comment_id=")) break; 
-                        }
+                // --- Extract ID ---
+                String permalink = "";
+                WebElement dateLink = null;
+                List<WebElement> links = article.findElements(By.tagName("a"));
+                for (WebElement link : links) {
+                    String href = link.getAttribute("href");
+                    if (href != null && (href.contains("comment_id=") || href.contains("&cid="))) {
+                        permalink = href;
+                        dateLink = link;
+                        if (href.contains("comment_id=")) break; 
                     }
+                }
 
-                    boolean reply = isReply(article);
-                    String type = reply ? "Reply" : "Top-level";
+                boolean reply = isReply(article);
+                String type = reply ? "Reply" : "Top-level";
 
-                    String dateStr = extractDateFromArticle(article);
-                    String uid = buildUniqueId(commentText, dateStr, type);
+                String dateStr = extractDateFromArticle(article);
+                String uid = buildUniqueId(commentText, dateStr, type);
 
-                    if (crawledIds.contains(uid)) continue;
-                    crawledIds.add(uid);
+                if (crawledIds.contains(uid)) continue;
+                crawledIds.add(uid);
 
-                    writer.println(String.format(
-                        "\"%s\",\"%s\",\"%s\"",
-                        dateStr,
-                        commentText.replace("\"", "\"\""),
-                        type
-                    ));
-                    count++;
+                // --- SAVE TO OBJECT INSTEAD OF CSV ---
+                // We add the scraped comment to our FacebookResult list
+                result.comments.add(commentText);
+                count++;
 
-                } catch (Exception e) {}
-            }
-        } catch (IOException e) { e.printStackTrace(); }
+            } catch (Exception e) {}
+        }
+        
         return count;
     }
     

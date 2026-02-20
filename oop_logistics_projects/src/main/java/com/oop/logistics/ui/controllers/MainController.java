@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.StackPane;
 import java.io.IOException;
 
@@ -12,6 +13,9 @@ public class MainController {
 
     @FXML private StackPane contentArea;
     @FXML private Label statusLabel;
+    
+    // --- NEW: Link to FXML text field ---
+    @FXML private TextField disasterField;
 
     private DisasterContext context;
 
@@ -21,9 +25,21 @@ public class MainController {
         loadModeSelection();
     }
 
+    // --- NEW: Save disaster to context ---
+    @FXML
+    private void handleSetDisaster() {
+        if (context != null && disasterField.getText() != null && !disasterField.getText().trim().isEmpty()) {
+            context.setDisasterName(disasterField.getText().trim());
+            context.setStatus("✅ Active Disaster: " + context.getDisasterName(), false);
+        }
+    }
+
     @FXML
     private void handleReset() {
         context.clearData();
+        if (disasterField != null) {
+            disasterField.clear();
+        }
         loadModeSelection();
     }
 
@@ -35,7 +51,7 @@ public class MainController {
             Parent view = loader.load();
             
             ModeSelectionController ctrl = loader.getController();
-            ctrl.setMainController(this); // Pass reference back to main for navigation
+            ctrl.setMainController(this); 
             
             contentArea.getChildren().setAll(view);
         } catch (IOException e) { e.printStackTrace(); }
@@ -56,8 +72,6 @@ public class MainController {
 
     public void navigateToWorkflow(boolean isReadyMode) {
         try {
-            // Load Analysis View (which contains Input + Charts)
-            // Or create a wrapper. For simplicity, let's load a VBox containing Input (optional) + Analysis
             FXMLLoader analysisLoader = new FXMLLoader(getClass().getResource("/fxml/AnalysisPanel.fxml"));
             Parent analysisView = analysisLoader.load();
             AnalysisController analysisCtrl = analysisLoader.getController();
@@ -65,7 +79,6 @@ public class MainController {
 
             javafx.scene.layout.VBox layout = new javafx.scene.layout.VBox(20);
             
-            // If NOT ready mode, add Input Panel at the top
             if (!isReadyMode) {
                 FXMLLoader inputLoader = new FXMLLoader(getClass().getResource("/fxml/InputPanel.fxml"));
                 Parent inputView = inputLoader.load();
@@ -73,9 +86,8 @@ public class MainController {
                 inputCtrl.setContext(context);
                 layout.getChildren().add(inputView);
             } else {
-                // Auto-load default data for Ready Mode
-                String file = context.getDataSource().equals("Facebook") ? "YagiComments.csv" : "YagiNews_normalized.csv";
-                context.loadCsvData(file);
+                // Since you are using SQLite now, we no longer auto-load hardcoded CSVs here!
+                context.setStatus("In Ready Mode: Please enter a disaster name above and click 'Load Database Data'.", false);
             }
 
             layout.getChildren().add(analysisView);
@@ -83,18 +95,20 @@ public class MainController {
 
         } catch (IOException e) { e.printStackTrace(); }
     }
+
     public void navigateToKeywordContribution() {
         try {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/KeywordContribution.fxml"));
-        Parent view = loader.load();
-        
-        KeywordContributionController ctrl = loader.getController();
-        ctrl.setMainController(this);
-        
-        contentArea.getChildren().setAll(view);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/KeywordContribution.fxml"));
+            Parent view = loader.load();
+            
+            KeywordContributionController ctrl = loader.getController();
+            ctrl.setMainController(this);
+            
+            contentArea.getChildren().setAll(view);
         } catch (IOException e) { 
-        e.printStackTrace(); 
+            e.printStackTrace(); 
         }   
     }    
+
     public DisasterContext getContext() { return context; }
 }

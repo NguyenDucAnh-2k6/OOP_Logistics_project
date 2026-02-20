@@ -1,8 +1,8 @@
 package com.oop.logistics.ui.controllers;
-
+import com.oop.logistics.analysis.PythonAnalysisClient;
+import com.oop.logistics.database.DataRepository;
 import com.oop.logistics.ui.DisasterContext;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
@@ -55,7 +55,42 @@ public class AnalysisController {
         chartContainer.getChildren().add(chart);
         context.setStatus("✅ Analysis complete.", false);
     }
+    
+    @FXML
+    private void handleLoadDatabaseClick() {
+        // We get the currently selected disaster from your context
+        String currentDisaster = context.getDisasterName(); 
+        
+        if (currentDisaster != null && !currentDisaster.isEmpty()) {
+            loadDataFromDatabase(currentDisaster);
+        } else {
+            // If they haven't searched/selected a disaster in the main UI yet
+            context.setStatus("⚠️ Please search or select a disaster first.", true);
+        }
+    }
 
+    private void loadDataFromDatabase(String disasterName) {
+        context.setStatus("Fetching data from SQLite for: " + disasterName + "...", false);
+        updateProgress(0.0); // Reset progress bar
+        
+        new Thread(() -> {
+            DataRepository repo = new DataRepository();
+            DataRepository.AnalysisData data = repo.getAnalysisData(disasterName);
+            
+            Platform.runLater(() -> {
+                if (data.texts.isEmpty()) {
+                    context.setStatus("⚠️ No data found in database for: " + disasterName, true);
+                    context.getTexts().clear(); 
+                    context.getDates().clear();
+                } else {
+                    context.setTexts(data.texts); 
+                    context.setDates(data.dates);
+                    context.setStatus("✅ Successfully loaded " + data.texts.size() + " items from Database.", false);
+                    updateProgress(1.0); // Fill progress bar when done
+                }
+            });
+        }).start();
+    }
     // =================================================================================
     // PROBLEM 1: Sentiment Time Series
     // =================================================================================

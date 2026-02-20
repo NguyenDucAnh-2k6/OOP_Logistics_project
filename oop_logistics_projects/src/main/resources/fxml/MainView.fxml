@@ -8,8 +8,13 @@
             fx:id="mainRoot">
 
     <top>
-        <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="20">
+        <HBox styleClass="top-bar" alignment="CENTER_LEFT" spacing="15">
             <Label text="📊 Disaster Analysis Pipeline" styleClass="top-bar-title"/>
+            
+            <Label text="Disaster:" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
+            <TextField fx:id="disasterField" promptText="e.g. Typhoon Matmo" />
+            <Button text="Set" onAction="#handleSetDisaster" style="-fx-background-color: #27ae60; -fx-text-fill: white;"/>
+            
             <Region HBox.hgrow="ALWAYS"/>
             <Label fx:id="statusLabel" text="Ready" styleClass="status-label"/>
             <Button text="↺ Reset" onAction="#handleReset" styleClass="button, button-secondary"/>

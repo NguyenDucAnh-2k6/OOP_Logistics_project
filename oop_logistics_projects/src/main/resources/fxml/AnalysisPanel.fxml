@@ -19,6 +19,9 @@
     </HBox>
 
     <HBox spacing="10" alignment="CENTER_LEFT">
+        
+        <Button text="Load Database Data" onAction="#handleLoadDatabaseClick" styleClass="button"/>
+
         <ComboBox fx:id="modelSelector" prefWidth="200">
             <items>
                 <FXCollections fx:factory="observableArrayList">

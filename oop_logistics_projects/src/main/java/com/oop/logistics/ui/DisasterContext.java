@@ -16,7 +16,9 @@ public class DisasterContext {
     private final List<String> rawDates = new ArrayList<>();
     private String dataSource;
     private Label statusLabel;
-    
+    private String disasterName;
+    private List<String> texts;
+    private List<String> dates;
     // Removed unused uiCallback and currentKeywordConfigPath if they aren't used elsewhere
 
     public DisasterContext() {
@@ -39,7 +41,7 @@ public class DisasterContext {
     public List<String> getTexts() { return rawTexts; }
     public List<String> getDates() { return rawDates; }
     public PythonAnalysisClient getClient() { return client; }
-
+    
     public void clearData() {
         rawTexts.clear();
         rawDates.clear();
@@ -122,7 +124,18 @@ public class DisasterContext {
         }
         return dateStr;
     }
+    public void setDisasterName(String disasterName) { 
+        this.disasterName = disasterName; 
+    }
+    
+    public String getDisasterName() { 
+        return disasterName; 
+    }
+    public void setTexts(List<String> texts) {
+    this.texts = texts;
+    }
 
-    // REMOVED: openKeywordContribution() method. 
-    // Navigation is now handled by MainController.
+    public void setDates(List<String> dates) {
+    this.dates = dates;
+    }
 }

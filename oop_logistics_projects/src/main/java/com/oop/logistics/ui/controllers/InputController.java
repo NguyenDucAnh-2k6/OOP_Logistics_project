@@ -1,11 +1,12 @@
 package com.oop.logistics.ui.controllers;
 
 import com.oop.logistics.crawler.FacebookCrawler;
+import com.oop.logistics.crawler.FacebookResult;
 import com.oop.logistics.crawler.NewsCrawler;
 import com.oop.logistics.crawler.NewsCrawlerFactory;
+import com.oop.logistics.crawler.NewsResult;
+import com.oop.logistics.database.DataRepository;
 import com.oop.logistics.preprocessing.DateExtract;
-import com.oop.logistics.preprocessing.NewsPreprocess;
-import com.oop.logistics.preprocessing.StripLevel;
 import com.oop.logistics.ui.DisasterContext;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -36,40 +37,92 @@ public class InputController {
     @FXML
     private void handleCrawl() {
         String url = urlField.getText();
-        context.setStatus("Crawling: " + url, false);
+        String currentDisaster = context.getDisasterName();
+
+        if (currentDisaster == null || currentDisaster.isEmpty()) {
+            context.setStatus("⚠️ Please enter and 'Set' a disaster name in the top bar first!", true);
+            return;
+        }
+
+        context.setStatus("Crawling: " + url + " for " + currentDisaster, false);
         
         new Thread(() -> {
             try {
+                // 1. Initialize Database Repository
+                DataRepository repo = new DataRepository();
+                int disasterId = repo.getOrCreateDisaster(currentDisaster);
+
                 if ("Facebook".equals(context.getDataSource())) {
                     FacebookCrawler fb = new FacebookCrawler();
-                    if (!cUserField.getText().isEmpty()) 
+                    if (!cUserField.getText().isEmpty()) {
                         fb.loginWithCookies(cUserField.getText(), xsField.getText(), frField.getText());
-                    fb.setCrawlDate(dateField.getText().isEmpty() ? DateExtract.getCurrentDateDDMMYYYY() : dateField.getText());
-                    fb.crawl(url);
+                    }
+                    
+                    String date = dateField.getText().isEmpty() ? DateExtract.getCurrentDateDDMMYYYY() : dateField.getText();
+                    fb.setCrawlDate(date);
+                    
+                    // --- FACEBOOK SQLITE INTEGRATION ---
+                    FacebookResult fbData = fb.crawlAndReturn(url); 
+                    
+                    if (fbData != null) {
+                        // Save the main post to get a parent newsId
+                        int newsId = repo.saveNews(disasterId, url, "Facebook Post", fbData.content, date);
+                        
+                        // Save all extracted comments linked to this post
+                        if (newsId != -1 && fbData.comments != null) {
+                            for (String comment : fbData.comments) {
+                                repo.saveComment(newsId, comment, "Facebook User", date);
+                            }
+                        }
+                    }
                     fb.tearDown();
+
                 } else {
+                    // --- NEWS ARTICLE SQLITE INTEGRATION ---
                     NewsCrawler crawler = NewsCrawlerFactory.getCrawler(url);
-                    crawler.crawl(url);
+                    NewsResult article = crawler.crawl(url); 
+                    
+                    if (article != null) {
+                        // Save the news article directly
+                        repo.saveNews(disasterId, article.url, article.title, article.text, article.date);
+                    } else {
+                        throw new RuntimeException("Crawler returned null. Page format might be unsupported.");
+                    }
                 }
-                context.setStatus("✅ Crawl complete!", false);
-            } catch (Exception ex) { context.setStatus("❌ Crawl failed: " + ex.getMessage(), true); }
+
+                Platform.runLater(() -> {
+                    context.setStatus("✅ Crawl complete! Data routed to DB for: " + currentDisaster, false);
+                    urlField.clear();
+                });
+            } catch (Exception ex) { 
+                Platform.runLater(() -> context.setStatus("❌ Crawl failed: " + ex.getMessage(), true)); 
+            }
         }).start();
     }
 
     @FXML
     private void handlePreprocess() {
-        context.setStatus("Preprocessing...", false);
+        // Preprocessing now just fetches clean data from SQLite
+        context.setStatus("Fetching fresh data from database...", false);
+        
         new Thread(() -> {
             try {
-                if ("Facebook".equals(context.getDataSource())) {
-                    StripLevel.processFile("YagiComments_fixed.csv");
-                    Platform.runLater(() -> context.loadCsvData("YagiComments.csv"));
+                String currentDisaster = context.getDisasterName();
+                if (currentDisaster != null && !currentDisaster.isEmpty()) {
+                    DataRepository repo = new DataRepository();
+                    DataRepository.AnalysisData data = repo.getAnalysisData(currentDisaster);
+                    
+                    Platform.runLater(() -> {
+                        context.setTexts(data.texts);
+                        context.setDates(data.dates);
+                        context.setStatus("✅ Data loaded from DB! Ready to analyze.", false);
+                    });
                 } else {
-                    NewsPreprocess.normalizeNewsDateColumn();
-                    Platform.runLater(() -> context.loadCsvData("YagiNews_normalized.csv"));
+                    Platform.runLater(() -> context.setStatus("⚠️ No active disaster set.", true));
                 }
-                context.setStatus("✅ Preprocessing complete! Ready to analyze.", false);
-            } catch (Exception ex) { context.setStatus("❌ Error: " + ex.getMessage(), true); }
+            } catch (Exception ex) { 
+                Platform.runLater(() -> context.setStatus("❌ Error loading DB: " + ex.getMessage(), true)); 
+            }
         }).start();
     }
 }
