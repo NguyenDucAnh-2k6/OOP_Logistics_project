@@ -15,29 +15,38 @@ public class DataRepository {
     }
 
     // Fetch texts and dates for a specific disaster
-    public AnalysisData getAnalysisData(String disasterName) {
+    // Fetch texts and dates for a specific disaster AND source
+    public AnalysisData getAnalysisData(String disasterName, String sourceType) {
         AnalysisData data = new AnalysisData();
+        String sql;
         
-        // This query gets all comments linked to a specific disaster name
-        String sql = "SELECT c.content, c.published_date FROM comments c " +
-                     "JOIN news n ON c.news_id = n.id " +
-                     "JOIN disasters d ON n.disaster_id = d.id " +
-                     "WHERE d.name = ?";
+        if ("News".equalsIgnoreCase(sourceType)) {
+            // Fetch actual article content for News
+            sql = "SELECT n.content, n.published_date FROM news n " +
+                  "JOIN disasters d ON n.disaster_id = d.id " +
+                  "WHERE d.name = ? AND n.source_type = ?";
+        } else {
+            // Fetch comment content for Facebook
+            sql = "SELECT c.content, c.published_date FROM comments c " +
+                  "JOIN news n ON c.news_id = n.id " +
+                  "JOIN disasters d ON n.disaster_id = d.id " +
+                  "WHERE d.name = ? AND n.source_type = ?";
+        }
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
             pstmt.setString(1, disasterName);
+            pstmt.setString(2, sourceType);
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
                 String content = rs.getString("content");
                 String date = rs.getString("published_date");
                 
-                // Only add if content isn't empty
                 if (content != null && !content.trim().isEmpty()) {
                     data.texts.add(content);
-                    data.dates.add(date != null ? date : "01/01/1970"); // Fallback for missing dates
+                    data.dates.add(date != null ? date : "01/01/1970");
                 }
             }
         } catch (SQLException e) {
@@ -45,6 +54,34 @@ public class DataRepository {
         }
         
         return data;
+    }
+
+    // Save a News Article with sourceType
+    public int saveNews(int disasterId, String url, String title, String content, String date, String sourceType) {
+        String insertSQL = "INSERT OR IGNORE INTO news(disaster_id, url, title, content, published_date, source_type) VALUES(?,?,?,?,?,?)";
+        String selectSQL = "SELECT id FROM news WHERE url = ?";
+        
+        try (Connection conn = DatabaseManager.getConnection()) {
+            try (PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
+                pstmt.setInt(1, disasterId);
+                pstmt.setString(2, url);
+                pstmt.setString(3, title);
+                pstmt.setString(4, content);
+                pstmt.setString(5, date);
+                pstmt.setString(6, sourceType);
+                pstmt.executeUpdate();
+            }
+            try (PreparedStatement pstmt = conn.prepareStatement(selectSQL)) {
+                pstmt.setString(1, url);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
     // 1. Get or Create a Disaster ID
     public int getOrCreateDisaster(String disasterName) {
@@ -72,20 +109,31 @@ public class DataRepository {
     }
 
     // 2. Save a News Article
+    // 2. Save a News Article
     public int saveNews(int disasterId, String url, String title, String content, String date) {
-        String sql = "INSERT OR IGNORE INTO news(disaster_id, url, title, content, published_date) VALUES(?,?,?,?,?)";
-        try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        String insertSQL = "INSERT OR IGNORE INTO news(disaster_id, url, title, content, published_date) VALUES(?,?,?,?,?)";
+        String selectSQL = "SELECT id FROM news WHERE url = ?";
+        
+        try (Connection conn = DatabaseManager.getConnection()) {
             
-            pstmt.setInt(1, disasterId);
-            pstmt.setString(2, url);
-            pstmt.setString(3, title);
-            pstmt.setString(4, content);
-            pstmt.setString(5, date);
-            pstmt.executeUpdate();
+            // Try to insert
+            try (PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
+                pstmt.setInt(1, disasterId);
+                pstmt.setString(2, url);
+                pstmt.setString(3, title);
+                pstmt.setString(4, content);
+                pstmt.setString(5, date);
+                pstmt.executeUpdate();
+            }
             
-            ResultSet rs = pstmt.getGeneratedKeys();
-            if (rs.next()) return rs.getInt(1);
+            // Retrieve the ID (works whether it was just inserted or already existed)
+            try (PreparedStatement pstmt = conn.prepareStatement(selectSQL)) {
+                pstmt.setString(1, url);
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+            }
             
         } catch (SQLException e) {
             e.printStackTrace();

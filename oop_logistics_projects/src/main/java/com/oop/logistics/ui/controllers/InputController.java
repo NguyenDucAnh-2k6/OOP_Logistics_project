@@ -103,19 +103,22 @@ public class InputController {
     @FXML
     private void handlePreprocess() {
         // Preprocessing now just fetches clean data from SQLite
-        context.setStatus("Fetching fresh data from database...", false);
+        String sourceType = context.getDataSource(); // <-- GET SOURCE TYPE
+        context.setStatus("Fetching fresh " + sourceType + " data from database...", false);
         
         new Thread(() -> {
             try {
                 String currentDisaster = context.getDisasterName();
                 if (currentDisaster != null && !currentDisaster.isEmpty()) {
                     DataRepository repo = new DataRepository();
-                    DataRepository.AnalysisData data = repo.getAnalysisData(currentDisaster);
+                    
+                    // PASS THE SOURCE TYPE AS THE SECOND ARGUMENT
+                    DataRepository.AnalysisData data = repo.getAnalysisData(currentDisaster, sourceType);
                     
                     Platform.runLater(() -> {
                         context.setTexts(data.texts);
                         context.setDates(data.dates);
-                        context.setStatus("✅ Data loaded from DB! Ready to analyze.", false);
+                        context.setStatus("✅ " + sourceType + " Data loaded from DB! Ready to analyze.", false);
                     });
                 } else {
                     Platform.runLater(() -> context.setStatus("⚠️ No active disaster set.", true));

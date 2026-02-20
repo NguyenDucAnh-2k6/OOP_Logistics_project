@@ -17,8 +17,6 @@ public class DisasterContext {
     private String dataSource;
     private Label statusLabel;
     private String disasterName;
-    private List<String> texts;
-    private List<String> dates;
     // Removed unused uiCallback and currentKeywordConfigPath if they aren't used elsewhere
 
     public DisasterContext() {
@@ -132,10 +130,16 @@ public class DisasterContext {
         return disasterName; 
     }
     public void setTexts(List<String> texts) {
-    this.texts = texts;
+        this.rawTexts.clear();
+        if (texts != null) {
+            this.rawTexts.addAll(texts);
+        }
     }
 
     public void setDates(List<String> dates) {
-    this.dates = dates;
+        this.rawDates.clear();
+        if (dates != null) {
+            this.rawDates.addAll(dates);
+        }
     }
 }

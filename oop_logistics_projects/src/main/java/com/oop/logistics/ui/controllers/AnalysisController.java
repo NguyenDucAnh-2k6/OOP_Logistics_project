@@ -70,23 +70,25 @@ public class AnalysisController {
     }
 
     private void loadDataFromDatabase(String disasterName) {
-        context.setStatus("Fetching data from SQLite for: " + disasterName + "...", false);
-        updateProgress(0.0); // Reset progress bar
+        String sourceType = context.getDataSource(); // <-- GET SOURCE TYPE
+        context.setStatus("Fetching " + sourceType + " data from SQLite for: " + disasterName + "...", false);
+        updateProgress(0.0); 
         
         new Thread(() -> {
             DataRepository repo = new DataRepository();
-            DataRepository.AnalysisData data = repo.getAnalysisData(disasterName);
+            // Pass the sourceType to the repository
+            DataRepository.AnalysisData data = repo.getAnalysisData(disasterName, sourceType); 
             
             Platform.runLater(() -> {
                 if (data.texts.isEmpty()) {
-                    context.setStatus("⚠️ No data found in database for: " + disasterName, true);
+                    context.setStatus("⚠️ No " + sourceType + " data found in database for: " + disasterName, true);
                     context.getTexts().clear(); 
                     context.getDates().clear();
                 } else {
                     context.setTexts(data.texts); 
                     context.setDates(data.dates);
-                    context.setStatus("✅ Successfully loaded " + data.texts.size() + " items from Database.", false);
-                    updateProgress(1.0); // Fill progress bar when done
+                    context.setStatus("✅ Successfully loaded " + data.texts.size() + " " + sourceType + " items from Database.", false);
+                    updateProgress(1.0);
                 }
             });
         }).start();

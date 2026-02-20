@@ -27,6 +27,7 @@ public class DatabaseManager {
                 "title TEXT," +
                 "content TEXT," +
                 "published_date TEXT," +
+                "source_type TEXT," + // <-- NEW COLUMN
                 "FOREIGN KEY(disaster_id) REFERENCES disasters(id)" +
                 ");";
 
