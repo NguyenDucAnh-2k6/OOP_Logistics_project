@@ -84,7 +84,8 @@ public class InputController {
                     
                     if (article != null) {
                         // Save the news article directly
-                        repo.saveNews(disasterId, article.url, article.title, article.text, article.date, "News");
+                        String cleanDate = DateExtract.formatDateToDDMMYYYY(article.date);
+                        repo.saveNews(disasterId, article.url, article.title, article.text, cleanDate, "News");
                     } else {
                         throw new RuntimeException("Crawler returned null. Page format might be unsupported.");
                     }
