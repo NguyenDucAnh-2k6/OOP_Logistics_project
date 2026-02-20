@@ -116,48 +116,32 @@ public class NewsPreprocess {
             return "";
         }
 
-        // Pattern 1: ISO 8601 / Dash format (e.g., 2024-09-07 or 2024-09-07T...)
-        // Matches: (4 digits) - (1-2 digits) - (1-2 digits)
-        Pattern isoPattern = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})");
-        Matcher isoMatcher = isoPattern.matcher(rawDate);
-
-        if (isoMatcher.find()) {
+        // Pattern 1: yyyy-mm-dd or yyyy/mm/dd
+        Pattern pYMD = Pattern.compile("(\\d{4})[\\/\\-](\\d{1,2})[\\/\\-](\\d{1,2})");
+        Matcher mYMD = pYMD.matcher(rawDate);
+        if (mYMD.find()) {
             try {
-                String year = isoMatcher.group(1);
-                int month = Integer.parseInt(isoMatcher.group(2));
-                int day = Integer.parseInt(isoMatcher.group(3));
-                
-                // Return in dd/mm/yyyy format
-                return String.format("%02d/%02d/%s", day, month, year);
-            } catch (NumberFormatException e) {
-                // Continue to next pattern
-            }
+                int year = Integer.parseInt(mYMD.group(1));
+                int month = Integer.parseInt(mYMD.group(2));
+                int day = Integer.parseInt(mYMD.group(3));
+                return String.format("%02d/%02d/%04d", day, month, year);
+            } catch (NumberFormatException ignored) {}
         }
 
-        // Pattern 2: Slash format (e.g., 28/9/2024 or Thứ bảy, 28/9/2024)
-        // Matches: (1-2 digits) / (1-2 digits) / (4 digits)
-        Pattern slashPattern = Pattern.compile("(\\d{1,2})/(\\d{1,2})/(\\d{4})");
-        Matcher slashMatcher = slashPattern.matcher(rawDate);
-
-        if (slashMatcher.find()) {
+        // Pattern 2: dd/mm/yyyy or dd-mm-yyyy
+        Pattern pDMY = Pattern.compile("(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{4})");
+        Matcher mDMY = pDMY.matcher(rawDate);
+        if (mDMY.find()) {
             try {
-                int day = Integer.parseInt(slashMatcher.group(1));
-                int month = Integer.parseInt(slashMatcher.group(2));
-                String year = slashMatcher.group(3);
-                
-                // Return in dd/mm/yyyy format
-                return String.format("%02d/%02d/%s", day, month, year);
-            } catch (NumberFormatException e) {
-                // Ignore parsing errors
-            }
+                int day = Integer.parseInt(mDMY.group(1));
+                int month = Integer.parseInt(mDMY.group(2));
+                int year = Integer.parseInt(mDMY.group(3));
+                return String.format("%02d/%02d/%04d", day, month, year);
+            } catch (NumberFormatException ignored) {}
         }
 
-        // If no date pattern found, return original (or convert "Unknown" to empty)
-        if ("Unknown".equalsIgnoreCase(rawDate) || "null".equalsIgnoreCase(rawDate)) {
-            return "";
-        }
-
-        return rawDate;
+        // Strict fallback: return empty string instead of raw unformatted text
+        return "";
     }
 
     /**

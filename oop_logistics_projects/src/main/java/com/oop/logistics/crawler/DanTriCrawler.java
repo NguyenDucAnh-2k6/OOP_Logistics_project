@@ -13,19 +13,14 @@ public class DanTriCrawler extends NewsCrawler {
             String title = doc.title(); // <-- Get the title
 
             String date = getMetaContent(doc, "pubdate");
-            if (date == null) date = getMetaContent(doc, "article:published_time");
             if (date == null) {
-                Element time = doc.selectFirst("span.date");
+                Element time = doc.selectFirst("time.author-time, span.dt-news__time, .author-wrap time");
                 if (time != null) date = time.text();
             }
-            if (date == null) {
-                Element headerDate = doc.selectFirst(".header-content .date");
-                if (headerDate != null) date = headerDate.text();
-            }
-            if (date == null) date = "Unknown";
 
+            // Update the content selector:
             StringBuilder text = new StringBuilder();
-            for (Element p : doc.select("article.fck_detail p")) {
+            for (Element p : doc.select("div.singular-content p, div.dt-news__content p")) {
                 text.append(p.text()).append("\n");
             }
 

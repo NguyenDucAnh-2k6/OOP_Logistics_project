@@ -207,33 +207,36 @@ public class DateExtract {
     }*/
     public static String formatDateToDDMMYYYY(String rawDate) {
         if (rawDate == null || rawDate.trim().isEmpty()) {
-            return rawDate;
+            return "Unknown";
         }
 
-        try {
-            // Split by comma to separate the date part
-            // "Thứ bảy, 28/9/2024, 14:00 (GMT+7)" -> ["Thứ bảy", " 28/9/2024", " 14:00 (GMT+7)"]
-            String[] parts = rawDate.split(",");
-            
-            if (parts.length >= 2) {
-                String datePart = parts[1].trim(); // "28/9/2024"
-                
-                // Split by slash to pad day and month
-                String[] dmy = datePart.split("/");
-                if (dmy.length == 3) {
-                    int day = Integer.parseInt(dmy[0]);
-                    int month = Integer.parseInt(dmy[1]);
-                    String year = dmy[2];
-                    
-                    // Format as dd/mm/yyyy
-                    return String.format("%02d/%02d/%s", day, month, year);
-                }
-            }
-        } catch (Exception e) {
-            // In case of parsing error, return original string or handle log
-            System.err.println("Error parsing date: " + rawDate);
+        // Pattern 1: dd/mm/yyyy or dd-mm-yyyy 
+        // Handles "Thứ bảy, 28/9/2024, 14:00 (GMT+7)" -> extracts 28, 9, 2024
+        java.util.regex.Pattern pDMY = java.util.regex.Pattern.compile("(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{4})");
+        java.util.regex.Matcher mDMY = pDMY.matcher(rawDate);
+        if (mDMY.find()) {
+            try {
+                int day = Integer.parseInt(mDMY.group(1));
+                int month = Integer.parseInt(mDMY.group(2));
+                int year = Integer.parseInt(mDMY.group(3));
+                return String.format("%02d/%02d/%04d", day, month, year);
+            } catch (Exception ignored) {}
+        }
+
+        // Pattern 2: yyyy-mm-dd or yyyy/mm/dd (ISO formats)
+        // Handles "2024-09-07T15:23:00Z" -> extracts 2024, 09, 07
+        java.util.regex.Pattern pYMD = java.util.regex.Pattern.compile("(\\d{4})[\\/\\-](\\d{1,2})[\\/\\-](\\d{1,2})");
+        java.util.regex.Matcher mYMD = pYMD.matcher(rawDate);
+        if (mYMD.find()) {
+            try {
+                int year = Integer.parseInt(mYMD.group(1));
+                int month = Integer.parseInt(mYMD.group(2));
+                int day = Integer.parseInt(mYMD.group(3));
+                return String.format("%02d/%02d/%04d", day, month, year);
+            } catch (Exception ignored) {}
         }
         
-        return rawDate;
+        // If it completely fails to find a valid date, return "Unknown" instead of the messy raw string
+        return "Unknown";
     }
 }

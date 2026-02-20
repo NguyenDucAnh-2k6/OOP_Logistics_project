@@ -66,7 +66,7 @@ public class InputController {
                     
                     if (fbData != null) {
                         // Save the main post to get a parent newsId
-                        int newsId = repo.saveNews(disasterId, url, "Facebook Post", fbData.content, date);
+                        int newsId = repo.saveNews(disasterId, url, "Facebook Post", fbData.content, date, "Facebook");
                         
                         // Save all extracted comments linked to this post
                         if (newsId != -1 && fbData.comments != null) {
@@ -84,7 +84,7 @@ public class InputController {
                     
                     if (article != null) {
                         // Save the news article directly
-                        repo.saveNews(disasterId, article.url, article.title, article.text, article.date);
+                        repo.saveNews(disasterId, article.url, article.title, article.text, article.date, "News");
                     } else {
                         throw new RuntimeException("Crawler returned null. Page format might be unsupported.");
                     }

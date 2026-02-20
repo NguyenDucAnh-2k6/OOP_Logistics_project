@@ -22,7 +22,11 @@
     </top>
 
     <center>
-        <StackPane fx:id="contentArea" style="-fx-padding: 20;"/>
+        <ScrollPane fitToWidth="true" fitToHeight="true" style="-fx-border-color: transparent;">
+            <content>
+                <StackPane fx:id="contentArea" style="-fx-padding: 20;"/>
+            </content>
+        </ScrollPane>
     </center>
     
 </BorderPane>
