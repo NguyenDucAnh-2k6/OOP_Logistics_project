@@ -67,38 +67,45 @@ def analyze_damage(req: DamageRequest):
 # Java sends: /analyze/relief_sentiment
 @app.post("/analyze/relief_sentiment")
 def analyze_relief_sentiment(req: ReliefSentimentRequest):
-    
+    """
+    Problem 3: Aggregate relief sentiment.
+    """
     logger.info(f"[Problem 3] Relief Sentiment Request (model_type={req.model_type}, texts_count={len(req.texts)})")
     try:
         result = aggregate_relief_sentiment(req.texts, req.model_type)
         logger.info(f"[Problem 3] Relief sentiment analysis completed successfully")
         return result
     except Exception as e:
-        logger.error(f"[Problem 3] Error during relief sentiment analysis: {e}", exc_info=Trueef_sentiment(req.texts, req.model_type)
-    except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error(f"[Problem 3] Error during relief sentiment analysis: {e}", exc_info=True)
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 # --- 4. RELIEF TIME SERIES ---
 # Java sends: /analyze/relief_timeseries
 @app.post("/analyze/relief_timeseries")
 def analyze_relief_timeseries(req: ReliefSentimentRequest):
-    
-    logger.info(f"[Problem 4] Relief Trend Request (model_type={req.model_type}, texts_count={len(req.texts)})")
+    """
+    Problem 4: Relief needs over time.
+    """
+    logger.info(f"[Problem 4] Relief Trend Request (model_type={req.model_type})")
     if req.dates is None:
-        logger.warning("[Problem 4] Dates are required but not provided")
         return JSONResponse(status_code=400, content={"error": "Dates are required for time-series analysis"})
         
     try:
         result = aggregate_relief_time_series(req.texts, req.dates, req.model_type)
-        logger.info(f"[Problem 4] Relief time series analysis completed successfully")
+        logger.info(f"[Problem 4] Relief time-series analysis completed successfully")
         return result
     except Exception as e:
-        logger.error(f"[Problem 4] Error during relief time series analysis: {e}", exc_info=Trueef_time_series(req.texts, req.dates, req.model_type)
-    except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error(f"[Problem 4] Error during relief time-series analysis: {e}", exc_info=True)
         return JSONResponse(status_code=500, content={"error": str(e)})
-@applogger.info(f"[Problem 5] Intent Request (model_type={req.model_type}, texts_count={len(req.texts)})")
+
+# --- 5. INTENT CLASSIFICATION ---
+# Java sends: /analyze/intent
+@app.post("/analyze/intent")
+def analyze_intent(req: IntentRequest):
+    """
+    Problem 5: Classify Supply (Offer) vs Demand (Request).
+    """
+    logger.info(f"[Problem 5] Intent Request (model_type={req.model_type})")
     try:
         result = aggregate_intent_stats(req.texts, req.model_type)
         logger.info(f"[Problem 5] Intent analysis completed successfully")
@@ -109,30 +116,5 @@ def analyze_relief_timeseries(req: ReliefSentimentRequest):
 
 # --- STARTUP ---
 if __name__ == "__main__":
-    logger.info("=" * 60)
-    logger.info("Starting Python FastAPI Analysis Backend on http://127.0.0.1:8000")
-    logger.info("=" * 60)
-    
-    # Configure uvicorn with custom logging
-    uvicorn_config = uvicorn.Config(
-        app=app,
-        host="127.0.0.1",
-        port=8000,
-        log_level="info",
-        access_log=True,
-        use_colors=True
-    )
-    server = uvicorn.Server(uvicorn_config)
-    
-    try:
-        import asyncio
-        asyncio.run(server.serve())
-    except KeyboardInterrupt:
-        logger.info("Server shutdown requested")
-    except Exception as e:
-        logger.error(f"Server error: {e}", exc_info=True)
-        return JSONResponse(status_code=500, content={"error": str(e)})
-# --- STARTUP ---
-if __name__ == "__main__":
-    print("🚀 Starting Python Backend on Port 8000...")
+    logger.info("🚀 Starting Python Backend on Port 8000...")
     uvicorn.run(app, host="127.0.0.1", port=8000)

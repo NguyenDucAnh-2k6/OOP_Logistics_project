@@ -12,6 +12,7 @@ public class DanTriCrawler extends NewsCrawler {
 
     @Override
     public NewsResult crawl(String url) {
+        logger.info("Starting crawl for URL: {}", url);
         try {
             Document doc = Jsoup.connect(url).userAgent("Mozilla/5.0").timeout(15000).get();
             String title = doc.title(); // <-- Get the title
@@ -28,11 +29,12 @@ public class DanTriCrawler extends NewsCrawler {
                 text.append(p.text()).append("\n");
             }
 
-            if (text.length() > 50) {
+            if (text.length() > 10) {
                 // <-- RETURN THE DATA INSTEAD OF WRITING TO CSV
+                logger.info("Successfully extracted data from URL.");
                 return new NewsResult(url, title, date, text.toString().trim()); 
             }
-
+        
         } catch (Exception e) {
             logger.error("Error crawling URL {}", url, e);
         }

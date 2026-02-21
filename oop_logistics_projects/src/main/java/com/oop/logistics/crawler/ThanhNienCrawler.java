@@ -28,8 +28,9 @@ public class ThanhNienCrawler extends NewsCrawler {
                 text.append(p.text()).append("\n");
             }
 
-            if (text.length() > 50) {
+            if (text.length() > 10) {
                 // <-- RETURN THE DATA INSTEAD OF WRITING TO CSV
+                logger.info("Successfully extracted data from URL.");
                 return new NewsResult(url, title, date, text.toString().trim()); 
             }
 

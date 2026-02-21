@@ -1,6 +1,7 @@
 package com.oop.logistics.analysis;
 
-import java.lang.reflect.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -23,7 +24,7 @@ public class PythonAnalysisClient implements AnalysisAPI {
     private final HttpClient httpClient;
     private final Gson gson;
     private static final int BATCH_SIZE = 50; 
-
+    private static final Logger logger = LoggerFactory.getLogger(PythonAnalysisClient.class); // <-- ADD THIS
     public PythonAnalysisClient(String apiUrl) {
         this.apiUrl = apiUrl;
         this.httpClient = HttpClient.newBuilder()
@@ -229,16 +230,23 @@ public class PythonAnalysisClient implements AnalysisAPI {
     }
 
     private String sendPost(String endpoint, Object requestObject) throws Exception {
+        logger.info("Preparing to send data to Python backend at endpoint: {}", endpoint); // <-- ADDED LOG
+        
         String jsonBody = gson.toJson(requestObject);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl + endpoint))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
                 .build();
+                
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        
         if (response.statusCode() != 200) {
+            logger.error("API Error at {}. Status: {}. Response: {}", endpoint, response.statusCode(), response.body()); // <-- ADDED LOG
             throw new RuntimeException("API Error (" + response.statusCode() + "): " + response.body());
         }
+        
+        logger.info("Successfully received response from {}", endpoint); // <-- ADDED LOG
         return response.body();
     }
     // --- Problem 5: Intent Classification (Supply vs Demand) ---

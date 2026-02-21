@@ -10,10 +10,10 @@
 
     <!-- MAIN APP LOG - Core application and search service -->
     <appender name="MAIN_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/logistics-app.log</file>
+        <file>logs/search.log</file> 
         
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/logistics-app-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>logs/search-%d{yyyy-MM-dd}.log</fileNamePattern> 
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>

@@ -23,7 +23,8 @@ def setup_logging():
     file_handler = RotatingFileHandler(
         API_LOG_FILE,
         maxBytes=10 * 1024 * 1024,  # 10MB
-        backupCount=10
+        backupCount=10,
+        encoding='utf-8'  # <--- ADD THIS LINE
     )
     file_handler.setLevel(logging.DEBUG)
     

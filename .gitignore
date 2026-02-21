@@ -2,6 +2,8 @@
 # Ignores the 'target' folder anywhere in the project (including inside oop_logistics_projects)
 target/
 *.class
+logs/
+*.log
 
 # --- Python ---
 # Ignores __pycache__ directories anywhere (including python_model and its subfolders)
