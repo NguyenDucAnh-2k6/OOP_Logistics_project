@@ -1,5 +1,5 @@
 package com.oop.logistics.ui.controllers;
-import com.oop.logistics.analysis.PythonAnalysisClient;
+import com.oop.logistics.preprocessing.*;
 import com.oop.logistics.database.DataRepository;
 import com.oop.logistics.ui.DisasterContext;
 import javafx.application.Platform;
@@ -8,6 +8,7 @@ import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -249,6 +250,100 @@ public class AnalysisController {
         }
 
         seriesMap.values().forEach(s -> chart.getData().add(s));
+        displayChart(chart);
+    }
+    // =================================================================================
+    // PROBLEM 5: Supply vs. Demand (Intent)
+    // =================================================================================
+    @FXML
+    private void runProblem5() {
+        if (checkData(false)) return; // Dates aren't required for this
+        updateProgress(0);
+        
+        new Thread(() -> {
+            try {
+                String type = getModelType();
+                context.setStatus("Processing Problem 5 (Supply vs Demand)...", false);
+                
+                Map<String, Integer> data = context.getClient().getIntentClassification(
+                    context.getTexts(), type, this::updateProgress
+                );
+                
+                Platform.runLater(() -> displayIntentClassification(data));
+            } catch (Exception ex) { 
+                context.setStatus("Error: " + ex.getMessage(), true); 
+            }
+        }).start();
+    }
+
+    private void displayIntentClassification(Map<String, Integer> data) {
+        PieChart chart = new PieChart();
+        chart.setTitle("Supply vs. Demand Overview");
+
+        // Extract values and add them to the Pie Chart if they exist
+        int requestCount = data.getOrDefault("Request", 0);
+        int offerCount = data.getOrDefault("Offer", 0);
+        int newsCount = data.getOrDefault("News", 0);
+
+        if (requestCount > 0) {
+            chart.getData().add(new PieChart.Data("Need Help (Request): " + requestCount, requestCount));
+        }
+        if (offerCount > 0) {
+            chart.getData().add(new PieChart.Data("Offering Help (Supply): " + offerCount, offerCount));
+        }
+        if (newsCount > 0) {
+            chart.getData().add(new PieChart.Data("General Info (News): " + newsCount, newsCount));
+        }
+
+        displayChart(chart);
+    }
+    // =================================================================================
+    // NEW FEATURE: Location Hotspots Analysis
+    // =================================================================================
+    @FXML
+    private void runLocationAnalysis() {
+        if (checkData(false)) return;
+        updateProgress(0);
+        
+        new Thread(() -> {
+            context.setStatus("Mapping disaster locations...", false);
+            Map<String, Integer> locationCounts = new HashMap<>();
+
+            // 1. Scan all loaded texts for locations
+            List<String> texts = context.getTexts();
+            for (int i = 0; i < texts.size(); i++) {
+                List<String> foundLocations = LocationExtractor.extractAllLocations(texts.get(i));
+                for (String loc : foundLocations) {
+                    locationCounts.put(loc, locationCounts.getOrDefault(loc, 0) + 1);
+                }
+                if (i % 50 == 0) updateProgress((double) i / texts.size());
+            }
+
+            // 2. Sort to find the Top 10 most mentioned locations
+            List<Map.Entry<String, Integer>> sortedLocations = new ArrayList<>(locationCounts.entrySet());
+            sortedLocations.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+            Platform.runLater(() -> displayLocationChart(sortedLocations));
+        }).start();
+    }
+
+    private void displayLocationChart(List<Map.Entry<String, Integer>> sortedLocations) {
+        CategoryAxis xAxis = new CategoryAxis(); xAxis.setLabel("Location");
+        NumberAxis yAxis = new NumberAxis(); yAxis.setLabel("Mentions");
+        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
+        chart.setTitle("Most Affected / Mentioned Regions");
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Location Mentions");
+
+        // Display up to top 10 to keep the chart clean
+        int limit = Math.min(10, sortedLocations.size());
+        for (int i = 0; i < limit; i++) {
+            Map.Entry<String, Integer> entry = sortedLocations.get(i);
+            series.getData().add(new XYChart.Data<>(entry.getKey(), entry.getValue()));
+        }
+
+        chart.getData().add(series);
         displayChart(chart);
     }
 }

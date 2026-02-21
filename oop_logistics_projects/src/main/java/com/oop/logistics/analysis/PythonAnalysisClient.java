@@ -241,4 +241,30 @@ public class PythonAnalysisClient implements AnalysisAPI {
         }
         return response.body();
     }
+    // --- Problem 5: Intent Classification (Supply vs Demand) ---
+    @Override
+    public Map<String, Integer> getIntentClassification(List<String> texts, String modelType, Consumer<Double> onProgress) throws Exception {
+        validateInputs(texts);
+        
+        // Initialize the tracking map with zeroes
+        Map<String, Integer> finalStats = new HashMap<>(Map.of("Request", 0, "Offer", 0, "News", 0));
+
+        processBatches(texts, null, modelType, onProgress, (batchTexts, batchDates, type) -> {
+            try {
+                AnalysisRequest req = new AnalysisRequest(batchTexts, null);
+                req.setModelType(type);
+                
+                // Call the new Python endpoint
+                String response = sendPost("/analyze/intent", req);
+                Map<String, Integer> batchResult = gson.fromJson(response, new TypeToken<Map<String, Integer>>(){}.getType());
+
+                // Merge the batch counts into the total
+                for (Map.Entry<String, Integer> entry : batchResult.entrySet()) {
+                    finalStats.put(entry.getKey(), finalStats.getOrDefault(entry.getKey(), 0) + entry.getValue());
+                }
+            } catch (Exception e) { throw new RuntimeException(e); }
+        });
+
+        return finalStats;
+    }
 }

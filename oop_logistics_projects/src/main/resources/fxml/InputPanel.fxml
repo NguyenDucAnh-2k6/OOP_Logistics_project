@@ -9,8 +9,11 @@
     <Label text="📝 Data Input" styleClass="header-label" style="-fx-font-size: 18px;"/>
 
     <GridPane hgap="10" vgap="10">
-        <Label text="URL:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-        <TextField fx:id="urlField" promptText="Paste URL here..." GridPane.columnIndex="1" GridPane.rowIndex="0" HBox.hgrow="ALWAYS" prefWidth="400"/>
+        <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <Label text="URLs:"/>
+            <Button text="📥 Load Search" onAction="#handleLoadSearchedUrls" style="-fx-font-size: 11px; -fx-padding: 3; -fx-background-color: #3498db; -fx-text-fill: white;"/>
+        </VBox>
+        <TextArea fx:id="urlArea" promptText="Paste URLs here, one per line..." GridPane.columnIndex="1" GridPane.rowIndex="0" HBox.hgrow="ALWAYS" prefHeight="120" prefWidth="400"/>
         
         <Label fx:id="lblDate" text="Date:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
         <TextField fx:id="dateField" promptText="dd/mm/yyyy" GridPane.columnIndex="1" GridPane.rowIndex="1"/>

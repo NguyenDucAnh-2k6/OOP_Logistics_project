@@ -259,7 +259,6 @@ public class FacebookCrawler {
     // NEW ROBUST DATE EXTRACTOR
     private String extractDateFromArticle(WebElement article) {
         // 1️⃣ Find the "a" tag that links to the comment itself. 
-        // Facebook almost always places the timestamp text directly inside this link.
         try {
             List<WebElement> links = article.findElements(By.tagName("a"));
             for (WebElement link : links) {
@@ -267,7 +266,8 @@ public class FacebookCrawler {
                 if (href != null && (href.contains("comment_id=") || href.contains("&cid=") || href.contains("reply_comment_id="))) {
                     String timeText = link.getText().trim();
                     if (!timeText.isEmpty()) {
-                        return parseRelativeTime(timeText.toLowerCase());
+                        String parsed = parseRelativeTime(timeText.toLowerCase());
+                        if (!parsed.equals("Unknown")) return parsed;
                     }
                 }
             }
@@ -277,11 +277,18 @@ public class FacebookCrawler {
         try {
             WebElement timeSpan = article.findElement(By.xpath(".//span[contains(text(), 'giờ') or contains(text(), 'phút') or contains(text(), 'giây') or contains(text(), 'ngày') or contains(text(), 'hôm qua') or contains(text(), 'tuần') or contains(text(), 'năm')]"));
             if (timeSpan != null) {
-                return parseRelativeTime(timeSpan.getText().trim().toLowerCase());
+                String parsed = parseRelativeTime(timeSpan.getText().trim().toLowerCase());
+                if (!parsed.equals("Unknown")) return parsed;
             }
         } catch (Exception ignored) {}
 
-        return "Unknown";
+        // 3️⃣ ULTIMATE FALLBACK: Use the user-inputted post date
+        if (this.crawlDate != null && !this.crawlDate.isEmpty()) {
+            return this.crawlDate;
+        }
+        
+        // Failsafe just in case crawlDate was never set
+        return java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 
     private String parseRelativeTime(String raw) {
@@ -326,8 +333,8 @@ public class FacebookCrawler {
             
         } catch (Exception e) {}
 
-        // If it failed to parse exactly but we got this far, it's safer to default to today rather than "Unknown"
-        return now.format(dtf); 
+        // If it failed to parse exactly, return Unknown so the crawler knows to use the crawlDate fallback
+        return "Unknown"; 
     }
 
     private int extractNumber(String s) {

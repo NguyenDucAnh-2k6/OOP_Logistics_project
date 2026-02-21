@@ -1,32 +1,38 @@
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, Field, model_validator
+from typing import List, Optional, Literal
 
 class BaseRequest(BaseModel):
-    texts: List[str]
-    model_type: str = "ai"  # Options: "ai" (default), "keyword"
-class SentimentTimeSeriesRequest(BaseRequest):
-    """
-    Request cho bài toán 1: sentiment theo thời gian.
-    - texts: danh sách bài post/comment
-    - dates: danh sách ngày tương ứng với từng text (chuỗi 'YYYY-MM-DD')
-    """
-    texts: List[str]
-    dates: List[str]
+    # Field(...) makes it required and adds documentation
+    texts: List[str] = Field(..., description="List of text contents (posts/comments)")
+    
+    # Literal strictly enforces that ONLY "ai" or "keyword" can be accepted
+    model_type: Literal["ai", "keyword"] = Field("ai", description="Analysis engine to use")
 
+class SentimentTimeSeriesRequest(BaseRequest):
+    dates: List[str] = Field(..., description="List of dates matching the texts ('DD/MM/YYYY' or 'YYYY-MM-DD')")
+
+    # This ensures Java doesn't send mismatched arrays
+    @model_validator(mode='after')
+    def check_lengths_match(self) -> 'SentimentTimeSeriesRequest':
+        if len(self.texts) != len(self.dates):
+            raise ValueError(f"Length mismatch: {len(self.texts)} texts vs {len(self.dates)} dates.")
+        return self
 
 class DamageRequest(BaseRequest):
-    """
-    Request cho bài toán 2: phân loại loại thiệt hại.
-    - texts: danh sách bài post/comment mô tả thiệt hại
-    """
-    texts: List[str]
-
+    """Inherits 'texts' and 'model_type' directly from BaseRequest."""
+    pass 
 
 class ReliefSentimentRequest(BaseRequest):
+    dates: Optional[List[str]] = Field(None, description="Optional dates for time-series relief analysis")
+
+    @model_validator(mode='after')
+    def check_lengths_match_if_dates_provided(self) -> 'ReliefSentimentRequest':
+        if self.dates is not None and len(self.texts) != len(self.dates):
+            raise ValueError(f"Length mismatch: {len(self.texts)} texts vs {len(self.dates)} dates.")
+        return self
+class IntentRequest(BaseRequest):
     """
-    Request cho bài toán 3 + 4: phân tích hàng cứu trợ.
-    - texts: danh sách bài post/comment
-    - dates: chỉ cần cho bài toán 4 (time-series), có thể None cho bài toán 3
+    Request for Problem 5: Supply vs. Demand Classification.
+    Inherits 'texts' and 'model_type' from BaseRequest.
     """
-    texts: List[str]
-    dates: Optional[List[str]] = None
+    pass

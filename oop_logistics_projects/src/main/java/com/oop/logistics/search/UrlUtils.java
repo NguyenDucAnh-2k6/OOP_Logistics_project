@@ -51,4 +51,15 @@ public class UrlUtils {
         }
         return ddgUrl;
     }
+    public static String cleanFacebookUrl(String url) {
+        if (url == null) return "";
+        // Remove Facebook tracking parameters but keep the post ID
+        if (url.contains("facebook.com")) {
+            url = url.split("\\?__cft__")[0];
+            url = url.split("&__cft__")[0];
+            url = url.split("\\?mibextid")[0];
+            url = url.split("&mibextid")[0];
+        }
+        return url;
+    }
 }

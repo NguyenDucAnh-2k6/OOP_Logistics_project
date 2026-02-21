@@ -38,6 +38,8 @@
         <Button text="2. Damage Class" onAction="#runProblem2" styleClass="button, button-success"/>
         <Button text="3. Relief Sentiment" onAction="#runProblem3" styleClass="button, button-success"/>
         <Button text="4. Relief Needs" onAction="#runProblem4" styleClass="button, button-success"/>
+        <Button text="5. Supply vs Demand" onAction="#runProblem5" styleClass="button, button-action"/>
+        <Button text="6. Location Hotspots" onAction="#runLocationAnalysis" styleClass="button, button-action"/>
     </HBox>
 
     <VBox fx:id="chartContainer" VBox.vgrow="ALWAYS" style="-fx-border-color: #ecf0f1; -fx-border-width: 2px; -fx-padding: 10;">

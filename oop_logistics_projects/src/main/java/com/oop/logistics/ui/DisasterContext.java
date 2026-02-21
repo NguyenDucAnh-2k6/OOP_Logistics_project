@@ -17,6 +17,9 @@ public class DisasterContext {
     private String dataSource;
     private Label statusLabel;
     private String disasterName;
+    private boolean readyMode = false;
+    public void setReadyMode(boolean readyMode) { this.readyMode = readyMode; }
+    public boolean isReadyMode() { return readyMode; }
     // Removed unused uiCallback and currentKeywordConfigPath if they aren't used elsewhere
 
     public DisasterContext() {

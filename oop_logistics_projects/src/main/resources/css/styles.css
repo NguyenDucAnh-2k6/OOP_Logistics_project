@@ -136,6 +136,20 @@
 .combo-box .list-cell {
     -fx-text-fill: #2d3436;
 }
+/* TextArea Specific Styling */
+.text-area {
+    -fx-control-inner-background: rgba(255, 255, 255, 0.9);
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+}
+
+.text-area .content {
+    -fx-background-color: transparent;
+}
+
+.text-area .text {
+    -fx-fill: #2d3436; /* Makes the URLs dark gray instead of white */
+}
 /* 8. ScrollPane Transparency Fix */
 .scroll-pane {
     -fx-background-color: transparent;
