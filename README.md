@@ -470,7 +470,13 @@ logs/
     <appender-ref ref="PYTHON_API_FILE" />
 </logger>
 ```
+#### Java Search Logs
+```
+2026-02-21 19:01:43 [Thread-3] INFO  c.o.logistics.search.BingRssStrategy - Bing RSS: https://www.bing.com/news/search?q=site%3Avnexpress.net+b%C3%A3o+matmo&format=rss
+2026-02-21 19:01:44 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: http://www.bing.com/news/apiclick.aspx?ref=FexRss&aid=&tid=69999ea739984b4baca084ef8dbcead2&url=https%3a%2f%2fvnexpress.net%2fklc-group-dong-hanh-cung-wechoice-awards-5030091.html&c=14529789873684638883&mkt=en-ww [2026-02-09]
+2026-02-21 19:01:44 [Thread-3] INFO  c.o.l.search.GoogleNewsRssStrategy - Google News RSS: https://news.google.com/rss/search?q=b%C3%A3o+matmo+site%3Avnexpress.net+after:2024-09-02+before:2024-09-11&hl=vi&gl=VN&ceid=VN:vi
 
+```
 #### Java Crawling Logs
 
 ```
