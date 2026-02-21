@@ -1,17 +1,22 @@
 from typing import List, Dict
+import logging
 from transformers import pipeline
 import json
 from config import INTENT_CONFIG
+
+logger = logging.getLogger(__name__)
 
 # 1. LOAD EXTERNAL KEYWORDS DYNAMICALLY
 try:
     with open(INTENT_CONFIG, "r", encoding="utf-8") as f:
         INTENT_KEYWORDS = json.load(f)
         INTENT_LABELS = list(INTENT_KEYWORDS.keys())
+        logger.debug(f"Loaded intent keywords: {INTENT_LABELS}")
 except Exception as e:
-    print(f"❌ Error loading intent config: {e}")
+    logger.error(f"Error loading intent config: {e}")
     INTENT_KEYWORDS = {}
     INTENT_LABELS = ["Yêu cầu cứu trợ (Request/Demand)", "Cung cấp cứu trợ (Offer/Supply)", "Tin tức chung (General News/Info)"]
+
 # Attempt to share the model already loaded in relief_service to save RAM
 try:
     from services.relief_service import classifier
@@ -20,15 +25,16 @@ except ImportError:
 
 # Fallback if it wasn't loaded
 if classifier is None:
-    print("⏳ Loading Intent AI Model...")
+    logger.info("Loading Intent AI Model...")
     try:
         classifier = pipeline(
             "zero-shot-classification", 
             model="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
             device=-1 
         )
+        logger.info("Intent AI Model loaded successfully")
     except Exception as e:
-        print(f"❌ Intent AI Load Failed: {e}")
+        logger.error(f"Failed to load Intent AI Model: {e}")
 
 # Define the logical categories
 INTENT_LABELS = [
@@ -47,7 +53,7 @@ def classify_intent_batch(texts: List[str], model_type: str = "ai") -> List[str]
     results = []
     batch_size = 8
     
-    print(f"🎯 AI Classifying Intent for {len(texts)} items...")
+    logger.debug(f"AI Classifying Intent for {len(texts)} items...")
 
     for i in range(0, len(texts), batch_size):
         batch = texts[i:i+batch_size]

@@ -1,23 +1,29 @@
 from typing import List, Dict
 import json
+import logging
 from transformers import pipeline
 from config import SENTIMENT_CONFIG
+
+logger = logging.getLogger(__name__)
 
 # --- SETUP ---
 # Load Keywords
 with open(SENTIMENT_CONFIG, "r", encoding="utf-8") as f:
     SENTIMENT_KEYWORDS = json.load(f)
+    logger.debug(f"Loaded sentiment keywords: {list(SENTIMENT_KEYWORDS.keys())}")
     # Expected JSON: {"positive": ["tốt", ...], "negative": ["buồn", ...]}
 
 # Load AI
-print("⏳ Loading Sentiment AI...")
+logger.info("Loading Sentiment AI Model...")
 try:
     sentiment_pipeline = pipeline(
         "sentiment-analysis", 
         model="wonrax/phobert-base-vietnamese-sentiment",
         tokenizer="wonrax/phobert-base-vietnamese-sentiment"
     )
-except Exception:
+    logger.info("Sentiment AI Model loaded successfully")
+except Exception as e:
+    logger.warning(f"Failed to load Sentiment AI Model: {e}. Will use keyword-based prediction")
     sentiment_pipeline = None
 
 # --- LOGIC ---

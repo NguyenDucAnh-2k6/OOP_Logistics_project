@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
+    <!-- CONSOLE APPENDER - All logs -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!-- MAIN APP LOG - Core application and search service -->
+    <appender name="MAIN_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/logistics-app.log</file>
         
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -21,11 +23,55 @@
         </encoder>
     </appender>
 
+    <!-- CRAWLERS LOG - All crawler activity -->
+    <appender name="CRAWLERS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/crawlers.log</file>
+        
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/crawlers-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- PYTHON API CLIENT LOG - Communication with Python analysis backend -->
+    <appender name="PYTHON_API_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/python-api-client.log</file>
+        
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/python-api-client-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ROOT LOGGER - Console and main file -->
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
-        <appender-ref ref="ROLLING_FILE" />
+        <appender-ref ref="MAIN_FILE" />
     </root>
 
+    <!-- CRAWLER LOGGERS -->
+    <logger name="com.oop.logistics.crawler" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="CRAWLERS_FILE" />
+    </logger>
+
+    <!-- PYTHON ANALYSIS CLIENT LOGGER -->
+    <logger name="com.oop.logistics.analysis.PythonAnalysisClient" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="PYTHON_API_FILE" />
+    </logger>
+
+    <!-- SUPPRESS VERBOSE THIRD-PARTY LOGS -->
     <logger name="org.jsoup" level="WARN"/>
     <logger name="com.gargoylesoftware" level="WARN"/>
     <logger name="org.apache.http" level="WARN"/>

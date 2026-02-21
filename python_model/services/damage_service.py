@@ -1,6 +1,9 @@
 import json
+import logging
 from transformers import pipeline
 from config import DAMAGE_CONFIG
+
+logger = logging.getLogger(__name__)
 
 # --- 1. KEYWORD SETUP ---
 try:
@@ -9,22 +12,23 @@ try:
         CANDIDATE_LABELS = list(DAMAGE_KEYWORDS.keys())
         if "Other" in CANDIDATE_LABELS:
             CANDIDATE_LABELS.remove("Other")
+        logger.debug(f"Loaded damage keywords: {list(DAMAGE_KEYWORDS.keys())}")
 except Exception as e:
-    print(f"❌ Error loading damage config: {e}")
+    logger.error(f"Error loading damage config: {e}")
     DAMAGE_KEYWORDS = {}
     CANDIDATE_LABELS = []
 
 # --- 2. AI MODEL SETUP ---
-print("⏳ Loading Damage AI Model...")
+logger.info("Loading Damage Classification AI Model...")
 try:
     classifier = pipeline(
         "zero-shot-classification", 
         model="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
         device=-1 
     )
-    print("✅ Damage AI Model Loaded.")
+    logger.info("Damage Classification AI Model loaded successfully")
 except Exception as e:
-    print(f"❌ AI Load Failed: {e}")
+    logger.error(f"Failed to load Damage Classification AI Model: {e}")
     classifier = None
 
 # --- CORE FUNCTIONS ---

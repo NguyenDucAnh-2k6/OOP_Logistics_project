@@ -1,7 +1,10 @@
 import json
+import logging
 from typing import List, Dict
 from transformers import pipeline
 from config import RELIEF_CONFIG
+
+logger = logging.getLogger(__name__)
 
 # Import sentiment functions from the sibling service
 # Ensure sentiment_service has 'predict_ai_batch' and 'predict_keyword' exposed
@@ -18,13 +21,14 @@ try:
         # Remove 'Other' from candidates for AI (it will be the fallback)
         if "Other" in CANDIDATE_LABELS:
             CANDIDATE_LABELS.remove("Other")
+        logger.debug(f"Loaded relief keywords: {list(RELIEF_KEYWORDS.keys())}")
 except Exception as e:
-    print(f"❌ Error loading relief config: {e}")
+    logger.error(f"Error loading relief config: {e}")
     RELIEF_KEYWORDS = {}
     CANDIDATE_LABELS = []
 
 # --- 2. SETUP: Load AI Model (Lazy Loading) ---
-print("⏳ Loading Relief Classification AI Model...")
+logger.info("Loading Relief Classification AI Model...")
 try:
     # We use the same model as Damage Service to save memory if possible
     # 'mnli-xnli' is excellent for Zero-Shot classification
@@ -33,9 +37,9 @@ try:
         model="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
         device=-1 
     )
-    print("✅ Relief AI Model Loaded.")
+    logger.info("Relief Classification AI Model loaded successfully")
 except Exception as e:
-    print(f"❌ Relief AI Load Failed: {e}")
+    logger.error(f"Failed to load Relief Classification AI Model: {e}")
     classifier = None
 
 # --- CORE FUNCTIONS ---

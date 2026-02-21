@@ -1,5 +1,8 @@
 from transformers import pipeline
 from threading import Lock
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ModelLoader:
     _instance = None
@@ -14,7 +17,7 @@ class ModelLoader:
         return cls._instance
 
     def _load_models(self):
-        print("⏳ Loading AI Models... (This may take a while first time)")
+        logger.info("Loading AI Models... (This may take a while on first run)")
         
         # 1. Sentiment Model (Vietnamese PhoBERT)
         # Maps output to NEG, NEU, POS
@@ -30,7 +33,7 @@ class ModelLoader:
             "zero-shot-classification", 
             model="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
         )
-        print("✅ AI Models Loaded Successfully.")
+        logger.info("AI Models loaded successfully")
 
     def get_sentiment_analyzer(self):
         return self.sentiment_pipeline
