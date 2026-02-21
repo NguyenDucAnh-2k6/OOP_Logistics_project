@@ -563,9 +563,12 @@ file_handler = RotatingFileHandler(
 Get-Content logs\search.log -Tail 50 -Wait
 
 # macOS/Linux
-tail -f logs/logistics-app.log
+tail -f logs/search.log
 ```
-
+#### Tail API client logs:
+```bash
+tail -f logs/python-api-client.log
+```
 #### Tail crawler logs only:
 ```bash
 tail -f logs/crawlers.log
@@ -579,13 +582,15 @@ tail -f logs/python-api.log
 #### Search logs for errors:
 ```bash
 # Find all ERROR entries
-grep "ERROR" logs/logistics-app.log
-
+grep "ERROR" logs/*.log
 # Find errors in last 24 hours
-grep "2026-02-21" logs/logistics-app.log | grep "ERROR"
-
+grep "2026-02-21" logs/*.log | grep "ERROR"
 # Count errors by component
 grep "ERROR" logs/*.log | wc -l
+```
+On Windows Powershell: 
+```bash
+Select-String -Path "logs\*.log" -Pattern "ERROR"
 ```
 
 ### Log Rotation & Retention
@@ -681,7 +686,7 @@ Test files in `src/test/java/com/oop/logistics/`:
 - `search/TestSearch.java` - Search strategies
 
 ---
-
+## Project Structure
 ```
 OOP_Logistics_project/
 ├── oop_logistics_projects/          # Java Maven project
@@ -711,7 +716,7 @@ OOP_Logistics_project/
 │   ├── requirements.txt
 │   └── venv/                        # Virtual environment
 └── README.md                        # This file```
-
+```
 ---
 
 ## Running the Application
