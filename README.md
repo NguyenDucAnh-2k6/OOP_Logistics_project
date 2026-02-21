@@ -357,118 +357,61 @@ mvn test jacoco:report
 
 #### Test Example: Crawler Factory Pattern
 ```java
-@Test
-public void testGetCrawlerVnExpress() {
-    NewsCrawler crawler = NewsCrawlerFactory.getCrawler("https://vnexpress.net/article");
-    assertThat(crawler).isInstanceOf(VnExpressCrawler.class);
-}
-
-@Test
-public void testGetCrawlerThanhNien() {
-    NewsCrawler crawler = NewsCrawlerFactory.getCrawler("https://thanhnien.vn/news");
-    assertThat(crawler).isInstanceOf(ThanhNienCrawler.class);
-}
-
-@Test
-public void testInvalidCrawlerThrowsException() {
-    assertThrows(IllegalArgumentException.class, () -> {
-        NewsCrawlerFactory.getCrawler("https://unknown-site.com");
-    });
-}
+@DisplayName("Should return correct crawler based on URL domain")
+    void testGetCrawlerWithValidUrls(String url) {
+        logger.debug("Testing factory with URL: {}", url);
+        
+        NewsCrawler crawler = NewsCrawlerFactory.getCrawler(url);
+        
+        assertNotNull(crawler, "Crawler should be instantiated for valid URL");
+        
+        // Optional: Check specific instance types based on the URL string
+        if (url.contains("thanhnien.vn")) assertTrue(crawler instanceof ThanhNienCrawler);
+        if (url.contains("vnexpress.net")) assertTrue(crawler instanceof VnExpressCrawler);
+    }
 ```
 
 **Benefits**: Factory Pattern tests ensure correct crawler selection without manual URL checking; prevents runtime errors.
 
-#### Test Example: Mocking External Dependencies
+#### Test Example: Use Mockito for DatabaseRepository testing
 ```java
-@Test
-public void testAnalysisClientHandlesPythonServerDown() {
-    PythonAnalysisClient client = new PythonAnalysisClient("http://bogus-url");
-    assertFalse(client.isAvailable());
-    // Tests graceful degradation when Python API unavailable
-}
+@DisplayName("Should successfully get or create a disaster and return ID")
+    void testGetOrCreateDisaster() throws Exception {
+        // 1. Arrange: Create mock JDBC objects
+        Connection mockConn = mock(Connection.class);
+        PreparedStatement mockInsertStmt = mock(PreparedStatement.class);
+        PreparedStatement mockSelectStmt = mock(PreparedStatement.class);
+        ResultSet mockResultSet = mock(ResultSet.class);
+
+        // 2. Arrange: Define the behavior of our mocks
+        when(mockConn.prepareStatement(contains("INSERT"))).thenReturn(mockInsertStmt);
+        when(mockConn.prepareStatement(contains("SELECT"))).thenReturn(mockSelectStmt);
+        
+        // Simulate the select statement finding ID '99'
+        when(mockSelectStmt.executeQuery()).thenReturn(mockResultSet);
+        when(mockResultSet.next()).thenReturn(true); 
+        when(mockResultSet.getInt("id")).thenReturn(99);
+
+        // 3. Act: We must mock the static DatabaseManager.getConnection() 
+        // inside a try-with-resources block so it closes properly after the test.
+        try (MockedStatic<DatabaseManager> mockedDb = mockStatic(DatabaseManager.class)) {
+            mockedDb.when(DatabaseManager::getConnection).thenReturn(mockConn);
+            
+            logger.info("Testing getOrCreateDisaster with mocked database connection");
+            int disasterId = repository.getOrCreateDisaster("Typhoon Yagi");
+            
+            // 4. Assert
+            assertEquals(99, disasterId, "Should return the ID retrieved from the database");
+            
+            // Verify our statements were actually called with the right data
+            verify(mockInsertStmt).setString(1, "Typhoon Yagi");
+            verify(mockInsertStmt).executeUpdate();
+            verify(mockSelectStmt).setString(1, "Typhoon Yagi");
+        }
+    }
 ```
 
 **Benefits**: Mocking prevents tests from depending on external service availability; tests run fast and reliably.
-
-### Python API Testing
-
-#### Testing Framework: pytest (recommended addition)
-
-```python
-# tests/test_sentiment_service.py
-import pytest
-from services.sentiment_service import predict_ai_batch, predict_keyword
-
-def test_predict_keyword_positive():
-    """Test keyword-based sentiment detection"""
-    result = predict_keyword("Đây là tin tốt lành")  # "This is good news"
-    assert result == "positive"
-
-def test_predict_keyword_negative():
-    """Test negative sentiment detection"""
-    result = predict_keyword("Thảm họa kinh khủng")  # "Terrible disaster"
-    assert result == "negative"
-
-def test_predict_ai_batch():
-    """Test batch processing efficiency"""
-    texts = [
-        "Tin vui từ cứu trợ",  # "Good news from relief"
-        "Tình hình xấu đi",     # "Situation getting worse"
-    ]
-    results = predict_ai_batch(texts)
-    assert len(results) == len(texts)
-    assert results[0] in ["positive", "neutral", "negative"]
-
-@pytest.fixture
-def sample_intent_texts():
-    """Sample texts for intent classification testing"""
-    return {
-        "demand": ["Chúng tôi cần thức ăn", "Xin hỗ trợ y tế"],
-        "supply": ["Tôi có thể hiến máu", "Công ty tặng 1000 cái mũ bảo hiểm"],
-        "news": ["Bão sắp đến miền Bắc", "Lũ kiểm soát được"]
-    }
-
-def test_intent_classification(sample_intent_texts):
-    """Test intent classification accuracy"""
-    for intent_type, texts in sample_intent_texts.items():
-        results = classify_intent_batch(texts)
-        # Verify results contain expected intent categories
-        assert any(intent_type.lower() in str(r).lower() for r in results)
-```
-
-**Benefits**: Python tests validate ML models produce sensible outputs; catch data shape mismatches before Java integration.
-
-#### Integration Testing: Java ↔ Python
-
-```java
-@Test
-public void testPythonAnalysisEndToEnd() throws Exception {
-    // Requires Python server running
-    List<String> texts = Arrays.asList("Tốt lành", "Quá đau lòng");
-    List<String> dates = Arrays.asList("2024-01-01", "2024-01-02");
-    
-    List<Map<String, Object>> result = analysisClient.getSentimentTimeSeries(
-        texts, dates, "keyword"
-    );
-    
-    assertNotNull(result);
-    assertEquals(2, result.size());  // Same as input count
-}
-```
-
-**Benefits**: Validates Java-Python communication; ensures serialization/deserialization works correctly.
-
-### Manual Testing Checklist
-
-- [ ] **UI Responsiveness**: GUI doesn't freeze during crawling
-- [ ] **Error Messages**: User-friendly error messages for failures
-- [ ] **Data Accuracy**: Crawled data matches webpage content
-- [ ] **Analysis Results**: Sentiment/damage/relief classifications make sense
-- [ ] **Export Functionality**: CSV exports contain correct data
-- [ ] **Cross-platform**: App runs on Windows/macOS/Linux
-
----
 
 ## Logging & Monitoring
 
@@ -702,13 +645,16 @@ Exception
 ```python
 @app.post("/analyze/sentiment_timeseries")
 def analyze_sentiment_timeseries(req: SentimentTimeSeriesRequest):
-    logger.info(f"[Problem 1] Sentiment Request (model_type={req.model_type})")
+    """
+    Problem 1: Sentiment trend over time.
+    """
+    logger.info(f"[Problem 1] Sentiment Request (model_type={req.model_type}, texts_count={len(req.texts)})")
     try:
         result = aggregate_by_date(req.texts, req.dates, req.model_type)
-        logger.info("[Problem 1] Sentiment analysis completed successfully")
+        logger.info(f"[Problem 1] Sentiment analysis completed successfully")
         return result
     except Exception as e:
-        logger.error(f"[Problem 1] Error: {e}", exc_info=True)
+        logger.error(f"[Problem 1] Error during sentiment analysis: {e}", exc_info=True)
         return JSONResponse(status_code=500, content={"error": str(e)})
 ```
 
