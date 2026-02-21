@@ -440,35 +440,50 @@ logs/
 #### Configuration: `src/main/resources/logback.xml`
 
 ```xml
-<!-- 3 separate file appenders -->
-<appender name="MAIN_FILE">
-    <file>logs/logistics-app.log</file>
-    <!-- Rotates daily, keeps 30 days, max 1GB total -->
-</appender>
+<!-- MAIN APP LOG - Core application and search service -->
+    <appender name="MAIN_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/search.log</file> 
+        
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/search-%d{yyyy-MM-dd}.log</fileNamePattern> 
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
 
-<appender name="CRAWLERS_FILE">
-    <file>logs/crawlers.log</file>
-    <!-- Max 500MB, 30-day retention -->
-</appender>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
 
-<appender name="PYTHON_API_FILE">
-    <file>logs/python-api-client.log</file>
-    <!-- Tracks all Java → Python API calls -->
-</appender>
+    <!-- CRAWLERS LOG - All crawler activity -->
+    <appender name="CRAWLERS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/crawlers.log</file>
+        
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/crawlers-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
 
-<!-- Route crawler logs to CRAWLERS_FILE only -->
-<logger name="com.oop.logistics.crawler" 
-        level="INFO" 
-        additivity="false">
-    <appender-ref ref="CRAWLERS_FILE" />
-</logger>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
 
-<!-- Route Python API calls to dedicated file -->
-<logger name="com.oop.logistics.analysis.PythonAnalysisClient" 
-        level="INFO" 
-        additivity="false">
-    <appender-ref ref="PYTHON_API_FILE" />
-</logger>
+    <!-- PYTHON API CLIENT LOG - Communication with Python analysis backend -->
+    <appender name="PYTHON_API_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/python-api-client.log</file>
+        
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/python-api-client-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
 ```
 #### Java Search Logs
 ```
