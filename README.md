@@ -22,16 +22,17 @@ A comprehensive data collection, preprocessing, and analysis platform for humani
 This application solves six key problems for humanitarian logistics and disaster response:
 
 1. **Problem 1: Sentiment Time Series Analysis** - Track sentiment trends over time to identify community emotions and needs in disaster situations
-2. **Problem 2: Damage Classification** - Automatically categorize disaster damage by type (infrastructure, people, environment, etc.) for targeted response planning
-3. **Problem 3: Relief Sentiment Aggregation** - Analyze sentiment around relief efforts and resource allocation to optimize community acceptance and trust
-4. **Problem 4: Relief Needs Trends Over Time** - Track how relief requirements evolve during prolonged disasters for dynamic resource planning
-5. **Problem 5: Supply vs Demand Intent Classification** - Distinguish between people offering help/supplies and those requesting assistance to match supply with demand
-6. **Problem 6: Resource Allocation & Prioritization** - Combine all analyses (damage, sentiment, intent, relief trends) with geographic clustering to recommend optimal resource allocation (routing, supply distribution, responder assignment)
+2. **Problem 2: Damage Classification** - Automatically categorize disaster damage by type (infrastructure, people, environment, etc.) for targeted response planning. 
+3. **Problem 3: Determine public satisfaction and dissatisfaction** By identifying which relief areas receive positive or negative public evaluation, humanitarian agencies and governments can prioritize resource allocation to the most urgent needs (for example shelter and transportation). This improves the effectiveness of relief efforts and helps ensure resources are used optimally
+4. **Problem 4: Relief Needs Trends Over Time** - By analyzing sentiment over time for each relief category, the study provides detailed insight into the effectiveness of humanitarian logistics in each sector. For example, positive sentiment related to medical services and food suggests success in those areas, while negative sentiment about shelter and transportation points to gaps that need to be addressed.
+
+5. **Problem 5: Supply vs Demand Intent Classification** - Distinguish between people offering help/supplies and those requesting assistance to match supply with demand using Pie Chart.
+6. **Problem 6: Geographical detection & Prioritization** - Extract provinces most affected by disaster so as to prioritize resource delivery, alongside the frequency with which they are mentioned.
 
 The system combines:
-- **Java backend**: Data crawling from multiple news sources, preprocessing, UI management
-- **Python ML services**: Keyword search, machine learning, and deep learning models for sentiment, damage, relief, and intent analysis
-- **JavaFX GUI**: User-friendly desktop application for interactive data exploration
+- **Java backend**: Article searching, data crawling from multiple news sources, Facebook, preprocessing, UI controllers.
+- **Python ML services**: Keyword search, machine learning, and deep learning models routed to each specific problem.
+- **JavaFX GUI**: User-friendly desktop application.
 
 ---
 
@@ -82,9 +83,10 @@ cd oop_logistics_projects
 mvn clean javafx:run
 # OR
 mvn exec:java -Dexec.mainClass="com.oop.logistics.Launcher"
+# OR SIMPLY CLICK "RUN JAVA"
 ```
 
-The JavaFX GUI will open, connecting to the Python backend at `http://localhost:8000`
+The JavaFX GUI will open, connecting to the Python backend at `http://localhost:8000` via Python API client.
 
 ---
 
@@ -109,9 +111,8 @@ The JavaFX GUI will open, connecting to the Python backend at `http://localhost:
 │  Preprocessing Layer    │
 │ - DateExtract           │
 │ - LocationExtractor     │
-│ - NewsPreprocess        │
-│ - RemoveDuplicates      │
-│ - CSV Processing        │
+│ - DatabasePreprocessor        │
+│ - ProcessCSV        │
 └────────┬────────────────┘
          │
          ▼
@@ -129,15 +130,15 @@ The JavaFX GUI will open, connecting to the Python backend at `http://localhost:
 │ - Problem 3: Relief Sentiment│
 │ - Problem 4: Relief Trends   │
 │ - Problem 5: Intent Class    │
-│ - Problem 6: Prioritization  │
+│ - Problem 6: Location
 └────────┬─────────────────────┘
          │
          ▼
 ┌─────────────────────────┐
 │  JavaFX UI              │
-│ - DisasterFXApp         │
+│ - Load DB & analyze     │
 │ - Results Visualization │
-│ - Resource Mapping      │
+│ - Search & crawl        │
 └─────────────────────────┘
 ```
 
@@ -149,8 +150,14 @@ The JavaFX GUI will open, connecting to the Python backend at `http://localhost:
 ```java
 // NewsCrawlerFactory.java
 public static NewsCrawler getCrawler(String url) {
-    if (url.contains("thanhnien.vn")) return new ThanhNienCrawler();
-    if (url.contains("vnexpress.net")) return new VnExpressCrawler();
+    if (url.contains("thanhnien.vn")) {
+            logger.debug("Creating ThanhNienCrawler for {}", url);
+            return new ThanhNienCrawler();
+        }
+    if (url.contains("vnexpress.net")) {
+            logger.debug("Creating VnExpressCrawler for {}", url);
+            return new VnExpressCrawler();
+        }
     // ... site-specific crawlers
 }
 ```
@@ -166,9 +173,11 @@ public static NewsCrawler getCrawler(String url) {
 ```java
 // Interface-based design
 public interface AnalysisAPI {
-    List<Map<String, Object>> getSentimentTimeSeries(...);
-    List<Map<String, Object>> getDamageAnalysis(...);
-    // ...
+    List<Map<String, Object>> getSentimentTimeSeries(List<String> texts, List<String> dates, String modelType, Consumer<Double> onProgress) throws Exception;
+
+        List<String> getDamageClassification(List<String> texts, String modelType, Consumer<Double> onProgress) throws Exception;
+
+    // ... Contracts for API clients (extendable to a model implemented in Java)
 }
 
 // Implementation
@@ -189,8 +198,8 @@ public class PythonAnalysisClient implements AnalysisAPI {
 ### 5. **Single Responsibility Principle (SRP)**
 - `DateExtract` - Only date extraction
 - `LocationExtractor` - Only location extraction
-- `NewsPreprocess` - Text cleaning and normalization
-- `CsvWriter` - CSV file writing
+- `DatabasePreprocessor` - Database operations and text formatting
+- `ProcessCSV` - CSV file handling
 
 Each class has one reason to change.
 
@@ -522,12 +531,10 @@ logs/
 #### Java Crawling Logs
 
 ```
-2026-02-21 14:54:20 [Thread-3] INFO  c.o.l.crawler.ThanhNienCrawler - 
-  Crawling: https://thanhnien.vn/news-article-12345.htm
-2026-02-21 14:54:21 [Thread-3] INFO  c.o.l.crawler.ThanhNienCrawler - 
-  Title: "Disaster Relief Efforts Mobilized"
-2026-02-21 14:54:22 [Thread-3] INFO  c.o.l.crawler.ThanhNienCrawler - 
-  Date: 2026-02-21 | Location: Hanoi | Word Count: 450
+2026-02-21 19:04:33 [Thread-4] INFO  c.o.l.crawler.VnExpressCrawler - Successfully extracted data from URL.
+2026-02-21 19:04:33 [Thread-4] INFO  c.o.l.crawler.VnExpressCrawler - Successfully extracted data from URL.
+2026-02-21 19:04:33 [Thread-4] INFO  c.o.logistics.crawler.DanTriCrawler - Starting crawl for URL: http://www.bing.com/news/apiclick.aspx?ref=FexRss&aid=&tid=69999edabebc4c7d93dd8f5efe518c43&url=https%3a%2f%2fdantri.com.vn%2fo-to-xe-may%2fchu-lynk-co-09-cho-phu-tung-4-thang-hang-can-cai-thien-dich-vu-sau-ban-20260210155817892.htm&c=588608706095726375&mkt=en-ww
+2026-02-21 19:04:34 [Thread-4] INFO  c.o.logistics.crawler.DanTriCrawler - Starting crawl for URL: http://www.bing.com/news/apiclick.aspx?ref=FexRss&aid=&tid=69999eea6f8644ed9267094125143830&url=https%3a%2f%2fdantri.com.vn%2fo-to-xe-may%2fchu-lynk-co-09-cho-phu-tung-4-thang-hang-can-cai-thien-dich-vu-sau-ban-20260210155817892.htm&c=588608706095726375&mkt=en-ww
 ```
 
 **Benefits**: Quickly identify which crawlers are slow, failing, or returning bad data.
@@ -535,15 +542,12 @@ logs/
 #### Python API Client Logs
 
 ```
-2026-02-21 15:00:15 [Thread-5] INFO  c.o.l.analysis.PythonAnalysisClient - 
-  Sending sentiment analysis request: 150 texts
-2026-02-21 15:00:18 [Thread-5] INFO  c.o.l.analysis.PythonAnalysisClient - 
-  Sentiment response received: positive=45, neutral=60, negative=45
-2026-02-21 15:00:20 [Thread-5] ERROR c.o.l.analysis.PythonAnalysisClient - 
-  Damage classification failed (timeout after 30s). Python server laggy?
+2026-02-21 19:05:05 [Thread-7] INFO  c.o.l.analysis.PythonAnalysisClient - Preparing to send data to Python backend at endpoint: /analyze/sentiment_timeseries
+2026-02-21 19:05:06 [Thread-7] INFO  c.o.l.analysis.PythonAnalysisClient - Successfully received response from /analyze/sentiment_timeseries
+2026-02-21 19:05:07 [Thread-8] INFO  c.o.l.analysis.PythonAnalysisClient - Preparing to send data to Python backend at endpoint: /analyze/damage
 ```
 
-**Benefits**: Understand system bottlenecks, validate API contract, detect Python server issues.
+**Benefits**: Understand system bottlenecks, validate API contract, detect Python client issues (low Internet...)
 
 ### Python Logging (Python `logging` module)
 
@@ -558,43 +562,43 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 # File handler: 10MB per file, keep 10 backups
+API_LOG_FILE = os.path.join(LOG_DIR, "python-api.log")
+
+
 file_handler = RotatingFileHandler(
-    "logs/python-api.log",
-    maxBytes=10 * 1024 * 1024,
-    backupCount=10
-)
-
-# Format: timestamp [logger_name] level - message
-formatter = logging.Formatter(
-    '%(asctime)s [%(name)s] %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
+        API_LOG_FILE,
+        maxBytes=10 * 1024 * 1024,  # 10MB
+        backupCount=10,
+        encoding='utf-8'  # <--- ADD THIS LINE
+    )
+    file_handler.setLevel(logging.DEBUG)
+    
+    # === CONSOLE HANDLER ===
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    
+    # === FORMATTER ===
+    formatter = logging.Formatter(
+        '%(asctime)s [%(name)s] %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    logging.getLogger("uvicorn.access").setLevel(logging.INFO)
+    logging.getLogger("uvicorn.error").setLevel(logging.INFO)
+    logging.getLogger("fastapi").setLevel(logging.INFO)
 ```
 
 #### Python Service Logs
 
 ```
-2026-02-21 15:00:10 [services.sentiment_service] INFO - 
-  Loading Sentiment AI Model (PhoBERT)...
-2026-02-21 15:00:15 [services.sentiment_service] INFO - 
-  Sentiment AI Model loaded successfully
-
-2026-02-21 15:00:20 [main] INFO - 
-  [Problem 1] Sentiment Request (model_type=transformer, texts_count=150)
-2026-02-21 15:00:22 [services.sentiment_service] DEBUG - 
-  AI Classifying Sentiment for 150 items...
-2026-02-21 15:00:25 [main] INFO - 
-  [Problem 1] Sentiment analysis completed successfully
-
-2026-02-21 15:00:30 [main] ERROR - 
-  [Problem 2] Error during damage classification: CUDA out of memory
-  Traceback (most recent call last):
-    File "main.py", line 65, in analyze_damage
-      result = classify_damage_batch(req.texts, req.model_type)
-    ...
+2026-02-21 19:05:06 [root] INFO - [Problem 1] Sentiment Request (model_type=keyword, texts_count=1)
+2026-02-21 19:05:06 [root] INFO - [Problem 1] Sentiment analysis completed successfully
+2026-02-21 19:05:07 [root] INFO - [Problem 2] Damage Request (model_type=keyword, texts_count=1)
 ```
 
 **Benefits**: Detects ML model issues (OOM, slow inference), tracks API request flow, helps debug model problems.
@@ -613,7 +617,7 @@ logger.addHandler(file_handler)
 #### Tail Java logs (search service activity):
 ```bash
 # Windows PowerShell
-Get-Content logs\logistics-app.log -Tail 50 -Wait
+Get-Content logs\search.log -Tail 50 -Wait
 
 # macOS/Linux
 tail -f logs/logistics-app.log
@@ -658,10 +662,10 @@ grep "ERROR" logs/*.log | wc -l
 
 | Log File | Typical Size/Day | Purpose |
 |----------|-----------------|---------|
-| logistics-app.log | 5-10 MB | Core operations, search |
-| crawlers.log | 20-50 MB | High volume (many URLs) |
-| python-api-client.log | 2-5 MB | API communication |
-| python-api.log | 15-30 MB | ML model inference |
+| ```search.log``` | 5-10 MB | Core operations, search |
+| ```crawlers.log``` | 20-50 MB | High volume (many URLs) |
+| ```python-api-client.log``` | 2-5 MB | API communication |
+|``` python-api.log``` | 15-30 MB | ML model inference |
 
 **Total monthly storage**: ~3-4 GB (with 30-day retention on Java, auto-rotation on Python)
 
@@ -676,18 +680,6 @@ grep "ERROR" logs/*.log | wc -l
 
 ### Java Exception Strategy
 
-#### Custom Exceptions (if defined)
-```java
-// Handle site-specific crawling failures
-throw new IllegalArgumentException("Unsupported news site: " + url);
-
-// HTTP connection timeouts
-throws Exception // from PythonAnalysisClient
-
-// File I/O errors
-throws IOException // from CategoryManager
-```
-
 #### Exception Hierarchy
 ```
 Exception
@@ -697,30 +689,13 @@ Exception
 └── HttpConnectException (Python API failures)
 ```
 
-#### Handling Pattern
-```java
-// In PythonAnalysisClient
-try {
-    HttpRequest request = HttpRequest.newBuilder()
-        .uri(URI.create(apiUrl + "/"))
-        .GET()
-        .build();
-    return httpClient.send(request, HttpResponse.BodyHandlers.ofString())
-        .statusCode() == 200;
-} catch (Exception e) { 
-    logger.error("Python API unavailable", e);
-    return false;
-}
-```
-
 #### Key Exception Scenarios
 | Scenario | Exception | Handling |
 |----------|-----------|----------|
-| Python server down | HttpTimeoutException | Retry with exponential backoff |
-| Invalid CSV format | IOException | Log error, skip malformed rows |
+| Python server down | HttpTimeoutException | Log error, gracefully disable Python UI features |
+| Invalid CSV format | IOException | Log error, skip malformed rows/URLs |
 | Unsupported news site | IllegalArgumentException | Log & show user message |
-| Date parsing fails | DateTimeParseException | Use default date or skip record |
-| Crawler network error | IOException | Retry or fallback strategy |
+| Crawler network error | IOException | Timeout gracefully and return partial results
 
 ### Python Exception Handling
 
@@ -743,14 +718,6 @@ def analyze_sentiment_timeseries(req: SentimentTimeSeriesRequest):
 - Handlers catch and return HTTP 5xx with error details to Java client
 - Logging captures full stack traces for debugging
 
-#### Error Handling by Problem
-
-| Problem | Common Errors | Recovery Strategy |
-|---------|---------------|-------------------|
-| 1-5: Analysis | Model not loaded, OOM, timeout | Fallback to keyword-based method |
-| 1-5: Analysis | Invalid text input | Skip problematic items, process rest |
-| 5: Intent | Empty or very short text | Classify as "Unknown" |
-| 6: Prioritization | Missing geographic data | Use alternative ranking criteria |
 
 ---
 
@@ -780,65 +747,24 @@ OOP_Logistics_project/
 │   │   └── disasters.json           # Disaster type definitions
 │   ├── src/main/java/com/oop/logistics/
 │   │   ├── Launcher.java            # Entry point
-│   │   ├── analysis/
-│   │   │   ├── AnalysisAPI.java     # Interface
-│   │   │   └── PythonAnalysisClient.java
-│   │   ├── config/
-│   │   │   ├── Category.java
-│   │   │   ├── CategoryManager.java # Config loader
-│   │   │   └── KeywordManager.java
-│   │   ├── crawler/
-│   │   │   ├── NewsCrawler.java     # Base class
-│   │   │   ├── NewsCrawlerFactory.java
-│   │   │   ├── ThanhNienCrawler.java
-│   │   │   ├── VnExpressCrawler.java
-│   │   │   ├── DanTriCrawler.java
-│   │   │   ├── TuoiTreCrawler.java
-│   │   │   ├── FacebookCrawler.java
-│   │   │   ├── NewsResult.java
-│   │   │   └── CsvWriter.java
-│   │   ├── models/
-│   │   │   ├── AnalysisRequest.java
-│   │   │   └── AnalysisResponse.java
-│   │   ├── preprocessing/
-│   │   │   ├── DateExtract.java
-│   │   │   ├── LocationExtractor.java
-│   │   │   ├── NewsPreprocess.java
-│   │   │   ├── ProcessCSV.java
-│   │   │   ├── RemoveDuplicates.java
-│   │   │   └── StripLevel.java
-│   │   ├── search/
-│   │   │   ├── SearchStrategy.java  # Interface
-│   │   │   ├── GoogleNewsRssStrategy.java
-│   │   │   ├── BingRssStrategy.java
-│   │   │   ├── DuckDuckGoStrategy.java
-│   │   │   ├── BingDirectStrategy.java
-│   │   │   ├── DisasterSearchService.java
-│   │   │   ├── DateUtils.java
-│   │   │   ├── SearchUtils.java
-│   │   │   └── UrlUtils.java
-│   │   └── ui/
-│   │       └── DisasterFXApp.java   # JavaFX GUI
-│   ├── src/main/resources/
-│   │   └── stopwords.txt
+│   │   ├── analysis/                # API and Clients
+│   │   ├── config/                  # JSON Config loaders
+│   │   ├── crawler/                 # Web scrapers
+│   │   ├── models/                  # Data structures
+│   │   ├── preprocessing/           # Data cleaning & extraction
+│   │   ├── search/                  # Search strategies
+│   │   └── ui/                      # JavaFX GUI
+│   ├── src/main/resources/          # CSS, FXML, Logging configs
 │   └── target/                      # Build output
 ├── python_model/                    # Python FastAPI backend
 │   ├── main.py                      # Entry point
 │   ├── config.py                    # Python config
-│   ├── models/
-│   │   ├── schemas.py               # Pydantic models
-│   │   └── __init__.py
-│   ├── services/
-│   │   ├── sentiment_service.py
-│   │   ├── damage_service.py
-│   │   ├── relief_service.py
-│   │   ├── model_loader.py
-│   │   └── __init__.py
+│   ├── logging_config.py            # Python logging config
+│   ├── models/                      # Pydantic models
+│   ├── services/                    # Analysis logic (sentiment, intent, etc.)
 │   ├── requirements.txt
 │   └── venv/                        # Virtual environment
-├── README.md                        # This file
-└── requirements.txt                 # Python dependencies
-```
+└── README.md                        # This file```
 
 ---
 
@@ -873,9 +799,9 @@ mvn exec:java -Dexec.mainClass="com.oop.logistics.Launcher"
 ```
 
 #### Step 5: Use the GUI
-- Click "Crawl News" to collect data from Vietnamese news sources
-- Select preprocessing options (remove duplicates, extract dates, etc.)
-- View results and export to CSV
+- Set disaster name on TopBar, the app automatically searches for URLs
+- Click "Crawl" to collect data from those URLs
+- Select preprocessing options (extract dates, database migration, etc.)
 - Run analysis (Sentiment, Damage Classification, Relief Sentiment)
 
 ### Maven Commands
@@ -947,14 +873,13 @@ print(response.json())
 }
 ``` 
 #### `external config/disasters.json`
-
+#### `external config/intent_service.json`
 ### Python Configuration
 
 Edit `python_model/config.py` for:
 - Model types (transformer, bert, gpt)
 - API port (default 8000)
 - Batch sizes for ML inference
-- Timeout values
 
 ---
 
@@ -979,7 +904,7 @@ Test files in `src/test/java/com/oop/logistics/`:
 |-------|----------|
 | Python server won't start | Check port 8000 is free; verify Python 3.10+ installed |
 | Java can't connect to Python | Ensure Python server running; check firewall settings |
-| Crawler fails on website | Site structure may have changed; update site-specific crawler |
+| Crawler fails on website | Site HTML structure may have changed; update site-specific crawler |
 | Out of memory during crawling | Increase JVM memory: `export _JAVA_OPTIONS="-Xmx4g"` |
 | Tests fail | Run `mvn clean install` first to fetch all dependencies |
 

@@ -20,7 +20,6 @@ public class KeywordContributionController {
 
     // Enum to map readable names to physical file paths
     public enum ConfigTarget {
-        DISASTERS("Disaster Types", "oop_logistics_projects/external config/disasters.json"),
         DAMAGE("Damage Keywords", "oop_logistics_projects/external config/damage_keywords.json"),
         RELIEF("Relief Keywords", "oop_logistics_projects/external config/relief_keywords.json"),
         SENTIMENT("Sentiment Keywords", "oop_logistics_projects/external config/sentiment_keywords.json"),
