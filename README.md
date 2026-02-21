@@ -851,8 +851,8 @@ Test files in `src/test/java/com/oop/logistics/`:
 | Python server won't start | Check port 8000 is free; verify Python 3.10+ installed |
 | Java can't connect to Python | Ensure Python server running; check firewall settings |
 | Crawler fails on website | Site HTML structure may have changed; update site-specific crawler |
-| Out of memory during crawling | Increase JVM memory: `export _JAVA_OPTIONS="-Xmx4g"` |
-| Tests fail | Run `mvn clean install` first to fetch all dependencies |
+| Out of memory during crawling | Increase JVM memory: `export _JAVA_OPTIONS="-Xms512m -Xmx1024m"` (Linux/Mac) or  `SET _JAVA_OPTIONS = -Xms512m -Xmx1024m`|
+| Tests fail | Check `pom.xml` to ensure dependencies of compatible version |
 
 ---
 
