@@ -111,8 +111,8 @@ The JavaFX GUI will open, connecting to the Python backend at `http://localhost:
 │  Preprocessing Layer    │
 │ - DateExtract           │
 │ - LocationExtractor     │
-│ - DatabasePreprocessor        │
-│ - ProcessCSV        │
+│ - DatabasePreprocessor  │
+│ - ProcessCSV            │
 └────────┬────────────────┘
          │
          ▼
@@ -130,7 +130,7 @@ The JavaFX GUI will open, connecting to the Python backend at `http://localhost:
 │ - Problem 3: Relief Sentiment│
 │ - Problem 4: Relief Trends   │
 │ - Problem 5: Intent Class    │
-│ - Problem 6: Location
+│ - Problem 6: Location        |
 └────────┬─────────────────────┘
          │
          ▼
