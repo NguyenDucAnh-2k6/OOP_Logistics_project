@@ -157,7 +157,7 @@ public class ProcessCSV {
         return sb.toString();
     }
 
-    private static String cleanText(String text) {
+    public static String cleanText(String text) {
         if (text == null || text.isEmpty()) return "";
 
         // 1. Loại bỏ ký tự đặc biệt (giữ lại chữ, số, dấu câu cơ bản)

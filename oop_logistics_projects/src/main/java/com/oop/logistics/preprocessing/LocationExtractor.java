@@ -1,126 +1,50 @@
 package com.oop.logistics.preprocessing;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
- * Extracts location information from text
+ * Extracts location information from text (Static Utility)
  */
 public class LocationExtractor {
     
-    private final Set<String> vietnameseProvinces;
-    private final Set<String> vietnameseCities;
-    private final Pattern locationPattern;
+    // Static final fields initialized exactly once
+    private static final Set<String> vietnameseProvinces = initializeProvinces();
+    private static final Set<String> vietnameseCities = initializeCities();
     
-    public LocationExtractor() {
-        this.vietnameseProvinces = initializeProvinces();
-        this.vietnameseCities = initializeCities();
-        
-        // Pattern to match location phrases
-        this.locationPattern = Pattern.compile(
-            "(tại|ở|tỉnh|thành phố|huyện|xã|tp\\.|TP\\.)\\s+([\\p{L}\\s]+?)(?=[,\\.;]|$)",
-            Pattern.CASE_INSENSITIVE
-        );
-    }
-    
-    private Set<String> initializeProvinces() {
-        return new HashSet<>(Arrays.asList(
-            "Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ",
-            "An Giang", "Bà Rịa-Vũng Tàu", "Bắc Giang", "Bắc Kạn", "Bạc Liêu",
-            "Bắc Ninh", "Bến Tre", "Bình Định", "Bình Dương", "Bình Phước",
-            "Bình Thuận", "Cà Mau", "Cao Bằng", "Đắk Lắk", "Đắk Nông",
-            "Điện Biên", "Đồng Nai", "Đồng Tháp", "Gia Lai", "Hà Giang",
-            "Hà Nam", "Hà Tĩnh", "Hải Dương", "Hậu Giang", "Hòa Bình",
-            "Hưng Yên", "Khánh Hòa", "Kiên Giang", "Kon Tum", "Lai Châu",
-            "Lâm Đồng", "Lạng Sơn", "Lào Cai", "Long An", "Nam Định",
-            "Nghệ An", "Ninh Bình", "Ninh Thuận", "Phú Thọ", "Phú Yên",
-            "Quảng Bình", "Quảng Nam", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị",
-            "Sóc Trăng", "Sơn La", "Tây Ninh", "Thái Bình", "Thái Nguyên",
-            "Thanh Hóa", "Thừa Thiên Huế", "Tiền Giang", "Trà Vinh", "Tuyên Quang",
-            "Vĩnh Long", "Vĩnh Phúc", "Yên Bái"
-        ));
-    }
-    
-    private Set<String> initializeCities() {
-        return new HashSet<>(Arrays.asList(
-            "Hanoi", "Ho Chi Minh", "Da Nang", "Hai Phong", "Can Tho",
-            "Hue", "Nha Trang", "Buon Ma Thuot", "Vung Tau", "Bien Hoa"
-        ));
-    }
+    // Private constructor prevents anyone from creating an object of this utility class
+    private LocationExtractor() {}
     
     /**
-     * Extract location from text description
+     * Extract all possible locations from text, case-insensitive and deduplicated.
      */
-    public String extractLocation(String text) {
-        if (text == null || text.isEmpty()) {
-            return null;
-        }
+    public static List<String> extractAllLocations(String text) {
+        // Use a Set to prevent double-counting if an article triggers both the province and city lists
+        Set<String> uniqueLocations = new HashSet<>();
         
-        // First try to find Vietnamese provinces
+        if (text == null || text.isEmpty()) return new ArrayList<>();
+        
+        // Convert text to lowercase once for faster, case-insensitive searching
+        String lowerText = text.toLowerCase();
+        
         for (String province : vietnameseProvinces) {
-            if (text.contains(province)) {
-                return province;
+            if (lowerText.contains(province.toLowerCase())) {
+                uniqueLocations.add(capitalizeWords(province));
             }
         }
-        
-        // Try to find cities
         for (String city : vietnameseCities) {
-            if (text.toLowerCase().contains(city.toLowerCase())) {
-                return city;
+            if (lowerText.contains(city.toLowerCase())) {
+                uniqueLocations.add(capitalizeWords(city));
             }
         }
         
-        // Use pattern matching for location phrases
-        Matcher matcher = locationPattern.matcher(text);
-        if (matcher.find()) {
-            String location = matcher.group(2).trim();
-            if (location.length() > 3 && location.length() < 50) {
-                return capitalizeWords(location);
-            }
-        }
-        
-        return null;
+        return new ArrayList<>(uniqueLocations);
     }
     
     /**
-     * Extract all possible locations from text
+     * Helper to ensure all locations are formatted beautifully for the UI (e.g. "bắc ninh" -> "Bắc Ninh")
      */
-    public List<String> extractAllLocations(String text) {
-        List<String> locations = new ArrayList<>();
-        if (text == null || text.isEmpty()) {
-            return locations;
-        }
-        
-        // Find all provinces
-        for (String province : vietnameseProvinces) {
-            if (text.contains(province)) {
-                locations.add(province);
-            }
-        }
-        
-        // Find all cities
-        for (String city : vietnameseCities) {
-            if (text.toLowerCase().contains(city.toLowerCase())) {
-                locations.add(city);
-            }
-        }
-        
-        return locations;
-    }
-    
-    /**
-     * Add custom location to the recognizer
-     */
-    public void addProvince(String province) {
-        vietnameseProvinces.add(province);
-    }
-    
-    public void addCity(String city) {
-        vietnameseCities.add(city);
-    }
-    
-    private String capitalizeWords(String text) {
+    private static String capitalizeWords(String text) {
+        if (text == null || text.isEmpty()) return "";
         String[] words = text.split("\\s+");
         StringBuilder capitalized = new StringBuilder();
         
@@ -131,7 +55,57 @@ public class LocationExtractor {
                           .append(" ");
             }
         }
-        
         return capitalized.toString().trim();
+    }
+    
+    /**
+     * Add custom location to the recognizer
+     */
+    public static void addProvince(String province) {
+        if (province != null && !province.trim().isEmpty()) {
+            vietnameseProvinces.add(province.trim());
+        }
+    }
+    
+    public static void addCity(String city) {
+        if (city != null && !city.trim().isEmpty()) {
+            vietnameseCities.add(city.trim());
+        }
+    }
+    
+    private static Set<String> initializeProvinces() {
+        return new HashSet<>(Arrays.asList(
+            "Hà Nội", "Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ",
+            "An Giang", "Bà Rịa-Vũng Tàu", "Bắc Giang", "Bắc Kạn", "Bạc Liêu",
+            "Bắc Ninh", "Bến Tre", "Bình Định", "Bình Dương", "Bình Phước",
+            "Bình Thuận", "Cà Mau", "Cao Bằng", "Đắk Lắk", "Đắk Nông", "Điện Biên",
+            "Đồng Nai", "Đồng Tháp", "Gia Lai", "Hà Giang", "Hà Nam", "Hà Tĩnh",
+            "Hải Dương", "Hậu Giang", "Hòa Bình", "Hưng Yên", "Khánh Hòa",
+            "Kiên Giang", "Kon Tum", "Lai Châu", "Lâm Đồng", "Lạng Sơn", "Lào Cai",
+            "Long An", "Nam Định", "Nghệ An", "Ninh Bình", "Ninh Thuận", "Phú Thọ",
+            "Phú Yên", "Quảng Bình", "Quảng Nam", "Quảng Ngãi", "Quảng Ninh",
+            "Quảng Trị", "Sóc Trăng", "Sơn La", "Tây Ninh", "Thái Bình", "Thái Nguyên",
+            "Thanh Hóa", "Thừa Thiên Huế", "Tiền Giang", "Trà Vinh", "Tuyên Quang",
+            "Vĩnh Long", "Vĩnh Phúc", "Yên Bái"
+        ));
+    }
+    
+    private static Set<String> initializeCities() {
+        return new HashSet<>(Arrays.asList(
+            "thủ đức", "hạ long", "cẩm phả", "uông bí", "móng cái", 
+            "thái nguyên", "sông công", "phổ yên", "việt trì", "vĩnh yên", 
+            "phúc yên", "bắc ninh", "từ sơn", "hải dương", "chí linh", 
+            "hưng yên", "thái bình", "nam định", "ninh bình", "tam điệp",
+            "thanh hóa", "sầm sơn", "bỉm sơn", "vinh", "cửa lò", "thái hòa", 
+            "hà tĩnh", "đồng hới", "đông hà", "huế", "hội an", "tam kỳ", 
+            "quảng ngãi", "quy nhơn", "tuy hòa", "nha trang", "cam ranh", 
+            "phan rang", "phan thiết", "biên hòa", "long khánh", "vũng tàu", 
+            "bà rịa", "thủ dầu một", "dĩ an", "thuận an", "tân uyên", 
+            "bến cát", "đồng xoài", "tây ninh", "mỹ tho", "bến tre", 
+            "trà vinh", "vĩnh long", "sa đéc", "cao lãnh", "hồng ngự", 
+            "long xuyên", "châu đốc", "rạch giá", "hà tiên", "vị thanh", 
+            "ngã bảy", "sóc trăng", "bạc liêu", "cà mau", "buôn ma thuột", 
+            "pleiku", "kon tum", "gia nghĩa", "đà lạt", "bảo lộc"
+        ));
     }
 }

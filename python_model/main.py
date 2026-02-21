@@ -7,6 +7,7 @@ from models.schemas import (
     SentimentTimeSeriesRequest,
     DamageRequest,
     ReliefSentimentRequest,
+    IntentRequest
 )
 
 # Import service logic
@@ -16,6 +17,7 @@ from services.relief_service import (
     aggregate_relief_sentiment,
     aggregate_relief_time_series,
 )
+from services.intent_service import aggregate_intent_stats
 
 app = FastAPI(title="Humanitarian Logistics Analysis API")
 
@@ -82,7 +84,17 @@ def analyze_relief_timeseries(req: ReliefSentimentRequest):
     except Exception as e:
         print(f"❌ Error: {e}")
         return JSONResponse(status_code=500, content={"error": str(e)})
-
+@app.post("/analyze/intent")
+def analyze_intent(req: IntentRequest):
+    """
+    Problem 5: Classify Supply (Offer) vs Demand (Request).
+    """
+    print(f"🤝 [Problem 5] Intent Request ({req.model_type})")
+    try:
+        return aggregate_intent_stats(req.texts, req.model_type)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 # --- STARTUP ---
 if __name__ == "__main__":
     print("🚀 Starting Python Backend on Port 8000...")

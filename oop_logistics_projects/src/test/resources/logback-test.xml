@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Logback configuration for running tests -->
+    <!-- This file is used automatically by Logback when tests run -->
+    
+    <!-- Appender definition: Console output -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!-- Color patterns for easier readability -->
+            <pattern>%d{HH:mm:ss.SSS} [%-5level] [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Appender definition: File output (optional) -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>target/test-logs.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%-5level] [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Root logger configuration for tests -->
+    <!-- Set level to DEBUG for more verbose test logging -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
+    </root>
+    
+    <!-- Specific logger levels for your packages -->
+    <logger name="com.oop.logistics" level="DEBUG"/>
+    <logger name="com.oop.logistics.database" level="DEBUG"/>
+    <logger name="com.oop.logistics.crawler" level="DEBUG"/>
+    
+    <!-- Reduce noise from third-party libraries -->
+    <logger name="org.seleniumhq.selenium" level="WARN"/>
+    <logger name="io.github.bonigarcia" level="WARN"/>
+</configuration>

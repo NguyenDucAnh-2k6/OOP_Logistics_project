@@ -2,8 +2,12 @@ package com.oop.logistics.search;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UrlUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(UrlUtils.class);
 
     public static boolean isValidArticleUrl(String url, String domain) {
         if (url == null || url.isEmpty()) return false;
@@ -46,9 +50,21 @@ public class UrlUtils {
             try {
                 return URLDecoder.decode(extracted, StandardCharsets.UTF_8);
             } catch (Exception e) {
+                logger.warn("Failed to decode DDG url part, returning raw: {}", extracted);
                 return extracted;
             }
         }
         return ddgUrl;
+    }
+    public static String cleanFacebookUrl(String url) {
+        if (url == null) return "";
+        // Remove Facebook tracking parameters but keep the post ID
+        if (url.contains("facebook.com")) {
+            url = url.split("\\?__cft__")[0];
+            url = url.split("&__cft__")[0];
+            url = url.split("\\?mibextid")[0];
+            url = url.split("&mibextid")[0];
+        }
+        return url;
     }
 }

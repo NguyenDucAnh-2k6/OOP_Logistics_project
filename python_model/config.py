@@ -20,6 +20,9 @@ MODEL_DIR = os.path.join(BASE_DIR, "models")
 # 1. We use os.path.join (strings) instead of the '/' operator (which requires pathlib).
 # 2. We removed "oop_logistics_projects" from the path because PROJECT_ROOT 
 #    is ALREADY inside "oop_logistics_projects".
-DAMAGE_CONFIG = os.path.join(PROJECT_ROOT, "oop_logistics_projects", "external config", "damage_keywords.json")
-RELIEF_CONFIG = os.path.join(PROJECT_ROOT, "oop_logistics_projects", "external config", "relief_keywords.json")
-SENTIMENT_CONFIG = os.path.join(PROJECT_ROOT, "oop_logistics_projects", "external config", "sentiment_keywords.json")
+CONFIG_DIR = os.path.join(BASE_DIR, "oop_logistics_projects", "external config") 
+
+SENTIMENT_CONFIG = os.path.join(CONFIG_DIR, "sentiment_keywords.json")
+DAMAGE_CONFIG = os.path.join(CONFIG_DIR, "damage_keywords.json")
+RELIEF_CONFIG = os.path.join(CONFIG_DIR, "relief_keywords.json")
+INTENT_CONFIG = os.path.join(CONFIG_DIR, "intent_keywords.json") # Add this new path

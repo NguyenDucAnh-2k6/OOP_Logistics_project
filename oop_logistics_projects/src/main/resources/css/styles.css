@@ -124,4 +124,40 @@
     -fx-background-radius: 10;
     -fx-border-color: rgba(0,0,0,0.1);
     -fx-border-radius: 10;
+    
+    /* Makes typed text dark gray/black */
+    -fx-text-fill: #2d3436; 
+    
+    /* Makes the placeholder prompt text a readable gray */
+    -fx-prompt-text-fill: #7f8c8d; 
+}
+
+/* Ensures the dropdown items in ComboBoxes are also readable */
+.combo-box .list-cell {
+    -fx-text-fill: #2d3436;
+}
+/* TextArea Specific Styling */
+.text-area {
+    -fx-control-inner-background: rgba(255, 255, 255, 0.9);
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+}
+
+.text-area .content {
+    -fx-background-color: transparent;
+}
+
+.text-area .text {
+    -fx-fill: #2d3436; /* Makes the URLs dark gray instead of white */
+}
+/* 8. ScrollPane Transparency Fix */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-control-inner-background: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
 }

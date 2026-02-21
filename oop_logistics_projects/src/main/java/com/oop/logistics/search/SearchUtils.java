@@ -1,26 +1,34 @@
 package com.oop.logistics.search;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.util.Map;
 
 public class SearchUtils {
     // Hardcoded date range for filtering (or you can pass these in)
-    private static final LocalDate START_DATE = LocalDate.of(2024, 9, 3);
-    private static final LocalDate END_DATE = LocalDate.of(2025, 1, 31);
+    private static final LocalDate START_DATE = LocalDate.of(2000, 1, 1);
+    private static final LocalDate END_DATE = LocalDate.now();
+
+    private static final Logger logger = LoggerFactory.getLogger(SearchUtils.class);
 
     public static void processResult(String url, String domain, String pubDateRaw, Map<String, UrlWithDate> output) {
+        url = UrlUtils.cleanFacebookUrl(url);
         if (!UrlUtils.isValidArticleUrl(url, domain)) return;
 
         LocalDate date = DateUtils.determineDate(url, pubDateRaw);
 
         if (date != null) {
+            // Now it accepts almost any valid date
             if (!date.isBefore(START_DATE) && !date.isAfter(END_DATE)) {
-                output.putIfAbsent(url, new UrlWithDate(url, date));
-                System.out.println("  + Found: " + url + " [" + date + "]");
+                if (output.putIfAbsent(url, new UrlWithDate(url, date)) == null) {
+                    logger.info("  + NEW URL Added: {} [{}]", url, date);
+                }
             }
         } else {
             output.putIfAbsent(url, new UrlWithDate(url, null));
-            System.out.println("  + Found (No Date): " + url);
+            logger.info("  + Found (No Date): {}", url);
         }
     }
+    
 }
