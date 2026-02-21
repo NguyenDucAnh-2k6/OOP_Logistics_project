@@ -3,6 +3,8 @@ package com.oop.logistics.search;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -10,6 +12,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DateUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(DateUtils.class);
 
     /**
      * Main method to get a date from a URL (pattern) or by fetching the page content.
@@ -31,7 +35,7 @@ public class DateUtils {
 
     private static LocalDate fetchDateFromPage(String url) {
         try {
-            System.out.println("    Fetching date from page: " + url);
+            logger.debug("Fetching date from page: {}", url);
             Document doc = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
                     .timeout(10000)
@@ -67,7 +71,7 @@ public class DateUtils {
             Thread.sleep(500);
 
         } catch (Exception e) {
-            // Log error if needed
+            logger.warn("Failed to fetch/parse date from page {}: {}", url, e.getMessage());
         }
         return null;
     }

@@ -3,8 +3,12 @@ package com.oop.logistics.crawler;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DanTriCrawler extends NewsCrawler {
+
+    private static final Logger logger = LoggerFactory.getLogger(DanTriCrawler.class);
 
     @Override
     public NewsResult crawl(String url) {
@@ -30,7 +34,7 @@ public class DanTriCrawler extends NewsCrawler {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error crawling URL {}", url, e);
         }
         return null; // <-- Return null if it fails
     }

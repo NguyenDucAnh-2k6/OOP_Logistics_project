@@ -1,0 +1,22 @@
+2026-02-21 14:54:20 [Thread-3] INFO  c.o.l.search.DisasterSearchService - === Searching domain: thanhnien.vn ===
+2026-02-21 14:54:20 [Thread-3] INFO  c.o.logistics.search.BingRssStrategy - Bing RSS: https://www.bing.com/news/search?q=site%3Athanhnien.vn+b%C3%A3o+matmo&format=rss
+2026-02-21 14:54:21 [Thread-3] INFO  c.o.l.search.GoogleNewsRssStrategy - Google News RSS: https://news.google.com/rss/search?q=b%C3%A3o+matmo+site%3Athanhnien.vn+after:2024-09-02+before:2024-09-11&hl=vi&gl=VN&ceid=VN:vi
+2026-02-21 14:54:35 [Thread-3] INFO  c.o.l.search.DuckDuckGoStrategy - DuckDuckGo: https://html.duckduckgo.com/html/?q=site%3Athanhnien.vn+b%C3%A3o+matmo
+2026-02-21 14:54:36 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/canh-bao-khu-vuc-gio-manh-trong-bao-matmo-14-tinh-khan-truong-ung-pho-185251005112753063.htm [2025-10-05]
+2026-02-21 14:54:36 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/hau-qua-tham-khoc-sau-bao-matmo-18-nguoi-chet-thiet-hai-hon-16900-ti-dong-185251015201644672.htm [2025-10-16]
+2026-02-21 14:54:36 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/bao-matmo-manh-len-cap-12-anh-huong-dat-lien-viet-nam-18525100209111372.htm [2025-10-02]
+2026-02-21 14:54:36 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/bao-matmo-di-nhanh-huong-vao-vinh-bac-bo-gay-song-cao-8-met-185251003160327027.htm [2025-10-03]
+2026-02-21 14:54:37 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/bao-matmo-bat-dau-suy-yeu-dang-tien-vao-vinh-bac-bo-185251005171113428.htm [2025-10-05]
+2026-02-21 14:54:37 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/7-nguoi-chet-va-mat-tich-trong-mua-lu-sau-bao-matmo-185251007213657741.htm [2025-10-07]
+2026-02-21 14:54:37 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/chu-dong-ung-pho-khac-phuc-nhanh-hau-qua-thien-tai-sau-bao-matmo-185251007004508656.htm [2025-10-07]
+2026-02-21 14:54:37 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/bao-matmo-manh-cap-10-vao-bien-dong-huong-ve-mien-bac-185251003064203379.htm [2025-10-03]
+2026-02-21 14:54:37 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/bao-matmo-bao-so-11-di-rat-nhanh-mien-bac-chiu-anh-huong-truc-tiep-185251002183034709.htm [2025-10-02]
+2026-02-21 14:54:37 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/mua-lu-bao-matmo-gay-thiet-hai-tren-8720-ti-dong-con-10961-nha-ngap-lut-185251012193012125.htm [2025-10-12]
+2026-02-21 14:54:39 [Thread-3] INFO  c.o.logistics.search.BingRssStrategy - Bing RSS: https://www.bing.com/news/search?q=site%3Athanhnien.vn+B%C3%A3o+b%C3%A3o+matmo&format=rss
+2026-02-21 14:54:40 [Thread-3] INFO  c.o.l.search.GoogleNewsRssStrategy - Google News RSS: https://news.google.com/rss/search?q=B%C3%A3o+b%C3%A3o+matmo+site%3Athanhnien.vn+after:2024-09-02+before:2024-09-11&hl=vi&gl=VN&ceid=VN:vi
+2026-02-21 14:54:53 [Thread-3] INFO  c.o.l.search.DuckDuckGoStrategy - DuckDuckGo: https://html.duckduckgo.com/html/?q=site%3Athanhnien.vn+B%C3%A3o+b%C3%A3o+matmo
+2026-02-21 14:54:55 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/bao-matmo-noi-tiep-bualoi-gay-mua-lon-va-nguy-co-lu-quet-sat-lo-tai-mien-bac-185251005152836754.htm [2025-10-05]
+2026-02-21 14:54:55 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + NEW URL Added: https://thanhnien.vn/du-bao-khu-vuc-hung-mua-lon-nguy-hiem-trong-bao-matmo-185251005141148503.htm [2025-10-05]
+2026-02-21 14:54:56 [Thread-3] INFO  c.oop.logistics.search.SearchUtils -   + Found (No Date): https://thanhnien.vn/bao-matmo-tags855593.html
+2026-02-21 14:54:58 [Thread-3] INFO  c.o.logistics.search.BingRssStrategy - Bing RSS: https://www.bing.com/news/search?q=site%3Athanhnien.vn+b%C3%A3o+matmo+thi%E1%BB%87t+h%E1%BA%A1i&format=rss
+2026-02-21 14:54:58 [Thread-3] INFO  c.o.l.search.GoogleNewsRssStrategy - Google News RSS: https://news.google.com/rss/search?q=b%C3%A3o+matmo+thi%E1%BB%87t+h%E1%BA%A1i+site%3Athanhnien.vn+after:2024-09-02+before:2024-09-11&hl=vi&gl=VN&ceid=VN:vi

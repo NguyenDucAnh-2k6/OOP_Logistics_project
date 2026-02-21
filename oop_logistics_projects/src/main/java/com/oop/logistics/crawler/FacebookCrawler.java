@@ -14,6 +14,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FacebookCrawler {
     private WebDriver driver;
@@ -24,6 +26,7 @@ public class FacebookCrawler {
     private Set<String> crawledIds = new HashSet<>();
     private int unknownIdCounter = 0;
     private String crawlDate = null; // Date assigned to all comments from this crawl
+    private static final Logger logger = LoggerFactory.getLogger(FacebookCrawler.class);
 
     public FacebookCrawler() {
         ChromeOptions options = new ChromeOptions();
@@ -53,7 +56,7 @@ public class FacebookCrawler {
      */
     public void setCrawlDate(String date) {
         this.crawlDate = date;
-        System.out.println("✓ Crawl date set to: " + date);
+        logger.info("✓ Crawl date set to: {}", date);
     }
 
     public FacebookResult crawlAndReturn(String url) {
@@ -88,12 +91,12 @@ public class FacebookCrawler {
             allOption.click();
             sleep(5000); // Increased wait for feed reload
         } catch (Exception e) {
-            System.out.println("Filter selection skipped.");
+            logger.warn("Filter selection skipped.", e);
         }
     }
 
     private FacebookResult performDeepCrawl(boolean isReel) {
-        System.out.println("Starting Deep Crawl...");
+        logger.info("Starting Deep Crawl...");
         JavascriptExecutor js = (JavascriptExecutor) driver;
         int noNewDataCount = 0;
         int totalCollected = 0;
@@ -111,10 +114,10 @@ public class FacebookCrawler {
 
             if (newFound > 0) {
                 noNewDataCount = 0;
-                System.out.println("\nCollected " + totalCollected);
+                logger.info("Collected {}", totalCollected);
             } else {
                 noNewDataCount++;
-                System.out.print(".");
+                logger.debug(".");
             }
 
             waitForCommentsToStabilize(10);
@@ -129,7 +132,7 @@ public class FacebookCrawler {
             waitForCommentsToStabilize(10);
         }
 
-        System.out.println("\nFinished. Total: " + totalCollected);
+        logger.info("Finished. Total: {}", totalCollected);
         return result; // Return the final collected data
     }
 

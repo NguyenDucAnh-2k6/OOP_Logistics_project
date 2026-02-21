@@ -2,8 +2,12 @@ package com.oop.logistics.crawler;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FacebookResult {
+    private static final Logger logger = LoggerFactory.getLogger(FacebookResult.class);
+
     public String content = "";
     
     // Store structured data instead of just strings

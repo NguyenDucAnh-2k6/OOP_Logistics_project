@@ -2,8 +2,11 @@ package com.oop.logistics.crawler;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class NewsCrawler {
+    private static final Logger logger = LoggerFactory.getLogger(NewsCrawler.class);
 
     // Now returns a NewsResult instead of void
     public abstract NewsResult crawl(String url);
