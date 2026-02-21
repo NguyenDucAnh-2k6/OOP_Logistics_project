@@ -679,12 +679,6 @@ def analyze_sentiment_timeseries(req: SentimentTimeSeriesRequest):
 cd oop_logistics_projects
 mvn test
 ```
-
-Test files in `src/test/java/com/oop/logistics/`:
-- `crawler/TestNewsCrawler.java` - Crawler functionality
-- `preprocessing/TestNewsPreprocess.java` - Text preprocessing
-- `search/TestSearch.java` - Search strategies
-
 ---
 ## Project Structure
 ```
@@ -715,7 +709,7 @@ OOP_Logistics_project/
 │   ├── services/                    # Analysis logic (sentiment, intent, etc.)
 │   ├── requirements.txt
 │   └── venv/                        # Virtual environment
-└── README.md                        # This file```
+└── README.md                        # This file
 ```
 ---
 
