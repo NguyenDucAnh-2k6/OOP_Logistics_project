@@ -4,12 +4,6 @@ pydantic
 matplotlib
 requests
 numpy
-fastapi
-uvicorn
-pydantic
-matplotlib
-requests
-numpy
 pandas
 # New AI dependencies
 torch 
