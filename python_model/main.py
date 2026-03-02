@@ -115,6 +115,8 @@ def analyze_intent(req: IntentRequest):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 # --- STARTUP ---
+# --- STARTUP ---
 if __name__ == "__main__":
     logger.info("🚀 Starting Python Backend on Port 8000...")
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # log_config=None forces Uvicorn to respect the setup in logging_config.py
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_config=None)

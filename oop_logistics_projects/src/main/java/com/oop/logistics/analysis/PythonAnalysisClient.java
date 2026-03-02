@@ -230,7 +230,7 @@ public class PythonAnalysisClient implements AnalysisAPI {
     }
 
     private String sendPost(String endpoint, Object requestObject) throws Exception {
-        logger.info("Preparing to send data to Python backend at endpoint: {}", endpoint); // <-- ADDED LOG
+        logger.info("Preparing to send data to Python backend at endpoint: {}", endpoint);
         
         String jsonBody = gson.toJson(requestObject);
         HttpRequest request = HttpRequest.newBuilder()
@@ -239,15 +239,25 @@ public class PythonAnalysisClient implements AnalysisAPI {
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
                 .build();
                 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        
-        if (response.statusCode() != 200) {
-            logger.error("API Error at {}. Status: {}. Response: {}", endpoint, response.statusCode(), response.body()); // <-- ADDED LOG
-            throw new RuntimeException("API Error (" + response.statusCode() + "): " + response.body());
+        try {
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200) {
+                logger.error("API Error at {}. Status: {}. Response: {}", endpoint, response.statusCode(), response.body()); 
+                throw new RuntimeException("API Error (" + response.statusCode() + "): " + response.body());
+            }
+            
+            logger.info("Successfully received response from {}", endpoint); 
+            return response.body();
+            
+        } catch (java.net.ConnectException e) {
+            // Explicitly catch Connection Refused when Uvicorn is offline
+            logger.error("Failed to connect to Python backend at {}. Is the Uvicorn server running?", apiUrl + endpoint, e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Unexpected error communicating with Python backend at {}: {}", endpoint, e.getMessage(), e);
+            throw e;
         }
-        
-        logger.info("Successfully received response from {}", endpoint); // <-- ADDED LOG
-        return response.body();
     }
     // --- Problem 5: Intent Classification (Supply vs Demand) ---
     @Override

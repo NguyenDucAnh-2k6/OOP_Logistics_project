@@ -102,22 +102,22 @@ public class FacebookCrawler {
         int totalCollected = 0;
         
         FacebookResult result = new FacebookResult();
-        result.content = "Facebook Post/Reel Video"; // Default content text for the main post
+        result.content = "Facebook Post/Reel Video"; 
 
         while (noNewDataCount < 20) {
             expandAllVisibleReplies();
             waitForCommentsToStabilize(15);
 
-            // Pass the result object so the scraper can add comments to it
             int newFound = scrapeVisibleComments(result); 
             totalCollected += newFound;
 
             if (newFound > 0) {
                 noNewDataCount = 0;
-                logger.info("Collected {}", totalCollected);
+                logger.info("Collected {} comments so far...", totalCollected);
             } else {
                 noNewDataCount++;
-                logger.debug(".");
+                // Changed from debug to info so it prints to the log file
+                logger.info("No new comments found. Retry attempt {}/20...", noNewDataCount);
             }
 
             waitForCommentsToStabilize(10);
@@ -132,8 +132,8 @@ public class FacebookCrawler {
             waitForCommentsToStabilize(10);
         }
 
-        logger.info("Finished. Total: {}", totalCollected);
-        return result; // Return the final collected data
+        logger.info("Finished. Total comments collected: {}", totalCollected);
+        return result; 
     }
 
     private void expandAllVisibleReplies() {

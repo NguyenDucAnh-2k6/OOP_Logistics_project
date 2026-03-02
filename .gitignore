@@ -4,6 +4,11 @@ target/
 *.class
 logs/
 *.log
+# Ignore SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+logistics_data.db
 
 # --- Python ---
 # Ignores __pycache__ directories anywhere (including python_model and its subfolders)
