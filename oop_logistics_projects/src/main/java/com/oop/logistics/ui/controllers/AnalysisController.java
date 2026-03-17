@@ -46,6 +46,12 @@ public class AnalysisController {
             return "keyword";
         } else if (selection.contains("XGBoost")) {
             return "xgboost";
+        } else if (selection.contains("SVM")) {
+            return "svm"; // Maps to the literal in Python schemas.py
+        } else if (selection.contains("MLP")) {
+            return "mlp"; // <-- Maps to your Python API schema
+        } else if (selection.contains("LSTM")) {
+            return "lstm"; // <-- Maps to your Python API schema
         } else {
             return "ai"; // Defaults to PhoBERT
         }

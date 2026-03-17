@@ -7,13 +7,13 @@
         "2": "positive"
     },
     "optuna_best_hyperparameters": {
-        "n_estimators": 413,
-        "learning_rate": 0.28011981301702454,
-        "max_depth": 8,
-        "subsample": 0.9032748319714741,
-        "colsample_bytree": 0.7692518671953932,
+        "n_estimators": 500,
+        "learning_rate": 0.075938917662714,
+        "max_depth": 7,
+        "subsample": 0.8281651887908185,
+        "colsample_bytree": 0.6931966536681634,
         "min_child_weight": 4,
-        "gamma": 1.5517391046238713e-08
+        "gamma": 2.9096075253416848e-05
     },
-    "validation_log_loss": 0.41892908788899735
+    "validation_log_loss": 0.38730964437042087
 }

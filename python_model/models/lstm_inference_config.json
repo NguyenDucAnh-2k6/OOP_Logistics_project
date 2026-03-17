@@ -1,0 +1,18 @@
+{
+    "model_architecture": "lstm_bidirectional",
+    "tokenizer": "google-bert/bert-base-multilingual-cased",
+    "max_len": 128,
+    "embed_dim": 128,
+    "labels_mapping": {
+        "0": "negative",
+        "1": "neutral",
+        "2": "positive"
+    },
+    "optuna_best_hyperparameters": {
+        "hidden_dim": 64,
+        "num_layers": 2,
+        "dropout": 0.17344880140193458,
+        "lr": 0.007442275207588865
+    },
+    "validation_loss": 0.3563718276928706
+}

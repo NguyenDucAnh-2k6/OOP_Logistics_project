@@ -28,6 +28,9 @@
                     <String fx:value="AI Model (Accurate - Slower)"/>
                     <String fx:value="XGBoost Classifier (Balanced)"/>
                     <String fx:value="Keyword Search (Instant)"/>
+                    <String fx:value="SVM Classifier (Theoretical)"/>
+                    <String fx:value="MLP Deep Learning (Complex)"/>
+                    <String fx:value="LSTM Neural Network (Sequential)"/>
                 </FXCollections>
             </items>
             <value>

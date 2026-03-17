@@ -110,7 +110,7 @@ def train_XGBoost_pipeline():
     print("\n🚀 Starting Optuna Hyperparameter Optimization...")
     # Adjust n_trials based on how much time you have (20-50 is a good start)
     study = optuna.create_study(direction='minimize')
-    study.optimize(lambda trial: objective(trial, X_train_vec, y_train, X_val_vec, y_val), n_trials=2)
+    study.optimize(lambda trial: objective(trial, X_train_vec, y_train, X_val_vec, y_val), n_trials=25)
 
     print("\n✅ Optimization Finished!")
     print("Best validation log-loss:", study.best_value)

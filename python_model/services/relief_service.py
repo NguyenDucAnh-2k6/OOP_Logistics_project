@@ -10,9 +10,9 @@ logger = logging.getLogger(__name__)
 # Ensure sentiment_service has 'predict_ai_batch' and 'predict_keyword' exposed
 # Import sentiment functions from the sibling service
 try:
-    from .sentiment_service import predict_ai_batch, predict_keyword, predict_xgboost_batch
+    from .sentiment_service import predict_ai_batch, predict_keyword, predict_xgboost_batch, predict_svm_batch, predict_mlp_batch, predict_lstm_batch
 except ImportError:
-    from services.sentiment_service import predict_ai_batch, predict_keyword, predict_xgboost_batch
+    from services.sentiment_service import predict_ai_batch, predict_keyword, predict_xgboost_batch, predict_svm_batch, predict_mlp_batch, predict_lstm_batch
 # --- 1. SETUP: Load Keywords ---
 try:
     with open(RELIEF_CONFIG, "r", encoding="utf-8") as f:
@@ -112,6 +112,12 @@ def get_sentiments_batch(texts: List[str], model_type: str) -> List[str]:
         return [predict_keyword(t) for t in texts]
     elif model_type == "xgboost":
         return predict_xgboost_batch(texts)
+    elif model_type == "svm": 
+        return predict_svm_batch(texts) # Add SVM route
+    elif model_type == "mlp": 
+        return predict_mlp_batch(texts) # <-- Add MLP
+    elif model_type == "lstm": 
+        return predict_lstm_batch(texts) # <-- Add LSTM
     else:
         # Process in batch for AI
         return predict_ai_batch(texts)
@@ -125,9 +131,7 @@ def aggregate_relief_sentiment(texts: List[str], model_type: str = "ai") -> Dict
     logger.info(f"🚀 [Problem 3] Starting analysis for {len(texts)} texts using [{model_type.upper()}] mode...")
     
     # 1. Get Categories (Batch)
-    if model_type in ["keyword", "xgboost"]:
-        if model_type == "xgboost":
-            logger.info("⚠️ Note: Using XGBoost for Sentiment, but falling back to KEYWORD for Categories.")
+    if model_type in ["keyword", "xgboost", "svm", "mlp", "lstm"]:
         all_categories = [detect_relief_keyword(t) for t in texts]
     else:
         logger.info("🧠 Running heavy AI for Category Detection (This may take a while...)")
@@ -158,7 +162,7 @@ def aggregate_relief_time_series(texts: List[str], dates: List[str], model_type:
     logger.info(f"🚀 [Problem 4] Starting time-series analysis for {len(texts)} texts using [{model_type.upper()}] mode...")
 
     # 1. Get Categories (Batch)
-    if model_type in ["keyword", "xgboost"]:
+    if model_type in ["keyword", "xgboost", "svm", "mlp", "lstm"]:
         all_categories = [detect_relief_keyword(t) for t in texts]
     else:
         logger.info("🧠 Running heavy AI for Category Detection (This may take a while...)")

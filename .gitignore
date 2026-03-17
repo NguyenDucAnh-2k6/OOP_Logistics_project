@@ -24,3 +24,5 @@ __pycache__/
 *.settings/
 # Model artifacts
 *.npy
+*.pt
+*.joblib
