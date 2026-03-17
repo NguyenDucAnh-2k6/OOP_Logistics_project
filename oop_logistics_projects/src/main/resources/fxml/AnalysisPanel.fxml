@@ -22,10 +22,11 @@
         
         <Button text="Load Database Data" onAction="#handleLoadDatabaseClick" styleClass="button"/>
 
-        <ComboBox fx:id="modelSelector" prefWidth="200">
+        <ComboBox fx:id="modelSelector" prefWidth="240">
             <items>
                 <FXCollections fx:factory="observableArrayList">
                     <String fx:value="AI Model (Accurate - Slower)"/>
+                    <String fx:value="XGBoost Classifier (Balanced)"/>
                     <String fx:value="Keyword Search (Instant)"/>
                 </FXCollections>
             </items>

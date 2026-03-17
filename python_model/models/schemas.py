@@ -6,8 +6,7 @@ class BaseRequest(BaseModel):
     texts: List[str] = Field(..., description="List of text contents (posts/comments)")
     
     # Literal strictly enforces that ONLY "ai" or "keyword" can be accepted
-    model_type: Literal["ai", "keyword"] = Field("ai", description="Analysis engine to use")
-
+    model_type: Literal["ai", "keyword", "xgboost"] = Field("ai", description="Analysis engine to use")
 class SentimentTimeSeriesRequest(BaseRequest):
     dates: List[str] = Field(..., description="List of dates matching the texts ('DD/MM/YYYY' or 'YYYY-MM-DD')")
 

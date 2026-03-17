@@ -8,11 +8,11 @@ logger = logging.getLogger(__name__)
 
 # Import sentiment functions from the sibling service
 # Ensure sentiment_service has 'predict_ai_batch' and 'predict_keyword' exposed
+# Import sentiment functions from the sibling service
 try:
-    from .sentiment_service import predict_ai_batch, predict_keyword
+    from .sentiment_service import predict_ai_batch, predict_keyword, predict_xgboost_batch
 except ImportError:
-    from services.sentiment_service import predict_ai_batch, predict_keyword
-
+    from services.sentiment_service import predict_ai_batch, predict_keyword, predict_xgboost_batch
 # --- 1. SETUP: Load Keywords ---
 try:
     with open(RELIEF_CONFIG, "r", encoding="utf-8") as f:
@@ -110,31 +110,35 @@ def get_sentiments_batch(texts: List[str], model_type: str) -> List[str]:
     if model_type == "keyword":
         # Process one by one for keyword
         return [predict_keyword(t) for t in texts]
+    elif model_type == "xgboost":
+        return predict_xgboost_batch(texts)
     else:
         # Process in batch for AI
         return predict_ai_batch(texts)
 
 # --- MAIN EXPORTED FUNCTIONS ---
 
-def aggregate_relief_sentiment(texts: List[str], model_type: str = "ai") -> Dict[str, Dict[str, int]]:
+def aggregate_relief_sentiment(texts: List[str], model_type: str = "ai") -> Dict:
     """
-    Problem 3: Aggregate sentiment by relief category.
+    Problem 3: Aggregate relief sentiment.
     """
-    stats = {} # { "Food": {pos: 1, neg: 0}, ... }
-
+    logger.info(f"🚀 [Problem 3] Starting analysis for {len(texts)} texts using [{model_type.upper()}] mode...")
+    
     # 1. Get Categories (Batch)
-    if model_type == "keyword":
-        print("⚡ Using Keyword Mode for Relief Categories")
+    if model_type in ["keyword", "xgboost"]:
+        if model_type == "xgboost":
+            logger.info("⚠️ Note: Using XGBoost for Sentiment, but falling back to KEYWORD for Categories.")
         all_categories = [detect_relief_keyword(t) for t in texts]
     else:
-        print("🧠 Using AI Mode for Relief Categories")
+        logger.info("🧠 Running heavy AI for Category Detection (This may take a while...)")
         all_categories = detect_relief_ai_batch(texts)
 
     # 2. Get Sentiments (Batch)
+    logger.info(f"⚡ Running Sentiment Analysis using {model_type}...")
     all_sentiments = get_sentiments_batch(texts, model_type)
 
-    # 3. Aggregate
-    # Note: One text can contribute to multiple categories (e.g. Food & Water)
+    logger.info("📊 Aggregating final statistics...")
+    stats = {}
     for cats, senti in zip(all_categories, all_sentiments):
         for cat in cats:
             if cat not in stats:
@@ -146,23 +150,26 @@ def aggregate_relief_sentiment(texts: List[str], model_type: str = "ai") -> Dict
 
 def aggregate_relief_time_series(texts: List[str], dates: List[str], model_type: str = "ai"):
     """
-    Problem 4: Gom theo ngày + loại hàng cứu trợ.
+    Problem 4: Relief needs over time.
     """
     if len(texts) != len(dates):
-        raise ValueError("texts và dates phải có cùng số lượng phần tử")
+        raise ValueError("texts and dates must have the same length")
+
+    logger.info(f"🚀 [Problem 4] Starting time-series analysis for {len(texts)} texts using [{model_type.upper()}] mode...")
 
     # 1. Get Categories (Batch)
-    if model_type == "keyword":
+    if model_type in ["keyword", "xgboost"]:
         all_categories = [detect_relief_keyword(t) for t in texts]
     else:
+        logger.info("🧠 Running heavy AI for Category Detection (This may take a while...)")
         all_categories = detect_relief_ai_batch(texts)
 
     # 2. Get Sentiments (Batch)
+    logger.info(f"⚡ Running Sentiment Analysis using {model_type}...")
     all_sentiments = get_sentiments_batch(texts, model_type)
 
+    logger.info("📊 Aggregating final time-series statistics...")
     stats = {}
-    # Structure: stats[date][category] = {positive, negative, neutral}
-
     for date, cats, senti in zip(dates, all_categories, all_sentiments):
         if date not in stats:
             stats[date] = {}
@@ -174,14 +181,14 @@ def aggregate_relief_time_series(texts: List[str], dates: List[str], model_type:
 
     # 3. Flatten for API response
     result = []
-    for date, cat_dict in stats.items():
-        for cat, counts in cat_dict.items():
+    for date, cat_data in stats.items():
+        for cat, s_data in cat_data.items():
             result.append({
                 "date": date,
                 "category": cat,
-                "positive": counts["positive"],
-                "negative": counts["negative"],
-                "neutral": counts["neutral"]
+                "positive": s_data["positive"],
+                "negative": s_data["negative"],
+                "neutral": s_data["neutral"]
             })
-            
+
     return result

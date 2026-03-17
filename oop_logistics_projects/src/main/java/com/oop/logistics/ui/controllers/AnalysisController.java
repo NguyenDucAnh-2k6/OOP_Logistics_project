@@ -35,7 +35,20 @@ public class AnalysisController {
 
     private String getModelType() {
         String selection = modelSelector.getSelectionModel().getSelectedItem();
-        return (selection != null && selection.contains("Keyword")) ? "keyword" : "ai";
+        
+        // Handle null safety just in case
+        if (selection == null) {
+            return "ai";
+        }
+        
+        // Route exactly to the literals expected by your Python Pydantic schemas
+        if (selection.contains("Keyword")) {
+            return "keyword";
+        } else if (selection.contains("XGBoost")) {
+            return "xgboost";
+        } else {
+            return "ai"; // Defaults to PhoBERT
+        }
     }
 
     private boolean checkData(boolean requireDates) {
