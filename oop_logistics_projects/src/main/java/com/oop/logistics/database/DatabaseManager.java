@@ -39,13 +39,22 @@ public class DatabaseManager {
                 "published_date TEXT," +
                 "FOREIGN KEY(news_id) REFERENCES news(id)" +
                 ");";
-
+        String createSocialTable = "CREATE TABLE IF NOT EXISTS social_comments (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "platform TEXT, " +
+                "author TEXT, " +
+                "content TEXT, " +
+                "likes INTEGER, " +
+                "timestamp TEXT" +
+                ");";
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
             // Create tables
             stmt.execute(createDisasterTable);
             stmt.execute(createNewsTable);
             stmt.execute(createCommentsTable);
+            stmt.execute(createSocialTable);
+
             System.out.println("Database tables initialized successfully.");
         } catch (SQLException e) {
             System.err.println("Error initializing database: " + e.getMessage());

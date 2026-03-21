@@ -11,11 +11,20 @@ from models.schemas import (
     SentimentTimeSeriesRequest,
     DamageRequest,
     ReliefSentimentRequest,
+    SingleSentimentRequest,
     IntentRequest
 )
 
 # Import service logic
-from services.sentiment_service import aggregate_by_date
+from services.sentiment_service import (
+    aggregate_by_date, 
+    predict_keyword, 
+    predict_ai_batch, 
+    predict_xgboost_batch, 
+    predict_svm_batch, 
+    predict_mlp_batch, 
+    predict_lstm_batch
+)
 from services.damage_service import classify_damage_batch
 from services.relief_service import (
     aggregate_relief_sentiment,
@@ -114,7 +123,28 @@ def analyze_intent(req: IntentRequest):
         logger.error(f"[Problem 5] Error during intent analysis: {e}", exc_info=True)
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-# --- STARTUP ---
+@app.post("/analyze/test_sentiment")
+def test_single_sentiment(req: SingleSentimentRequest):
+    """Interactive testing endpoint for the Java UI."""
+    logger.info(f"🧪 Testing single text with [{req.model_type.upper()}] model")
+    try:
+        if req.model_type == "keyword":
+            result = predict_keyword(req.text)
+        elif req.model_type == "xgboost":
+            result = predict_xgboost_batch([req.text])[0]
+        elif req.model_type == "svm":
+            result = predict_svm_batch([req.text])[0]
+        elif req.model_type == "mlp":
+            result = predict_mlp_batch([req.text])[0]
+        elif req.model_type == "lstm":
+            result = predict_lstm_batch([req.text])[0]
+        else:
+            result = predict_ai_batch([req.text])[0]
+            
+        return {"sentiment": result}
+    except Exception as e:
+        logger.error(f"Error testing sentiment: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 # --- STARTUP ---
 if __name__ == "__main__":
     logger.info("🚀 Starting Python Backend on Port 8000...")

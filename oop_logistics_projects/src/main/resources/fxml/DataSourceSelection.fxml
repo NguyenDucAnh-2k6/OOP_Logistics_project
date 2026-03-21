@@ -14,7 +14,10 @@
                 
         <Button text="News Data" onAction="#selectNews" 
                 styleClass="button, button-primary" prefWidth="200"/>
-                
+        <Button text="YouTube Comments" onAction="#selectYoutube" styleClass="button, button-primary" prefWidth="200" />
+        <Button text="TikTok Comments" onAction="#selectTiktok" styleClass="button, button-primary" prefWidth="200" />
+        <Button text="Voz Forum" onAction="#selectVoz" styleClass="button, button-primary" prefWidth="200" />
+        <Button text="Reddit Threads" onAction="#selectReddit" styleClass="button, button-primary" prefWidth="200" />
         <Separator/>
         
         <Button text="Add Personal Keywords" onAction="#openKeywords" 

@@ -6,7 +6,7 @@ class BaseRequest(BaseModel):
     texts: List[str] = Field(..., description="List of text contents (posts/comments)")
     
     # Literal strictly enforces that ONLY "ai" or "keyword" can be accepted
-    model_type: Literal["ai", "keyword", "xgboost", "svm", "mlp", "lstm"] = Field("ai", description="Analysis engine to use")
+    model_type: Literal["ai", "keyword", "xgboost", "svm", "mlp", "lstm", "cnn_lstm", "cfa"] = Field("ai", description="Analysis engine to use")
 class SentimentTimeSeriesRequest(BaseRequest):
     dates: List[str] = Field(..., description="List of dates matching the texts ('DD/MM/YYYY' or 'YYYY-MM-DD')")
 
@@ -35,3 +35,7 @@ class IntentRequest(BaseRequest):
     Inherits 'texts' and 'model_type' from BaseRequest.
     """
     pass
+
+class SingleSentimentRequest(BaseModel):
+    text: str = Field(..., description="A single text string to test")
+    model_type: Literal["ai", "keyword", "xgboost", "svm", "mlp", "lstm"] = Field("ai", description="Analysis engine to use")

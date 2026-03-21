@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class DisasterContext {
     private final PythonAnalysisClient client;
@@ -131,6 +130,9 @@ public class DisasterContext {
     
     public String getDisasterName() { 
         return disasterName; 
+    }
+    public PythonAnalysisClient getApi() {
+        return this.client;
     }
     public void setTexts(List<String> texts) {
         this.rawTexts.clear();

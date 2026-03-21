@@ -66,7 +66,47 @@ public class DisasterSearchService {
         writeCsv(urlMap);
         logger.info("=== DONE: total URLs = {} ===", urlMap.size());
     }
+    // Add this method inside DisasterSearchService.java
+    
+    public void searchSocialUrls(String keyword, String platform) {
+        logger.info("Searching {} URLs for: {}", platform, keyword);
+        Map<String, UrlWithDate> urlMap = new LinkedHashMap<>();
 
+        // Map the UI platform name to the actual web domain
+        String domain = switch (platform.toLowerCase()) {
+            case "youtube" -> "youtube.com";
+            case "tiktok" -> "tiktok.com";
+            case "voz" -> "voz.vn";
+            case "reddit" -> "reddit.com";
+            case "facebook" -> "facebook.com"; // You can consolidate your old FB method here!
+            default -> "";
+        };
+
+        if (domain.isEmpty()) {
+            logger.error("Unknown platform selected for search: {}", platform);
+            return;
+        }
+
+        logger.info("=== Searching domain: {} ===", domain);
+        
+        // Add variations to catch discussions rather than just news
+        List<String> searchVariations = List.of(
+            keyword,
+            keyword + " review",
+            keyword + " thảo luận" // "discussion" in Vietnamese (great for Voz/Reddit)
+        );
+
+        for (String query : searchVariations) {
+            for (SearchStrategy strategy : strategies) {
+                // Bing and DuckDuckGo are usually best for social links as Google blocks automated queries heavily
+                strategy.search(domain, query, urlMap);
+            }
+            try { Thread.sleep(2000); } catch (InterruptedException ignored) {} // Be polite to search engines
+        }
+        
+        writeCsv(urlMap);
+        logger.info("=== DONE: total {} URLs = {} ===", platform, urlMap.size());
+    }
     private void writeCsv(Map<String, UrlWithDate> urlMap) {
         // Removed 'true' to overwrite the file cleanly for the new disaster
         try (PrintWriter pw = new PrintWriter(new FileWriter(OUTPUT))) {

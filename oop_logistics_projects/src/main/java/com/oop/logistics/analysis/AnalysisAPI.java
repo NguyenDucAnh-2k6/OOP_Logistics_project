@@ -19,4 +19,5 @@ public interface AnalysisAPI {
     
     List<Map<String, Object>> getReliefTimeSeries(List<String> texts, List<String> dates, String modelType, Consumer<Double> onProgress) throws Exception;
     Map<String, Integer> getIntentClassification(List<String> texts, String modelType, Consumer<Double> onProgress) throws Exception;
+    String testSingleSentiment(String text, String modelType) throws Exception;
 }

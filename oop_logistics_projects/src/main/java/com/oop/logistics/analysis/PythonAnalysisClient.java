@@ -285,4 +285,19 @@ public class PythonAnalysisClient implements AnalysisAPI {
 
         return finalStats;
     }
+    // oop_logistics_projects/src/main/java/com/oop/logistics/analysis/PythonAnalysisClient.java
+    
+    @Override
+    public String testSingleSentiment(String text, String modelType) throws Exception {
+        // Create an inline map for the JSON payload
+        Map<String, String> requestData = new HashMap<>();
+        requestData.put("text", text);
+        requestData.put("model_type", modelType);
+        
+        String response = sendPost("/analyze/test_sentiment", requestData);
+        
+        // Parse the {"sentiment": "positive"} response
+        Map<String, String> result = gson.fromJson(response, new TypeToken<Map<String, String>>(){}.getType());
+        return result.get("sentiment");
+    }
 }

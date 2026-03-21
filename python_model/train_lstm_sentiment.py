@@ -18,8 +18,9 @@ warnings.filterwarnings("ignore")
 MAX_LEN = 128
 BATCH_SIZE = 64
 EMBED_DIM = 128
-EPOCHS_PER_TRIAL = 3 
-FINAL_EPOCHS = 5
+EPOCHS_PER_TRIAL = 5
+FINAL_EPOCHS = 15
+TOTAL_TRIALS = 25  # <-- ADDED: Needed so Optuna knows when to stop resuming
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 2. Dynamic LSTM Architecture
@@ -51,8 +52,10 @@ def objective(trial, train_loader, val_loader, vocab_size):
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     
+    print(f"\n--- Starting Trial {trial.number} ---")
     for epoch in range(EPOCHS_PER_TRIAL):
         model.train()
+        train_loss = 0.0
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
             optimizer.zero_grad()
@@ -60,6 +63,10 @@ def objective(trial, train_loader, val_loader, vocab_size):
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
+            train_loss += loss.item()
+            
+        avg_train_loss = train_loss / len(train_loader)
+        print(f"  -> Trial {trial.number} | Iteration {epoch+1}/{EPOCHS_PER_TRIAL} | Train Loss: {avg_train_loss:.4f}")
             
     model.eval()
     val_loss = 0.0
@@ -71,12 +78,12 @@ def objective(trial, train_loader, val_loader, vocab_size):
             val_loss += loss.item()
             
     avg_val_loss = val_loss / len(val_loader)
-    print(f"🟢 Trial {trial.number} | Val Loss: {avg_val_loss:.4f} | hidden:{hidden_dim}, layers:{num_layers}, lr:{lr:.5f}")
+    print(f"🟢 Trial {trial.number} Finished | Val Loss: {avg_val_loss:.4f} | hidden:{hidden_dim}, layers:{num_layers}, lr:{lr:.5f}")
     return avg_val_loss
 
 
 def train_LSTM_pipeline():
-    print(f"🚀 Starting LSTM Pipeline on {DEVICE}...")
+    print(f"🚀 Starting Resilient LSTM Pipeline on {DEVICE}...")
     
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     DATA_DIR = os.path.join(SCRIPT_DIR, 'data')
@@ -86,12 +93,10 @@ def train_LSTM_pipeline():
     os.makedirs(PROCESSED_DIR, exist_ok=True)
     os.makedirs(MODELS_DIR, exist_ok=True)
 
-    # We always load the tokenizer purely to get the vocab_size for the neural network
     print("Loading Tokenizer architecture...")
     tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-multilingual-cased")
     vocab_size = tokenizer.vocab_size
 
-    # Define paths for our cached PyTorch tensors
     train_seq_path = os.path.join(PROCESSED_DIR, 'lstm_train_seq.pt')
     train_lbl_path = os.path.join(PROCESSED_DIR, 'lstm_train_lbl.pt')
     val_seq_path = os.path.join(PROCESSED_DIR, 'lstm_val_seq.pt')
@@ -99,7 +104,6 @@ def train_LSTM_pipeline():
     test_seq_path = os.path.join(PROCESSED_DIR, 'lstm_test_seq.pt')
     test_lbl_path = os.path.join(PROCESSED_DIR, 'lstm_test_lbl.pt')
 
-    # --- CACHING LOGIC ---
     if os.path.exists(train_seq_path) and os.path.exists(test_lbl_path):
         print("⚡ Found cached tokenized tensors! Loading them directly to save time...")
         X_train_seq = torch.load(train_seq_path)
@@ -144,7 +148,6 @@ def train_LSTM_pipeline():
         torch.save(X_test_seq, test_seq_path)
         torch.save(y_test_tensor, test_lbl_path)
 
-    # --- Create DataLoaders ---
     train_data = TensorDataset(X_train_seq, y_train_tensor)
     val_data = TensorDataset(X_val_seq, y_val_tensor)
     test_data = TensorDataset(X_test_seq, y_test_tensor)
@@ -153,24 +156,52 @@ def train_LSTM_pipeline():
     val_loader = DataLoader(val_data, batch_size=BATCH_SIZE)
     test_loader = DataLoader(test_data, batch_size=BATCH_SIZE)
 
-    # --- Optuna Optimization ---
-    print("\n🚀 Starting Optuna Optimization for LSTM...")
-    study = optuna.create_study(direction='minimize')
-    study.optimize(lambda trial: objective(trial, train_loader, val_loader, vocab_size), n_trials=2)
+    # --- 1. OPTUNA PERSISTENCE ---
+    print("\n🚀 Connecting to Optuna Database...")
+    study_name = "lstm_sentiment_study"
+    storage_name = f"sqlite:///{os.path.join(MODELS_DIR, 'optuna_lstm_study.db')}"
+    
+    study = optuna.create_study(
+        study_name=study_name, 
+        storage=storage_name, 
+        load_if_exists=True,
+        direction='minimize'
+    )
+    
+    completed_trials = len(study.trials)
+    remaining_trials = max(0, TOTAL_TRIALS - completed_trials)
+    
+    if remaining_trials > 0:
+        print(f"Resuming study: {completed_trials} trials completed. Running {remaining_trials} more...")
+        study.optimize(lambda trial: objective(trial, train_loader, val_loader, vocab_size), n_trials=remaining_trials)
+    else:
+        print(f"All {TOTAL_TRIALS} Optuna trials are already complete!")
 
-    print("\n✅ Optimization Finished!")
     best_params = study.best_params
     print(f"Best Hyperparameters: {best_params}")
 
-    # --- Final Model Training ---
-    print("\nTraining Final LSTM Model with Best Parameters...")
+    # --- 2. FINAL MODEL CHECKPOINTING ---
+    print("\nPreparing Final LSTM Model...")
     final_model = SentimentLSTM(vocab_size, EMBED_DIM, best_params['hidden_dim'], 3, 
                                 best_params['num_layers'], best_params['dropout']).to(DEVICE)
     
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(final_model.parameters(), lr=best_params['lr'])
 
-    for epoch in range(FINAL_EPOCHS):
+    checkpoint_path = os.path.join(MODELS_DIR, 'lstm_checkpoint.pt')
+    start_epoch = 0
+
+    # Load checkpoint if it exists
+    if os.path.exists(checkpoint_path):
+        print(f"⚡ Found existing training checkpoint! Resuming...")
+        checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
+        final_model.load_state_dict(checkpoint['model_state'])
+        optimizer.load_state_dict(checkpoint['optimizer_state'])
+        start_epoch = checkpoint['epoch'] + 1
+        print(f"Resuming from Epoch {start_epoch + 1} / {FINAL_EPOCHS}")
+
+    # Training Loop with saving
+    for epoch in range(start_epoch, FINAL_EPOCHS):
         final_model.train()
         total_loss = 0
         for batch_idx, (inputs, labels) in enumerate(train_loader):
@@ -184,6 +215,15 @@ def train_LSTM_pipeline():
             
             if batch_idx % 100 == 0:
                 print(f"Epoch {epoch+1}/{FINAL_EPOCHS} | Batch {batch_idx}/{len(train_loader)} | Loss: {loss.item():.4f}")
+
+        # Save Checkpoint at the end of every epoch
+        torch.save({
+            'epoch': epoch,
+            'model_state': final_model.state_dict(),
+            'optimizer_state': optimizer.state_dict(),
+            'loss': total_loss
+        }, checkpoint_path)
+        print(f"💾 Checkpoint saved for Epoch {epoch+1}")
 
     # --- Evaluation ---
     print("\nEvaluating Final LSTM on Test Set...")
@@ -199,7 +239,7 @@ def train_LSTM_pipeline():
 
     print(classification_report(all_targets, all_preds))
 
-    # --- Save Artifacts ---
+    # --- Save Final Artifacts ---
     print("💾 Saving LSTM Artifacts...")
     torch.save(final_model.state_dict(), os.path.join(MODELS_DIR, 'lstm_sentiment_model.pt'))
     
@@ -214,6 +254,10 @@ def train_LSTM_pipeline():
     }
     with open(os.path.join(MODELS_DIR, 'lstm_inference_config.json'), 'w') as f:
         json.dump(config, f, indent=4)
+
+    # Clean up the temporary checkpoint file after successful completion
+    if os.path.exists(checkpoint_path):
+        os.remove(checkpoint_path)
 
     print(f"✅ LSTM artifacts saved successfully to {MODELS_DIR}")
 

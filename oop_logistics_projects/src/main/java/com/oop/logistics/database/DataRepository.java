@@ -8,6 +8,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.oop.logistics.crawler.SocialResult;
+
 public class DataRepository {
     public static class AnalysisData {
         public List<String> texts = new ArrayList<>();
@@ -157,4 +159,18 @@ public class DataRepository {
             e.printStackTrace();
         }
     }
+    public void saveSocialResult(SocialResult result) {
+    String sql = "INSERT INTO social_comments(platform, author, content, likes, timestamp) VALUES(?,?,?,?,?)";
+    try (Connection conn = DatabaseManager.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setString(1, result.getPlatform());
+        pstmt.setString(2, result.getAuthor());
+        pstmt.setString(3, result.getContent());
+        pstmt.setInt(4, result.getLikes());
+        pstmt.setString(5, result.getTimestamp());
+        pstmt.executeUpdate();
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
 }

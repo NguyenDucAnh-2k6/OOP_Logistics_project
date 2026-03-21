@@ -22,6 +22,7 @@ __pycache__/
 .classpath
 .project
 *.settings/
+*.zip
 # Model artifacts
 *.npy
 *.pt

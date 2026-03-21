@@ -25,12 +25,14 @@
         <ComboBox fx:id="modelSelector" prefWidth="240">
             <items>
                 <FXCollections fx:factory="observableArrayList">
-                    <String fx:value="AI Model (Accurate - Slower)"/>
-                    <String fx:value="XGBoost Classifier (Balanced)"/>
-                    <String fx:value="Keyword Search (Instant)"/>
-                    <String fx:value="SVM Classifier (Theoretical)"/>
-                    <String fx:value="MLP Deep Learning (Complex)"/>
-                    <String fx:value="LSTM Neural Network (Sequential)"/>
+                    <String fx:value="AI Model (Accurate - Slower) - best for VN"/>
+                    <String fx:value="XGBoost Classifier (Balanced) - better for Eng"/>
+                    <String fx:value="Keyword Search (Instant) - best for VN"/>
+                    <String fx:value="SVM Classifier (Theoretical) - best for Eng"/>
+                    <String fx:value="MLP Deep Learning (Complex) - best for Eng"/>
+                    <String fx:value="LSTM Neural Network (Sequential) - best for Eng"/>
+                    <String fx:value="Hybrid CNN+BiLSTM (SOTA) - best for Eng"/>
+                    <String fx:value="CFA (SOTA Ensemble) - best for Eng"/>
                 </FXCollections>
             </items>
             <value>
@@ -45,7 +47,9 @@
         <Button text="5. Supply vs Demand" onAction="#runProblem5" styleClass="button, button-action"/>
         <Button text="6. Location Hotspots" onAction="#runLocationAnalysis" styleClass="button, button-action"/>
     </HBox>
-
+    <Region HBox.hgrow="ALWAYS" /> <TextField fx:id="testInputField" promptText="Enter text to test model..." prefWidth="250"/>
+        <Button text="Test Model" onAction="#handleTestModel" styleClass="button, button-action"/>
+        <Label fx:id="testResultLabel" text="" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
     <VBox fx:id="chartContainer" VBox.vgrow="ALWAYS" style="-fx-border-color: #ecf0f1; -fx-border-width: 2px; -fx-padding: 10;">
         <Label text="Select an analysis above to generate charts." style="-fx-text-fill: grey;" alignment="CENTER"/>
     </VBox>

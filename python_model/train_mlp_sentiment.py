@@ -32,7 +32,8 @@ def objective(trial, X_train, y_train, X_val, y_val):
         'max_iter': 500,
         'early_stopping': True, # Crucial to prevent deep learning overfitting
         'validation_fraction': 0.1,
-        'random_state': 42
+        'random_state': 42,
+        'verbose': True
     }
 
     model = MLPClassifier(**param)
@@ -95,7 +96,7 @@ def train_MLP_pipeline():
 
     print("\n🚀 Starting Optuna Optimization for Deep Neural Network...")
     study = optuna.create_study(direction='minimize')
-    study.optimize(lambda trial: objective(trial, X_train_vec, y_train, X_val_vec, y_val), n_trials=2)
+    study.optimize(lambda trial: objective(trial, X_train_vec, y_train, X_val_vec, y_val), n_trials=25)
 
     print("\n✅ Optimization Finished!")
     

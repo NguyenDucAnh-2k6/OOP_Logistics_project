@@ -52,18 +52,21 @@ public class MainController {
             
             new Thread(() -> {
                 try {
-                    com.oop.logistics.search.DisasterSearchService searchService = new com.oop.logistics.search.DisasterSearchService();
+                    DisasterSearchService searchService = new DisasterSearchService();
                     
                     if ("Facebook".equals(dataSource)) {
                         searchService.searchFacebookUrls(disasterName);
-                    } else {
+                    } else if ("News".equals(dataSource)) {
                         searchService.searchNewsUrls(disasterName);
+                    } else {
+                        // This handles YouTube, TikTok, Voz, and Reddit based on the new method
+                        searchService.searchSocialUrls(disasterName, dataSource);
                     }
                     
-                    javafx.application.Platform.runLater(() -> 
+                    Platform.runLater(() -> 
                         context.setStatus("✅ " + dataSource + " Search complete! Click 'Load Search' below.", false));
                 } catch (Exception e) {
-                    javafx.application.Platform.runLater(() -> context.setStatus("❌ Auto-Search failed: " + e.getMessage(), true));
+                    Platform.runLater(() -> context.setStatus("❌ Auto-Search failed: " + e.getMessage(), true));
                 }
             }).start();
         }

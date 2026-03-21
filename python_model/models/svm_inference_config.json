@@ -7,10 +7,10 @@
         "2": "positive"
     },
     "optuna_best_hyperparameters": {
-        "C": 1.6028928360935886,
-        "tol": 0.000189593051342865,
-        "class_weight": null,
-        "max_iter": 3741
+        "C": 0.24461216360385418,
+        "tol": 0.016619380032633985,
+        "class_weight": "balanced",
+        "max_iter": 2097
     },
-    "validation_accuracy": 0.8190533253445177
+    "validation_accuracy": 0.823247453565009
 }

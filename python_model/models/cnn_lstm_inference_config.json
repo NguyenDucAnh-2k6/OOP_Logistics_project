@@ -1,0 +1,20 @@
+{
+    "model_architecture": "cnn_bilstm_hybrid",
+    "tokenizer": "google-bert/bert-base-multilingual-cased",
+    "max_len": 128,
+    "embed_dim": 128,
+    "labels_mapping": {
+        "0": "negative",
+        "1": "neutral",
+        "2": "positive"
+    },
+    "optuna_best_hyperparameters": {
+        "num_filters": 128,
+        "kernel_size": 3,
+        "hidden_dim": 64,
+        "num_layers": 1,
+        "dropout": 0.3963776004955222,
+        "lr": 0.0012488178230737276
+    },
+    "validation_loss": 0.3798544004739049
+}

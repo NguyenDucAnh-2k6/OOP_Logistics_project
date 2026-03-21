@@ -10,6 +10,8 @@ import numpy as np
 import joblib
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from transformers import RobertaTokenizer, RobertaForSequenceClassification
 from transformers import AutoTokenizer
 logger = logging.getLogger(__name__)
 
@@ -45,8 +47,8 @@ try:
         xgb_model = xgb.XGBClassifier()
         xgb_model._estimator_type = "classifier"
         xgb_model.load_model(model_path)
-        xgb_model.n_classes_ = 3
-        xgb_model.classes_ = np.array([0, 1, 2])
+        # xgb_model.n_classes_ = 3
+        # xgb_model.classes_ = np.array([0, 1, 2])
         logger.info("XGBoost Model and Embedder loaded successfully.")
     else:
         logger.warning(f"XGBoost model not found at {model_path}. Please run train_xgb_sentiment.py first.")
@@ -126,6 +128,74 @@ try:
         logger.warning("LSTM artifacts not found. Please run train_lstm_sentiment.py.")
 except Exception as e:
     logger.error(f"Failed to load LSTM pipeline: {e}")
+# --- 7. Load CNN+BiLSTM Deep Learning Model ---
+class SentimentCNNLSTM(nn.Module):
+    def __init__(self, vocab_size, embed_dim, num_filters, kernel_size, hidden_dim, output_dim, num_layers, dropout):
+        super(SentimentCNNLSTM, self).__init__()
+        self.embedding = nn.Embedding(vocab_size, embed_dim, padding_idx=0)
+        self.conv1d = nn.Conv1d(embed_dim, num_filters, kernel_size, padding=kernel_size // 2)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(dropout)
+        lstm_drop = dropout if num_layers > 1 else 0.0
+        self.lstm = nn.LSTM(num_filters, hidden_dim, num_layers=num_layers, batch_first=True, bidirectional=True, dropout=lstm_drop)
+        self.fc = nn.Linear(hidden_dim * 2, output_dim)
+        
+    def forward(self, x):
+        embedded = self.embedding(x).permute(0, 2, 1)
+        conv_out = self.dropout(self.relu(self.conv1d(embedded))).permute(0, 2, 1)
+        _, (hidden, _) = self.lstm(conv_out)
+        return self.fc(torch.cat((hidden[-2,:,:], hidden[-1,:,:]), dim=1))
+
+logger.info("Loading CNN+BiLSTM Sentiment Model...")
+cnn_lstm_model = None
+
+try:
+    model_path_hybrid = os.path.join(base_dir, 'models', 'cnn_lstm_sentiment_model.pt')
+    config_path_hybrid = os.path.join(base_dir, 'models', 'cnn_lstm_inference_config.json')
+    
+    if os.path.exists(model_path_hybrid) and os.path.exists(config_path_hybrid):
+        with open(config_path_hybrid, 'r') as f:
+            hybrid_config = json.load(f)
+            
+        best_params = hybrid_config["optuna_best_hyperparameters"]
+        cnn_lstm_model = SentimentCNNLSTM(
+            vocab_size=lstm_tokenizer.vocab_size, # Reuse tokenizer from LSTM
+            embed_dim=hybrid_config["embed_dim"],
+            num_filters=best_params["num_filters"],
+            kernel_size=best_params["kernel_size"],
+            hidden_dim=best_params["hidden_dim"],
+            output_dim=3,
+            num_layers=best_params["num_layers"],
+            dropout=best_params["dropout"]
+        ).to(DEVICE)
+        
+        cnn_lstm_model.load_state_dict(torch.load(model_path_hybrid, map_location=DEVICE))
+        cnn_lstm_model.eval() 
+        logger.info("CNN+BiLSTM Hybrid Model loaded successfully.")
+except Exception as e:
+    logger.error(f"Failed to load CNN+BiLSTM pipeline: {e}")
+logger.info("Loading RoBERTa Sentiment Model...")
+roberta_model = None
+roberta_tokenizer = None
+
+try:
+    roberta_dir = os.path.join(base_dir, 'models', 'roberta_sentiment_model')
+    if os.path.exists(roberta_dir):
+        roberta_tokenizer = RobertaTokenizer.from_pretrained(roberta_dir)
+        roberta_model = RobertaForSequenceClassification.from_pretrained(roberta_dir).to(DEVICE)
+        roberta_model.eval()
+        logger.info("RoBERTa Model loaded successfully.")
+except Exception as e:
+    logger.error(f"Failed to load RoBERTa pipeline: {e}")
+def predict_cnn_lstm_batch(texts: List[str]) -> List[str]:
+    if not texts: return []
+    if cnn_lstm_model is None or lstm_tokenizer is None:
+        return predict_ai_batch(texts)
+        
+    encoded = lstm_tokenizer(texts, padding='max_length', truncation=True, max_length=LSTM_MAX_LEN, return_tensors='pt')
+    with torch.no_grad():
+        preds = torch.max(cnn_lstm_model(encoded['input_ids'].to(DEVICE)), 1)[1]
+    return [{0: 'negative', 1: 'neutral', 2: 'positive'}.get(int(p), 'neutral') for p in preds.cpu().numpy()]
 # --- LOGIC ---
 
 def predict_keyword(text: str) -> str:
@@ -222,6 +292,59 @@ def predict_lstm_batch(texts: List[str]) -> List[str]:
     # 3. Map predictions
     mapping = {0: 'negative', 1: 'neutral', 2: 'positive'}
     return [mapping.get(int(p), 'neutral') for p in preds.cpu().numpy()]
+# --- 9. THE CFA ENSEMBLE FUSION ALGORITHM ---
+def predict_cfa_ensemble(texts: List[str]) -> List[str]:
+    """
+    Implements Combinatorial Fusion Analysis (CFA) by fusing 
+    RoBERTa, XGBoost, Calibrated SVM, and MLP using Score & Rank.
+    """
+    if not texts: return []
+    
+    # 1. Get raw Probability Scores from all models
+    # XGBoost, SVM, MLP need SentenceTransformer embeddings
+    embeddings = xgb_embedder.encode(texts)
+    
+    # Scikit-Learn based models (.predict_proba returns shape [batch_size, 3])
+    probas_xgb = xgb_model.predict_proba(embeddings)
+    probas_svm = svm_model.predict_proba(embeddings) 
+    probas_mlp = mlp_model.predict_proba(embeddings)
+    
+    # RoBERTa needs its own tokenizer
+    roberta_enc = roberta_tokenizer(texts, padding=True, truncation=True, max_length=128, return_tensors='pt')
+    inputs = {k: v.to(DEVICE) for k, v in roberta_enc.items()}
+    with torch.no_grad():
+        logits = roberta_model(**inputs).logits
+        probas_roberta = F.softmax(logits, dim=1).cpu().numpy()
+
+    final_predictions = []
+    
+    # 2. Iterate through each text in the batch
+    for i in range(len(texts)):
+        model_outputs = [probas_xgb[i], probas_svm[i], probas_mlp[i], probas_roberta[i]]
+        
+        # We track combined scores for classes 0, 1, 2
+        combined_scores = np.zeros(3)
+        
+        # Apply CFA Math: Fusion of Score and Rank
+        for proba in model_outputs:
+            score = proba
+            
+            # Calculate Rank (highest prob = Rank 1, lowest = Rank 3)
+            ranks = np.empty(3)
+            sorted_indices = np.argsort(proba)[::-1]
+            for rank_val, class_idx in enumerate(sorted_indices):
+                ranks[class_idx] = rank_val + 1 
+                
+            # Fusion equation: CFA = Sum(Score + 1/Rank)
+            for class_idx in range(3):
+                combined_scores[class_idx] += score[class_idx] + (1.0 / ranks[class_idx])
+                
+        # The class with the highest fused score wins
+        winning_class = np.argmax(combined_scores)
+        mapping = {0: 'negative', 1: 'neutral', 2: 'positive'}
+        final_predictions.append(mapping.get(winning_class, 'neutral'))
+        
+    return final_predictions
 def aggregate_by_date(texts: List[str], dates: List[str], model_type: str = "ai") -> List[Dict]:
     stats = {}
     
@@ -238,6 +361,10 @@ def aggregate_by_date(texts: List[str], dates: List[str], model_type: str = "ai"
         predictions = predict_mlp_batch(texts) # <-- Add MLP route
     elif model_type == "lstm":
         predictions = predict_lstm_batch(texts) # <-- Add LSTM route
+    elif model_type == "cnn_lstm":
+        predictions = predict_cnn_lstm_batch(texts)
+    elif model_type == "cfa":
+        predictions = predict_cfa_ensemble(texts)
     else:
         predictions = predict_ai_batch(texts) # Default to PhoBERT
 

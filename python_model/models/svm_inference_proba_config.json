@@ -1,0 +1,16 @@
+{
+    "model_architecture": "linear_svc",
+    "embedder_model": "all-MiniLM-L6-v2",
+    "labels_mapping": {
+        "0": "negative",
+        "1": "neutral",
+        "2": "positive"
+    },
+    "optuna_best_hyperparameters": {
+        "C": 0.23735107143626044,
+        "tol": 0.002374216512122964,
+        "class_weight": "balanced",
+        "max_iter": 4379
+    },
+    "validation_accuracy": 0.8228480127821051
+}

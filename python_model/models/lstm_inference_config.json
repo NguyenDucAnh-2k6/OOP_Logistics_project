@@ -9,10 +9,10 @@
         "2": "positive"
     },
     "optuna_best_hyperparameters": {
-        "hidden_dim": 64,
-        "num_layers": 2,
-        "dropout": 0.17344880140193458,
-        "lr": 0.007442275207588865
+        "hidden_dim": 256,
+        "num_layers": 3,
+        "dropout": 0.1430916250601654,
+        "lr": 0.0006867110051261447
     },
-    "validation_loss": 0.3563718276928706
+    "validation_loss": 0.3530182624796787
 }

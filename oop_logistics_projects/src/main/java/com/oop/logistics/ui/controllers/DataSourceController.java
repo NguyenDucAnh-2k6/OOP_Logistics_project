@@ -1,12 +1,6 @@
 package com.oop.logistics.ui.controllers;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
-
-import java.io.IOException;
 
 public class DataSourceController {
     private MainController mainController;
@@ -15,10 +9,12 @@ public class DataSourceController {
     public void setMainController(MainController mainController) {
         this.mainController = mainController;
     }
+    
     public void setReadyMode(boolean isReadyMode) {
         this.isReadyMode = isReadyMode;
     }
 
+    // --- Existing Methods ---
     @FXML
     private void selectFacebook() {
         mainController.getContext().setDataSource("Facebook");
@@ -31,10 +27,32 @@ public class DataSourceController {
         mainController.navigateToWorkflow(isReadyMode);
     }
 
+    // --- New Methods for Social Platforms ---
+    @FXML
+    private void selectYoutube() {
+        mainController.getContext().setDataSource("YouTube");
+        mainController.navigateToWorkflow(isReadyMode);
+    }
+
+    @FXML
+    private void selectTiktok() {
+        mainController.getContext().setDataSource("TikTok");
+        mainController.navigateToWorkflow(isReadyMode);
+    }
+
+    @FXML
+    private void selectVoz() {
+        mainController.getContext().setDataSource("Voz");
+        mainController.navigateToWorkflow(isReadyMode);
+    }
+
+    @FXML
+    private void selectReddit() {
+        mainController.getContext().setDataSource("Reddit");
+        mainController.navigateToWorkflow(isReadyMode);
+    }
     @FXML
     private void openKeywords() {
-    // OLD: mainController.getContext().openKeywordContribution();
-    // NEW: Use MainController navigation
-    mainController.navigateToKeywordContribution();
+        mainController.navigateToKeywordContribution();
     }
 }

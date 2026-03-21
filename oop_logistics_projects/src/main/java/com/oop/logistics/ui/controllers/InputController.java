@@ -7,7 +7,10 @@ import com.oop.logistics.crawler.NewsCrawlerFactory;
 import com.oop.logistics.crawler.NewsResult;
 import com.oop.logistics.database.DataRepository;
 import com.oop.logistics.preprocessing.DateExtract;
+import com.oop.logistics.preprocessing.DatabasePreprocessor;
 import com.oop.logistics.ui.DisasterContext;
+import com.oop.logistics.crawler.UnifiedSocialCrawler;
+import com.oop.logistics.crawler.SocialResult;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -91,8 +94,10 @@ public class InputController {
                 DataRepository repo = new DataRepository();
                 int disasterId = repo.getOrCreateDisaster(currentDisaster);
                 int successCount = 0;
+                
+                String sourceType = context.getDataSource();
 
-                if ("Facebook".equals(context.getDataSource())) {
+                if ("Facebook".equals(sourceType)) {
                     FacebookCrawler fb = new FacebookCrawler();
                     // Login happens only ONCE before the loop
                     if (!cUserField.getText().isEmpty()) {
@@ -128,6 +133,37 @@ public class InputController {
                         }
                     }
                     fb.tearDown();
+
+                } else if ("YouTube".equals(sourceType) || "TikTok".equals(sourceType) || 
+                           "Voz".equals(sourceType) || "Reddit".equals(sourceType)) {
+                    
+                    UnifiedSocialCrawler.Platform platformEnum = UnifiedSocialCrawler.Platform.valueOf(sourceType.toUpperCase());
+                    UnifiedSocialCrawler crawler = new UnifiedSocialCrawler(platformEnum);
+                    String defaultDate = DateExtract.getCurrentDateDDMMYYYY();
+
+                    for (String url : urls) {
+                        url = url.trim();
+                        if (url.isEmpty()) continue;
+
+                        final String currentUrl = url;
+                        Platform.runLater(() -> context.setStatus("Crawling " + sourceType + ": " + currentUrl, false));
+
+                        // Fetch top 50 comments
+                        List<SocialResult> results = crawler.crawlComments(url, 50); 
+                        
+                        if (!results.isEmpty()) {
+                            // Create a parent entry for the thread/video to attach comments to in the DB
+                            int parentId = repo.saveNews(disasterId, url, sourceType + " Post", "Social Thread/Video from " + sourceType, defaultDate, sourceType);
+                            
+                            if (parentId != -1) {
+                                for (SocialResult r : results) {
+                                    String commentDate = (r.getTimestamp() != null && !r.getTimestamp().isEmpty()) ? r.getTimestamp() : defaultDate;
+                                    repo.saveComment(parentId, r.getContent(), r.getAuthor(), commentDate);
+                                }
+                            }
+                            successCount++; // Count as 1 successful URL crawled
+                        }
+                    }
 
                 } else {
                     // Loop through all News URLs
@@ -179,7 +215,7 @@ public class InputController {
         new Thread(() -> {
             try {
                 // Run the DB cleaner, stop-word remover, and deduplicator
-                com.oop.logistics.preprocessing.DatabasePreprocessor.preprocessDisasterData(currentDisaster, sourceType);
+                DatabasePreprocessor.preprocessDisasterData(currentDisaster, sourceType);
                 
                 Platform.runLater(() -> 
                     context.setStatus("✅ Preprocessing complete! Data is clean. Proceed to 'Load Database' in Analysis.", false)

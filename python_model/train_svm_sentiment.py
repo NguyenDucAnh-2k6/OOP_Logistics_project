@@ -91,7 +91,7 @@ def train_SVM_pipeline():
     print("\n🚀 Starting Optuna Hyperparameter Optimization...")
     # Change n_trials here later when you want to run a deeper search
     study = optuna.create_study(direction='maximize')
-    study.optimize(lambda trial: objective(trial, X_train_vec, y_train, X_val_vec, y_val), n_trials=2)
+    study.optimize(lambda trial: objective(trial, X_train_vec, y_train, X_val_vec, y_val), n_trials=25)
 
     print("\n✅ Optimization Finished!")
     print("Best validation accuracy:", study.best_value)

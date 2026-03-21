@@ -19,7 +19,8 @@ public class AnalysisController {
     @FXML private ProgressBar progressBar;
     @FXML private Label progressLabel;
     @FXML private VBox chartContainer;
-
+    @FXML private TextField testInputField;
+    @FXML private Label testResultLabel;
     private DisasterContext context;
 
     public void setContext(DisasterContext context) {
@@ -52,6 +53,10 @@ public class AnalysisController {
             return "mlp"; // <-- Maps to your Python API schema
         } else if (selection.contains("LSTM")) {
             return "lstm"; // <-- Maps to your Python API schema
+        } else if (selection.contains("CNN+BiLSTM")) {
+            return "cnn_lstm";
+        } else if (selection.contains("CFA")) {
+            return "cfa";
         } else {
             return "ai"; // Defaults to PhoBERT
         }
@@ -88,7 +93,45 @@ public class AnalysisController {
             context.setStatus("⚠️ Please search or select a disaster first.", true);
         }
     }
+    @FXML
+    private void handleTestModel() {
+        String textToTest = testInputField.getText();
+        if (textToTest == null || textToTest.trim().isEmpty()) {
+            testResultLabel.setText("Please enter text.");
+            testResultLabel.setStyle("-fx-text-fill: #e74c3c;"); // Red
+            return;
+        }
 
+        String modelType = getModelType();
+        testResultLabel.setText("Testing...");
+        testResultLabel.setStyle("-fx-text-fill: #34495e;"); // Dark Grey
+
+        // Run network request on a background thread to prevent UI freezing
+        new Thread(() -> {
+            try {
+                String result = context.getApi().testSingleSentiment(textToTest, modelType);
+                
+                // Update UI back on the JavaFX Application Thread
+                Platform.runLater(() -> {
+                    testResultLabel.setText(result.toUpperCase());
+                    
+                    // Add nice color coding based on the sentiment
+                    if ("POSITIVE".equalsIgnoreCase(result)) {
+                        testResultLabel.setStyle("-fx-text-fill: #2ecc71; -fx-font-weight: bold;"); // Green
+                    } else if ("NEGATIVE".equalsIgnoreCase(result)) {
+                        testResultLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;"); // Red
+                    } else {
+                        testResultLabel.setStyle("-fx-text-fill: #95a5a6; -fx-font-weight: bold;"); // Grey
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    testResultLabel.setText("API ERROR");
+                    testResultLabel.setStyle("-fx-text-fill: #e74c3c;");
+                });
+            }
+        }).start();
+    }
     private void loadDataFromDatabase(String disasterName) {
         String sourceType = context.getDataSource(); // <-- GET SOURCE TYPE
         context.setStatus("Fetching " + sourceType + " data from SQLite for: " + disasterName + "...", false);

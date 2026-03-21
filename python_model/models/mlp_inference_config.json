@@ -8,16 +8,15 @@
     },
     "optuna_best_hyperparameters": {
         "hidden_layer_sizes": [
-            90,
-            37
+            129
         ],
         "solver": "adam",
         "max_iter": 500,
         "early_stopping": true,
         "random_state": 42,
-        "activation": "tanh",
-        "alpha": 0.0003525974451785878,
-        "learning_rate_init": 0.007190183012026547
+        "activation": "relu",
+        "alpha": 0.014435560948858056,
+        "learning_rate_init": 0.0008871188097736781
     },
-    "validation_loss": 0.3927762240710489
+    "validation_loss": 0.36994774159241517
 }
