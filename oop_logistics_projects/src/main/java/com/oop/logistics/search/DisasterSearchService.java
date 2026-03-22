@@ -72,13 +72,12 @@ public class DisasterSearchService {
         logger.info("Searching {} URLs for: {}", platform, keyword);
         Map<String, UrlWithDate> urlMap = new LinkedHashMap<>();
 
-        // Map the UI platform name to the actual web domain
         String domain = switch (platform.toLowerCase()) {
             case "youtube" -> "youtube.com";
             case "tiktok" -> "tiktok.com";
             case "voz" -> "voz.vn";
             case "reddit" -> "reddit.com";
-            case "facebook" -> "facebook.com"; // You can consolidate your old FB method here!
+            case "facebook" -> "facebook.com"; 
             default -> "";
         };
 
@@ -89,23 +88,49 @@ public class DisasterSearchService {
 
         logger.info("=== Searching domain: {} ===", domain);
         
-        // Add variations to catch discussions rather than just news
-        List<String> searchVariations = List.of(
-            keyword,
-            keyword + " review",
-            keyword + " thảo luận" // "discussion" in Vietnamese (great for Voz/Reddit)
-        );
+        // 1. ADVANCED QUERY VARIATIONS
+        List<String> searchVariations;
+        if (platform.equalsIgnoreCase("tiktok")) {
+            // Using "inurl:video" forces search engines to ONLY return actual video posts
+            // rather than useless /tag/ or /@username profile pages.
+            searchVariations = List.of(
+                keyword,
+                "inurl:video " + keyword
+            );
+        } else if (platform.equalsIgnoreCase("youtube")) {
+            searchVariations = List.of(keyword, keyword + " tin tức", keyword + " shorts");
+        } else {
+            searchVariations = List.of(keyword, keyword + " review", keyword + " thảo luận");
+        }
 
         for (String query : searchVariations) {
             for (SearchStrategy strategy : strategies) {
-                // Bing and DuckDuckGo are usually best for social links as Google blocks automated queries heavily
                 strategy.search(domain, query, urlMap);
             }
-            try { Thread.sleep(2000); } catch (InterruptedException ignored) {} // Be polite to search engines
+            try { Thread.sleep(2000); } catch (InterruptedException ignored) {} 
         }
         
-        writeCsv(urlMap);
-        logger.info("=== DONE: total {} URLs = {} ===", platform, urlMap.size());
+        // 2. RESILIENT URL FILTERING
+        Map<String, UrlWithDate> filteredMap = new LinkedHashMap<>();
+        for (Map.Entry<String, UrlWithDate> entry : urlMap.entrySet()) {
+            String url = entry.getKey().toLowerCase();
+            
+            if (platform.equalsIgnoreCase("tiktok")) {
+                // Check for standard "/video/" or Bing's URL-encoded "%2Fvideo%2F" tracking links
+                if (url.contains("tiktok.com") && (url.contains("/video/") || url.contains("%2fvideo%2f") || url.contains("vm.tiktok.com"))) {
+                    filteredMap.put(entry.getKey(), entry.getValue());
+                }
+            } else if (platform.equalsIgnoreCase("youtube")) {
+                if (url.contains("watch?v=") || url.contains("/shorts/")) {
+                    filteredMap.put(entry.getKey(), entry.getValue());
+                }
+            } else {
+                filteredMap.put(entry.getKey(), entry.getValue()); 
+            }
+        }
+
+        writeCsv(filteredMap);
+        logger.info("=== DONE: total {} URLs = {} ===", platform, filteredMap.size());
     }
     private void writeCsv(Map<String, UrlWithDate> urlMap) {
         // Removed 'true' to overwrite the file cleanly for the new disaster

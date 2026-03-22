@@ -1,5 +1,6 @@
 package com.oop.logistics.preprocessing;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -9,6 +10,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("LocationExtractor Tests")
 class TestLocationExtractor {
+
+    @BeforeAll
+    static void setUp() {
+        // Inject the required locations directly into memory for testing.
+        // This ensures the tests pass even if the external JSON file isn't found during test execution.
+        LocationExtractor.addProvince("Hà Nội");
+        LocationExtractor.addProvince("Hồ Chí Minh");
+        LocationExtractor.addProvince("Đà Nẵng");
+        LocationExtractor.addCity("thủ đức"); 
+    }
 
     @Test
     @DisplayName("Should extract and format known provinces and cities")

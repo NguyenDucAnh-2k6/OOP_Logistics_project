@@ -18,8 +18,8 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 MAX_LEN = 128
 BATCH_SIZE = 16 # Keep smaller for RoBERTa to prevent Out-Of-Memory errors
 EPOCHS_PER_TRIAL = 5 
-FINAL_EPOCHS = 15
-TOTAL_TRIALS = 15
+FINAL_EPOCHS = 5
+TOTAL_TRIALS = 2
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODEL_NAME = "roberta-base"
 

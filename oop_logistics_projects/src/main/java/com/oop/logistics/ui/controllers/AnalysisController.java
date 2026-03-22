@@ -51,10 +51,10 @@ public class AnalysisController {
             return "svm"; // Maps to the literal in Python schemas.py
         } else if (selection.contains("MLP")) {
             return "mlp"; // <-- Maps to your Python API schema
-        } else if (selection.contains("LSTM")) {
-            return "lstm"; // <-- Maps to your Python API schema
         } else if (selection.contains("CNN+BiLSTM")) {
             return "cnn_lstm";
+        } else if (selection.contains("LSTM")) {
+            return "lstm"; // <-- Maps to your Python API schema
         } else if (selection.contains("CFA")) {
             return "cfa";
         } else {

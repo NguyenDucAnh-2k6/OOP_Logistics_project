@@ -7,6 +7,9 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class KeywordContributionController {
 
@@ -18,20 +21,39 @@ public class KeywordContributionController {
     private MainController mainController;
     private final KeywordManager helperManager = new KeywordManager();
 
-    // Enum to map readable names to physical file paths
+    // Enum now only holds the file name, not the hardcoded path
     public enum ConfigTarget {
-        DAMAGE("Damage Keywords", "oop_logistics_projects/external config/damage_keywords.json"),
-        RELIEF("Relief Keywords", "oop_logistics_projects/external config/relief_keywords.json"),
-        SENTIMENT("Sentiment Keywords", "oop_logistics_projects/external config/sentiment_keywords.json"),
-        INTENT("Intent Keywords", "oop_logistics_projects/external config/intent_keywords.json"); // <-- NEWLY ADDED
+        DAMAGE("Damage Keywords", "damage_keywords.json"),
+        RELIEF("Relief Keywords", "relief_keywords.json"),
+        SENTIMENT("Sentiment Keywords", "sentiment_keywords.json"),
+        INTENT("Intent Keywords", "intent_keywords.json"),
+        LOCATION("Location Keywords", "location_keywords.json"); 
+        
         final String label;
-        final String filePath;
+        final String fileName;
 
-        ConfigTarget(String label, String filePath) {
+        ConfigTarget(String label, String fileName) {
             this.label = label;
-            this.filePath = filePath;
+            this.fileName = fileName;
         }
         @Override public String toString() { return label; }
+    }
+
+    /**
+     * Traverses up the directory tree to reliably locate the external config file.
+     */
+    private String resolveConfigPath(String fileName) {
+        Path currentPath = Paths.get("").toAbsolutePath();
+        while (currentPath != null) {
+            Path directPath = currentPath.resolve("external config").resolve(fileName);
+            if (Files.exists(directPath)) return directPath.toString();
+            
+            Path subfolderPath = currentPath.resolve("oop_logistics_projects").resolve("external config").resolve(fileName);
+            if (Files.exists(subfolderPath)) return subfolderPath.toString();
+            
+            currentPath = currentPath.getParent();
+        }
+        return "external config/" + fileName;
     }
 
     public void setMainController(MainController mainController) {
@@ -51,8 +73,11 @@ public class KeywordContributionController {
         statusLabel.setText("Loading...");
         statusLabel.setStyle("-fx-text-fill: black;");
 
+        // Dynamically resolve the path here
+        String actualPath = resolveConfigPath(target.fileName);
+
         try {
-            helperManager.loadFromJson(target.filePath);
+            helperManager.loadFromJson(actualPath);
             categorySelector.getItems().clear();
             categorySelector.getItems().addAll(helperManager.getCategories());
             
@@ -88,6 +113,7 @@ public class KeywordContributionController {
 
         try {
             helperManager.addKeyword(cat.trim(), word.trim());
+            // Since loadFromJson caches the path inside KeywordManager, saveChanges() just works!
             helperManager.saveChanges();
             
             statusLabel.setText("✅ Saved '" + word + "' to category [" + cat + "]");
@@ -106,9 +132,6 @@ public class KeywordContributionController {
 
     @FXML
     private void handleBack() {
-        // Return to Data Source Selection (defaulting to isReadyMode=false or passing it if tracked)
-        // Since this screen is usually accessed from "Add Data" flow, we can return there.
-        // If you want precise state, you might need to pass `isReadyMode` into this controller too.
         if (mainController != null) {
             mainController.navigateToDataSourceSelection(false); 
         }

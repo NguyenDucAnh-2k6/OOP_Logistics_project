@@ -17,11 +17,20 @@ public class GoogleNewsRssStrategy implements SearchStrategy {
     public void search(String domain, String keyword, Map<String, UrlWithDate> results) {
         try {
             String encoded = URLEncoder.encode(keyword + " site:" + domain, StandardCharsets.UTF_8);
-            // Example time range: modify as needed or pass in via constructor
-            String rssUrl = "https://news.google.com/rss/search?q=" + encoded + "+after:2024-09-02+before:2024-09-11&hl=vi&gl=VN&ceid=VN:vi";
+            String rssUrl = "https://news.google.com/rss/search?q=" + encoded + "&hl=vi&gl=VN&ceid=VN:vi";
             logger.info("Google News RSS: {}", rssUrl);
 
-            Document doc = Jsoup.connect(rssUrl).timeout(15000).get();
+            // UPGRADED JSOUP CONNECTION:
+            Document doc = Jsoup.connect(rssUrl)
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+                    .header("Accept", "application/rss+xml, application/xml, text/xml, */*; q=0.01")
+                    .header("Accept-Language", "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7")
+                    .header("Sec-Ch-Ua", "\"Chromium\";v=\"122\", \"Not(A:Brand\";v=\"24\", \"Google Chrome\";v=\"122\"")
+                    .header("Sec-Ch-Ua-Mobile", "?0")
+                    .header("Sec-Ch-Ua-Platform", "\"Windows\"")
+                    .timeout(15000)
+                    .get();
+
             for (Element item : doc.select("item")) {
                 String url = UrlUtils.extractActualUrl(item.select("link").text());
                 String pubDate = item.select("pubDate").text();
