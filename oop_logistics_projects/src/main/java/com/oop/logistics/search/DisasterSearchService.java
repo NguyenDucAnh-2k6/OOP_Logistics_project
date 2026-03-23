@@ -79,6 +79,8 @@ public class DisasterSearchService {
             case "reddit" -> "reddit.com";
             case "facebook", "facebook-debug" -> "facebook.com"; 
             case "twitter" -> "x.com"; // Twitter is now indexed heavily under x.com
+            case "instagram" -> "instagram.com";
+            case "threads" -> "threads.com";
             default -> "";
         };
 
@@ -92,8 +94,14 @@ public class DisasterSearchService {
         List<String> searchVariations;
         if (platform.equalsIgnoreCase("tiktok")) {
             searchVariations = List.of(keyword, "inurl:video " + keyword);
+        } else if (platform.equalsIgnoreCase("instagram")) {
+            // Forces search engine to only return /p/ (posts) or /reel/ (videos)
+            searchVariations = List.of(keyword, "inurl:p OR inurl:reel " + keyword);
         } else if (platform.equalsIgnoreCase("youtube")) {
             searchVariations = List.of(keyword, keyword + " tin tức", keyword + " shorts");
+        } else if (platform.equalsIgnoreCase("threads")) {
+            // Forces search engine to only return specific Threads posts
+            searchVariations = List.of(keyword, "inurl:post " + keyword);
         } else if (platform.equalsIgnoreCase("twitter")) {
             // "inurl:status" ensures we get actual tweets, not profile pages
             searchVariations = List.of(keyword, "inurl:status " + keyword);
@@ -119,12 +127,24 @@ public class DisasterSearchService {
                 if (url.contains("tiktok.com") && (url.contains("/video/") || url.contains("%2fvideo%2f") || url.contains("vm.tiktok.com"))) {
                     filteredMap.put(entry.getKey(), entry.getValue());
                 }
+            } else if (platform.equalsIgnoreCase("instagram")) {
+                // STRICT INSTAGRAM FILTER: Must be a specific post or reel.
+                // Rejects generic instagram.com/username/ profiles.
+                if (url.contains("/p/") || url.contains("/reel/")) {
+                    filteredMap.put(entry.getKey(), entry.getValue());
+                }
             } else if (platform.equalsIgnoreCase("youtube")) {
                 if (url.contains("watch?v=") || url.contains("/shorts/")) {
                     filteredMap.put(entry.getKey(), entry.getValue());
                 }
             } else if (platform.equalsIgnoreCase("twitter")) {
                 if (url.contains("/status/") || url.contains("%2fstatus%2f")) {
+                    filteredMap.put(entry.getKey(), entry.getValue());
+                }
+            } else if (platform.equalsIgnoreCase("threads")) {
+                // STRICT THREADS FILTER: Must be a specific post.
+                // Rejects generic threads.net/@username profiles.
+                if (url.contains("/post/")) {
                     filteredMap.put(entry.getKey(), entry.getValue());
                 }
             } else if (platform.toLowerCase().startsWith("facebook")) {

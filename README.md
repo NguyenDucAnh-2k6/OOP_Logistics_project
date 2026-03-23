@@ -85,7 +85,12 @@ mvn clean javafx:run
 mvn exec:java -Dexec.mainClass="com.oop.logistics.Launcher"
 # OR SIMPLY CLICK "RUN JAVA"
 ```
-
+#### 5. Open Chrome in DEBUG mode
+Open Windows cmd:
+```bash
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\ChromeDebug"
+```
+By doing this, Chrome DEBUG mode is opened at port ```9222```, thereby search engines can access Bing/Google/DuckDuckGo and crawlers can gain direct access to social/news platform without blocked by CAPTCHA or Cloudfare. <br>
 The JavaFX GUI will open, connecting to the Python backend at `http://localhost:8000` via Python API client.
 
 ---

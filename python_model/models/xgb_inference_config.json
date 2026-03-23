@@ -1,19 +1,19 @@
 {
     "model_architecture": "xgboost",
-    "embedder_model": "all-MiniLM-L6-v2",
+    "embedder_model": "paraphrase-multilingual-MiniLM-L12-v2",
     "labels_mapping": {
         "0": "negative",
         "1": "neutral",
         "2": "positive"
     },
     "optuna_best_hyperparameters": {
-        "n_estimators": 500,
-        "learning_rate": 0.075938917662714,
+        "n_estimators": 495,
+        "learning_rate": 0.01875693024800048,
         "max_depth": 7,
-        "subsample": 0.8281651887908185,
-        "colsample_bytree": 0.6931966536681634,
-        "min_child_weight": 4,
-        "gamma": 2.9096075253416848e-05
+        "subsample": 0.605939763310016,
+        "colsample_bytree": 0.8646287800080653,
+        "min_child_weight": 3,
+        "gamma": 7.250558686848765e-07
     },
-    "validation_log_loss": 0.38730964437042087
+    "validation_log_loss": 0.5764876558957776
 }

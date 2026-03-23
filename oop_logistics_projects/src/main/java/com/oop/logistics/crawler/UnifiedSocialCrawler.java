@@ -28,24 +28,27 @@ import java.time.format.DateTimeFormatter;
 
 public class UnifiedSocialCrawler implements SocialCrawler {
     private static final Logger logger = LoggerFactory.getLogger(UnifiedSocialCrawler.class);
-    public enum Platform { YOUTUBE, TIKTOK, VOZ, REDDIT, TWITTER, FACEBOOK }    private final Platform platform;
+    private final Platform platform;
 
     public UnifiedSocialCrawler(Platform platform) {
         this.platform = platform;
     }
 
+    public enum Platform { YOUTUBE, TIKTOK, VOZ, REDDIT, TWITTER, FACEBOOK, INSTAGRAM, THREADS }
+
     @Override
     public List<SocialResult> crawlComments(String url, int maxComments) {
         return switch (platform) {
-            case VOZ -> crawlVozSelenium(url, maxComments); 
+            case VOZ -> crawlVozSelenium(url, maxComments);
             case YOUTUBE -> crawlYouTubeSelenium(url, maxComments);
             case TIKTOK -> crawlTikTokSelenium(url, maxComments);
             case REDDIT -> crawlRedditJson(url, maxComments);
-            case TWITTER -> crawlTwitterSelenium(url, maxComments); // <--- Added here
+            case TWITTER -> crawlTwitterSelenium(url, maxComments);
             case FACEBOOK -> crawlFacebookSelenium(url, maxComments);
+            case INSTAGRAM -> crawlInstagramSelenium(url, maxComments);
+            case THREADS -> crawlThreadsSelenium(url, maxComments); // <--- Add here
         };
     }
-
     // 1. VOZ (Using Selenium to bypass Cloudflare 403 and handle pagination)
     private List<SocialResult> crawlVozSelenium(String baseUrl, int maxComments) {
         List<SocialResult> results = new ArrayList<>();
@@ -862,6 +865,264 @@ public class UnifiedSocialCrawler implements SocialCrawler {
             
         } catch (Exception e) {
             logger.error("Twitter Selenium Crawl Error for URL [{}]: {}", url, e.getMessage(), e);
+        }
+        return results;
+    }
+    // 7. Instagram Crawler
+    private List<SocialResult> crawlInstagramSelenium(String url, int maxComments) {
+        List<SocialResult> results = new ArrayList<>();
+        Set<String> seenComments = new HashSet<>();
+        
+        if (url == null || !url.startsWith("http")) {
+            logger.warn("Invalid Instagram URL provided: {}", url);
+            return results;
+        }
+
+        WebDriver driver = setupWebDriver();
+        try {
+            logger.info("Fetching Instagram Post: {}", url);
+            driver.get(url);
+            
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("body")));
+            Thread.sleep(5000); 
+
+            // --- 1. CLICK COMMENT BUTTON OR "VIEW ALL COMMENTS" ---
+            try {
+                // Look for the Speech Bubble SVG (from your image) or the "View all X comments" text link
+                js.executeScript(
+                    "var svgs = document.querySelectorAll('svg[aria-label=\"Comment\"], svg[aria-label=\"Bình luận\"]');" +
+                    "if (svgs.length > 0) { " +
+                    "   var btn = svgs[0].closest('div[role=\"button\"], button, a'); " +
+                    "   if (btn) btn.click(); " +
+                    "} else {" +
+                    "   var spans = document.querySelectorAll('span, div');" +
+                    "   for(var i=0; i<spans.length; i++) {" +
+                    "       var t = spans[i].innerText ? spans[i].innerText.toLowerCase() : '';" +
+                    "       if ((t.includes('view all') && t.includes('comments')) || (t.includes('xem tất cả') && t.includes('bình luận'))) {" +
+                    "           spans[i].click(); return;" +
+                    "       }" +
+                    "   }" +
+                    "}"
+                );
+                Thread.sleep(3000); 
+            } catch (Exception ignored) {}
+
+            int previousSize = 0;
+            int retries = 0;
+
+            // --- 2. EXTRACTION LOOP ---
+            while (results.size() < maxComments && retries < 4) {
+                
+                // --- CLICK "VIEW ALL {n} REPLIES" ---
+                try {
+                    js.executeScript(
+                        "var elements = document.querySelectorAll('span, div[role=\"button\"]');" +
+                        "elements.forEach(el => {" +
+                        "   var t = el.innerText ? el.innerText.toLowerCase() : '';" +
+                        // Splitting 'view' and 'repl' allows it to catch "view all 4 replies", "view 1 previous reply", etc.
+                        "   if((t.includes('view') && t.includes('repl')) || (t.includes('xem') && t.includes('câu trả lời')) || (t.includes('hiển thị') && t.includes('bình luận'))) { " +
+                        "       el.click(); " +
+                        "   }" +
+                        "});"
+                    );
+                    Thread.sleep(2000); // Give the replies time to slide down
+                } catch (Exception ignored) {}
+
+                // --- EXTRACT COMMENTS ---
+                // We find all <time> tags on the screen, and work backwards to the comment container
+                List<WebElement> timeElements = driver.findElements(By.tagName("time"));
+                
+                for (WebElement timeEl : timeElements) {
+                    if (results.size() >= maxComments) break;
+                    
+                    try {
+                        // Instagram DOM changes constantly. The safest way is to go up 5 levels to the main comment block.
+                        WebElement commentBlock = (WebElement) js.executeScript(
+                            "return arguments[0].closest('ul, li, div[role=\"listitem\"]') || arguments[0].parentElement.parentElement.parentElement.parentElement.parentElement;", 
+                            timeEl
+                        );
+
+                        if (commentBlock == null) continue;
+
+                        // Extract all text from the block at once. It usually looks like:
+                        // "username\nThis is the comment text!\n2w\nReply"
+                        String rawText = commentBlock.getAttribute("innerText");
+                        if (rawText == null || rawText.isEmpty()) continue;
+
+                        String[] lines = rawText.split("\\n");
+                        if (lines.length < 2) continue;
+
+                        String author = lines[0].trim();
+                        String content = "";
+
+                        // If the user is verified, line 1 might be "Verified", so the comment is pushed to line 2
+                        if (lines.length > 2 && (lines[1].contains("Verified") || lines[1].trim().isEmpty() || lines[1].equals("•"))) {
+                            content = lines[2].trim();
+                        } else {
+                            content = lines[1].trim();
+                        }
+
+                        // Extract Date (Bypassing hover by grabbing the ISO datetime attribute)
+                        String dateStr = java.time.LocalDate.now().toString();
+                        String datetime = timeEl.getAttribute("datetime"); // e.g., "2026-03-03T12:00:00.000Z"
+                        if (datetime != null && datetime.length() >= 10) {
+                            dateStr = datetime.substring(0, 10); // Grabs "YYYY-MM-DD"
+                        }
+
+                        String uniqueId = author + "|" + content.replaceAll("\\s+", " ");
+
+                        if (!author.isEmpty() && !content.isEmpty() && !seenComments.contains(uniqueId)) {
+                            seenComments.add(uniqueId);
+                            results.add(new SocialResult("INSTAGRAM", author, content, 0, dateStr));
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                if (results.size() == previousSize) {
+                    retries++;
+                } else {
+                    retries = 0;
+                }
+                previousSize = results.size();
+
+                // Instagram places comments inside a specific popup scroll window
+                js.executeScript(
+                    "var containers = document.querySelectorAll('div[style*=\"overflow-y: scroll\"], div[style*=\"overflow-y: auto\"], div[style*=\"overflow: hidden auto\"], article');" +
+                    "if(containers.length > 0) { containers[containers.length-1].scrollBy(0, 1000); }" +
+                    "window.scrollBy(0, 1000);"
+                );
+                Thread.sleep(3000); 
+            }
+            logger.info("Successfully crawled {} comments from Instagram.", results.size());
+            
+        } catch (Exception e) {
+            logger.error("Instagram Selenium Crawl Error for URL [{}]: {}", url, e.getMessage(), e);
+        }
+        return results;
+    }
+    // 8. Threads Crawler (Safe Version - Prevents Wandering)
+    private List<SocialResult> crawlThreadsSelenium(String url, int maxComments) {
+        List<SocialResult> results = new ArrayList<>();
+        Set<String> seenComments = new HashSet<>();
+        
+        if (url == null || !url.startsWith("http")) {
+            logger.warn("Invalid Threads URL provided: {}", url);
+            return results;
+        }
+
+        WebDriver driver = setupWebDriver();
+        try {
+            logger.info("Fetching Threads Post: {}", url);
+            driver.get(url);
+            
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("body")));
+            Thread.sleep(5000); 
+
+            // Clean the original URL for our safety monitor (removes tracking tags like ?igshid=...)
+            final String cleanOriginalUrl = url.split("\\?")[0].replace("threads.com", "threads.net");
+
+            int previousSize = 0;
+            int retries = 0;
+
+            // --- EXTRACTION LOOP ---
+            while (results.size() < maxComments && retries < 4) {
+
+                // 1. EXTRACT COMMENTS FIRST
+                List<WebElement> timeElements = driver.findElements(By.tagName("time"));
+                
+                for (WebElement timeEl : timeElements) {
+                    if (results.size() >= maxComments) break;
+                    
+                    try {
+                        WebElement commentBlock = (WebElement) js.executeScript(
+                            "return arguments[0].closest('div[data-pressable-container=\"true\"]') || arguments[0].parentElement.parentElement.parentElement.parentElement.parentElement;", 
+                            timeEl
+                        );
+
+                        if (commentBlock == null) continue;
+
+                        String rawText = commentBlock.getAttribute("innerText");
+                        if (rawText == null || rawText.isEmpty()) continue;
+
+                        String[] lines = rawText.split("\\n");
+                        if (lines.length < 3) continue;
+
+                        String author = lines[0].trim();
+                        String content = "";
+
+                        for (int i = 1; i < lines.length; i++) {
+                            String line = lines[i].trim();
+                            if (!line.isEmpty() && !line.matches("\\d+[hmdw]") && !line.equals("Verified") && !line.equals(author)) {
+                                content = line;
+                                break;
+                            }
+                        }
+
+                        // Extract Date
+                        String dateStr = java.time.LocalDate.now().toString();
+                        String datetime = timeEl.getAttribute("datetime"); 
+                        if (datetime != null && datetime.length() >= 10) {
+                            dateStr = datetime.substring(0, 10); 
+                        }
+
+                        String uniqueId = author + "|" + content.replaceAll("\\s+", " ");
+
+                        if (!author.isEmpty() && !content.isEmpty() && !seenComments.contains(uniqueId)) {
+                            seenComments.add(uniqueId);
+                            results.add(new SocialResult("THREADS", author, content, 0, dateStr));
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                if (results.size() == previousSize) {
+                    retries++;
+                } else {
+                    retries = 0;
+                }
+                previousSize = results.size();
+
+                // 2. SAFETY MONITOR: Did we wander off the main thread?
+                String currentUrl = driver.getCurrentUrl();
+                if (currentUrl != null) {
+                    String cleanCurrentUrl = currentUrl.split("\\?")[0].replace("threads.com", "threads.net");
+                    
+                    // If the current URL doesn't match the original, we either clicked a sub-thread or wandered away.
+                    if (!cleanCurrentUrl.equalsIgnoreCase(cleanOriginalUrl)) {
+                        logger.info("Crawler navigated away to {}. Returning to main thread...", cleanCurrentUrl);
+                        driver.navigate().back(); // Use actual browser history to go back
+                        Thread.sleep(3000);
+                        continue; // Skip the rest of the loop and resume extracting on the main page
+                    }
+                }
+
+                // 3. SAFE EXPANSION: Only click explicit "View replies" buttons (No blind clicking containers!)
+                try {
+                    js.executeScript(
+                        "var elements = document.querySelectorAll('span, div[role=\"button\"]');" +
+                        "elements.forEach(el => {" +
+                        "   var t = el.innerText ? el.innerText.toLowerCase() : '';" +
+                        "   if((t.includes('view') && t.includes('repl')) || (t.includes('xem') && t.includes('câu trả lời')) || (t.includes('hiển thị') && t.includes('bình luận'))) { " +
+                        "       el.click(); " +
+                        "   }" +
+                        "});"
+                    );
+                    Thread.sleep(2000); 
+                } catch (Exception ignored) {}
+
+                // 4. SCROLL
+                js.executeScript("window.scrollBy(0, 1500);");
+                Thread.sleep(3000); 
+            }
+            logger.info("Successfully crawled {} comments from Threads.", results.size());
+            
+        } catch (Exception e) {
+            logger.error("Threads Selenium Crawl Error for URL [{}]: {}", url, e.getMessage(), e);
         }
         return results;
     }

@@ -20,6 +20,8 @@
         <Button text="Reddit Threads" onAction="#selectReddit" styleClass="button, button-primary" prefWidth="200" />
         <Button text="Twitter Comments" onAction="#selectTwitter" styleClass="button, button-primary" prefWidth="200" />
         <Button text="FB Comments (Debug Mode Chrome)" onAction="#selectFacebookDebugMode" styleClass="button, button-primary" prefWidth="200" />
+        <Button text="Instagram Posts" onAction="#selectInstagram" styleClass="button, button-primary" prefWidth="200" />
+        <Button text="Threads" onAction="#selectThreads" styleClass="button, button-primary" prefWidth="200" />
 
         <Separator/>
         

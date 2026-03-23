@@ -62,6 +62,16 @@ public class DataSourceController {
         mainController.navigateToWorkflow(isReadyMode);
     }
     @FXML
+    private void selectInstagram() {
+        mainController.getContext().setDataSource("Instagram");
+        mainController.navigateToWorkflow(isReadyMode);
+    }
+    @FXML
+    private void selectThreads() {
+        mainController.getContext().setDataSource("Threads");
+        mainController.navigateToWorkflow(isReadyMode);
+    }
+    @FXML
     private void openKeywords() {
         mainController.navigateToKeywordContribution();
     }
