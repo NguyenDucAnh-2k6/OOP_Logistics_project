@@ -52,6 +52,16 @@ public class DataSourceController {
         mainController.navigateToWorkflow(isReadyMode);
     }
     @FXML
+    private void selectTwitter() {
+        mainController.getContext().setDataSource("Twitter");
+        mainController.navigateToWorkflow(isReadyMode);
+    }
+    @FXML
+    private void selectFacebookDebugMode() {
+        mainController.getContext().setDataSource("Facebook-Debug");
+        mainController.navigateToWorkflow(isReadyMode);
+    }
+    @FXML
     private void openKeywords() {
         mainController.navigateToKeywordContribution();
     }

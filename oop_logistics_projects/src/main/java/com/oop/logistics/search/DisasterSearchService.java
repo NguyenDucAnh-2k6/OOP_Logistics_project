@@ -77,7 +77,8 @@ public class DisasterSearchService {
             case "tiktok" -> "tiktok.com";
             case "voz" -> "voz.vn";
             case "reddit" -> "reddit.com";
-            case "facebook" -> "facebook.com"; 
+            case "facebook", "facebook-debug" -> "facebook.com"; 
+            case "twitter" -> "x.com"; // Twitter is now indexed heavily under x.com
             default -> "";
         };
 
@@ -88,17 +89,14 @@ public class DisasterSearchService {
 
         logger.info("=== Searching domain: {} ===", domain);
         
-        // 1. ADVANCED QUERY VARIATIONS
         List<String> searchVariations;
         if (platform.equalsIgnoreCase("tiktok")) {
-            // Using "inurl:video" forces search engines to ONLY return actual video posts
-            // rather than useless /tag/ or /@username profile pages.
-            searchVariations = List.of(
-                keyword,
-                "inurl:video " + keyword
-            );
+            searchVariations = List.of(keyword, "inurl:video " + keyword);
         } else if (platform.equalsIgnoreCase("youtube")) {
             searchVariations = List.of(keyword, keyword + " tin tức", keyword + " shorts");
+        } else if (platform.equalsIgnoreCase("twitter")) {
+            // "inurl:status" ensures we get actual tweets, not profile pages
+            searchVariations = List.of(keyword, "inurl:status " + keyword);
         } else {
             searchVariations = List.of(keyword, keyword + " review", keyword + " thảo luận");
         }
@@ -110,13 +108,14 @@ public class DisasterSearchService {
             try { Thread.sleep(2000); } catch (InterruptedException ignored) {} 
         }
         
-        // 2. RESILIENT URL FILTERING
+        // 2. STRICT URL FILTERING
+        // Search engines often return user profiles, tags, or group hubs.
+        // We MUST filter these out so the crawlers actually find specific posts/threads.
         Map<String, UrlWithDate> filteredMap = new LinkedHashMap<>();
         for (Map.Entry<String, UrlWithDate> entry : urlMap.entrySet()) {
             String url = entry.getKey().toLowerCase();
             
             if (platform.equalsIgnoreCase("tiktok")) {
-                // Check for standard "/video/" or Bing's URL-encoded "%2Fvideo%2F" tracking links
                 if (url.contains("tiktok.com") && (url.contains("/video/") || url.contains("%2fvideo%2f") || url.contains("vm.tiktok.com"))) {
                     filteredMap.put(entry.getKey(), entry.getValue());
                 }
@@ -124,10 +123,33 @@ public class DisasterSearchService {
                 if (url.contains("watch?v=") || url.contains("/shorts/")) {
                     filteredMap.put(entry.getKey(), entry.getValue());
                 }
+            } else if (platform.equalsIgnoreCase("twitter")) {
+                if (url.contains("/status/") || url.contains("%2fstatus%2f")) {
+                    filteredMap.put(entry.getKey(), entry.getValue());
+                }
+            } else if (platform.toLowerCase().startsWith("facebook")) {
+                // STRICT FACEBOOK FILTER: Must be a specific post, reel, video, or permalink.
+                // Rejects generic /groups/ or /people/ homepages.
+                if (url.contains("/posts/") || url.contains("/reel/") || url.contains("/videos/") || url.contains("/watch/") || url.contains("/permalink/") || url.contains("story.php")) {
+                    filteredMap.put(entry.getKey(), entry.getValue());
+                }
+            } else if (platform.equalsIgnoreCase("reddit")) {
+                // Keep only Reddit comment threads, reject subreddit homepages
+                if (url.contains("/comments/")) {
+                    filteredMap.put(entry.getKey(), entry.getValue());
+                }
+            } else if (platform.equalsIgnoreCase("voz")) {
+                // Keep only Voz threads, reject forum categories
+                if (url.contains("/t/")) {
+                    filteredMap.put(entry.getKey(), entry.getValue());
+                }
             } else {
                 filteredMap.put(entry.getKey(), entry.getValue()); 
             }
         }
+
+        writeCsv(filteredMap);
+        logger.info("=== DONE: total {} URLs = {} ===", platform, filteredMap.size());
 
         writeCsv(filteredMap);
         logger.info("=== DONE: total {} URLs = {} ===", platform, filteredMap.size());

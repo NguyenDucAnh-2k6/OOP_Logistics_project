@@ -28,8 +28,7 @@ import java.time.format.DateTimeFormatter;
 
 public class UnifiedSocialCrawler implements SocialCrawler {
     private static final Logger logger = LoggerFactory.getLogger(UnifiedSocialCrawler.class);
-    public enum Platform { YOUTUBE, TIKTOK, VOZ, REDDIT }
-    private final Platform platform;
+    public enum Platform { YOUTUBE, TIKTOK, VOZ, REDDIT, TWITTER, FACEBOOK }    private final Platform platform;
 
     public UnifiedSocialCrawler(Platform platform) {
         this.platform = platform;
@@ -38,10 +37,12 @@ public class UnifiedSocialCrawler implements SocialCrawler {
     @Override
     public List<SocialResult> crawlComments(String url, int maxComments) {
         return switch (platform) {
-            case VOZ -> crawlVozSelenium(url, maxComments); // <-- Updated to Selenium
+            case VOZ -> crawlVozSelenium(url, maxComments); 
             case YOUTUBE -> crawlYouTubeSelenium(url, maxComments);
             case TIKTOK -> crawlTikTokSelenium(url, maxComments);
             case REDDIT -> crawlRedditJson(url, maxComments);
+            case TWITTER -> crawlTwitterSelenium(url, maxComments); // <--- Added here
+            case FACEBOOK -> crawlFacebookSelenium(url, maxComments);
         };
     }
 
@@ -123,7 +124,216 @@ public class UnifiedSocialCrawler implements SocialCrawler {
         }
         return results;
     }
+    // 6. Facebook Crawler (Using Chrome Debug Mode)
+    private List<SocialResult> crawlFacebookSelenium(String url, int maxComments) {
+        List<SocialResult> results = new ArrayList<>();
+        Set<String> seenComments = new HashSet<>();
+        
+        if (url == null || !url.startsWith("http")) {
+            logger.warn("Invalid Facebook URL provided: {}", url);
+            return results;
+        }
 
+        WebDriver driver = setupWebDriver();
+        try {
+            logger.info("Fetching Facebook Post from: {}", url);
+            driver.get(url);
+            
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+
+            // Wait for the main post to load
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("body")));
+            Thread.sleep(5000); 
+            // --- 0. CLICK REEL/VIDEO COMMENT BUTTON ---
+            // If the URL is a Reel or Facebook Watch video, the comments are usually hidden behind a button
+            if (url.contains("/reel/") || url.contains("/videos/") || url.contains("/watch/")) {
+                logger.info("Detected Reel/Video. Attempting to open the comment sidebar...");
+                try {
+                    js.executeScript(
+                        "var btns = document.querySelectorAll('div[role=\"button\"], span[role=\"button\"], div[aria-label]');" +
+                        "for (var i = 0; i < btns.length; i++) {" +
+                        "   var label = btns[i].getAttribute('aria-label') ? btns[i].getAttribute('aria-label').toLowerCase() : '';" +
+                        "   if (label.includes('bình luận') || label.includes('comment') || label.includes('leave a comment')) {" +
+                        "       btns[i].click();" +
+                        "       return;" + // Stop searching after clicking the first match
+                        "   }" +
+                        "}"
+                    );
+                    Thread.sleep(3000); // Wait for the sidebar animation to slide out
+                } catch (Exception e) {
+                    logger.warn("Could not find or click the Reel comment button.");
+                }
+            }
+
+            // --- 1. FILTER TO "TẤT CẢ BÌNH LUẬN" (ALL COMMENTS) ---
+            logger.info("Attempting to switch comment filter to 'All Comments'...");
+            // --- 1. FILTER TO "TẤT CẢ BÌNH LUẬN" (ALL COMMENTS) ---
+            logger.info("Attempting to switch comment filter to 'All Comments'...");
+            try {
+                js.executeScript(
+                    "var spans = document.querySelectorAll('span, div');" +
+                    "spans.forEach(s => {" +
+                    "   var text = s.innerText ? s.innerText.toLowerCase() : '';" +
+                    "   if (text === 'phù hợp nhất' || text === 'most relevant') {" +
+                    "       s.click();" +
+                    "   }" +
+                    "});"
+                );
+                Thread.sleep(1500); // Wait for the dropdown to open
+                
+                js.executeScript(
+                    "var options = document.querySelectorAll('span, div[role=\"menuitem\"]');" +
+                    "options.forEach(o => {" +
+                    "   var text = o.innerText ? o.innerText.toLowerCase() : '';" +
+                    "   if (text.includes('tất cả bình luận') || text.includes('all comments')) {" +
+                    "       o.click();" +
+                    "   }" +
+                    "});"
+                );
+                Thread.sleep(3000); // Wait for comments to reload
+            } catch (Exception e) {
+                logger.warn("Could not change comment filter. Facebook UI might have changed or it's already set.");
+            }
+
+            int previousSize = 0;
+            int retries = 0;
+
+            // --- 2. EXTRACTION LOOP ---
+            while (results.size() < maxComments && retries < 4) {
+                
+                // Click "Xem thêm phản hồi" (View Replies) and "Xem thêm" (See More text)
+                try {
+                    js.executeScript(
+                        "var btns = document.querySelectorAll('div[role=\"button\"], span');" +
+                        "btns.forEach(b => {" +
+                        "   var text = b.innerText ? b.innerText.toLowerCase() : '';" +
+                        "   if(text.includes('phản hồi') || text.includes('replies') || text.includes('xem thêm') || text.includes('bình luận khác') || text.includes('view more')) {" +
+                        "       b.click();" +
+                        "   }" +
+                        "});"
+                    );
+                    Thread.sleep(2000); 
+                } catch (Exception ignored) {}
+
+                // Facebook groups comments inside elements with role="article"
+                List<WebElement> articles = driver.findElements(By.cssSelector("div[role='article']"));
+                
+                for (WebElement article : articles) {
+                    if (results.size() >= maxComments) break;
+                    
+                    try {
+                        // Extract Author (Usually the first link or span with text inside the article)
+                        String author = "Unknown";
+                        try {
+                            // Target specific span structure Facebook uses for names
+                            author = article.findElement(By.cssSelector("span[dir='auto'] > span:first-child, a[role='link'] span[dir='auto']")).getText().trim();
+                        } catch (Exception ignored) {}
+
+                        // Extract Content
+                        String content = "";
+                        try {
+                            // Find the main text block, avoiding the author name span
+                            List<WebElement> textBlocks = article.findElements(By.cssSelector("div[dir='auto']"));
+                            for (WebElement block : textBlocks) {
+                                String text = block.getText().trim();
+                                if (!text.isEmpty() && !text.equals(author)) {
+                                    content = text;
+                                    break;
+                                }
+                            }
+                        } catch (Exception e) { continue; }
+
+                        // Extract Date
+                        String dateStr = java.time.LocalDate.now().toString();
+                        try {
+                            // Facebook usually places timestamps in links under the comment.
+                            // The aria-label often contains the exact hover date (e.g., "12 Tháng 3, 2026").
+                            WebElement timeLink = article.findElement(By.cssSelector("a[role='link'] span:contains('tuần'), a[role='link']:last-of-type, ul > li:last-child"));
+                            String rawDateText = timeLink.getAttribute("innerText");
+                            
+                            // If there's an aria-label or tooltip, it's the exact date. Otherwise, we parse "1 tuần"
+                            String hoverText = timeLink.getAttribute("aria-label");
+                            if (hoverText != null && !hoverText.isEmpty()) {
+                                rawDateText = hoverText; 
+                            }
+                            
+                            dateStr = parseFacebookDate(rawDateText);
+                        } catch (Exception ignored) {}
+
+                        String uniqueId = author + "|" + content.replaceAll("\\s+", " ");
+
+                        if (!author.isEmpty() && !content.isEmpty() && !seenComments.contains(uniqueId)) {
+                            seenComments.add(uniqueId);
+                            results.add(new SocialResult("FACEBOOK", author, content, 0, dateStr));
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                if (results.size() == previousSize) {
+                    retries++;
+                } else {
+                    retries = 0;
+                }
+                previousSize = results.size();
+
+                // Scroll down
+                js.executeScript("window.scrollBy(0, 1500);");
+                Thread.sleep(3000); 
+            }
+            logger.info("Successfully crawled {} comments from Facebook.", results.size());
+            
+        } catch (Exception e) {
+            logger.error("Facebook Selenium Crawl Error for URL [{}]: {}", url, e.getMessage(), e);
+        }
+        return results;
+    }
+    // --- HELPER METHOD: Parses Facebook's Hover and Relative Dates ---
+    private String parseFacebookDate(String rawDate) {
+        if (rawDate == null || rawDate.isEmpty()) {
+            return java.time.LocalDate.now().toString();
+        }
+        
+        rawDate = rawDate.trim().toLowerCase();
+        java.time.LocalDate date = java.time.LocalDate.now();
+        
+        try {
+            // 1. Check for Exact Hover Date Formats (e.g., "12 tháng 3, 2026" or "12 tháng 3")
+            if (rawDate.contains("tháng")) {
+                // Remove the word 'lúc' and times (e.g. "lúc 14:30")
+                rawDate = rawDate.replaceAll("lúc.*", "").trim(); 
+                String[] parts = rawDate.replace(",", "").split(" ");
+                
+                int day = Integer.parseInt(parts[0]);
+                int month = Integer.parseInt(parts[2]);
+                int year = date.getYear(); // Default to current year
+                
+                // If year is present at the end
+                if (parts.length > 3) {
+                    year = Integer.parseInt(parts[3]);
+                }
+                return String.format("%04d-%02d-%02d", year, month, day);
+            }
+            
+            // 2. Fallback: Parse Relative Dates ("1 tuần", "2 ngày", "5h")
+            if (rawDate.contains("vừa xong") || rawDate.contains("phút") || rawDate.contains("m") || rawDate.contains("giờ") || rawDate.contains("h")) {
+                return date.toString(); // Happened today
+            }
+            
+            String numberStr = rawDate.replaceAll("[^0-9]", ""); 
+            if (!numberStr.isEmpty()) {
+                int amount = Integer.parseInt(numberStr);
+                if (rawDate.contains("ngày") || rawDate.contains("d")) date = date.minusDays(amount);
+                else if (rawDate.contains("tuần") || rawDate.contains("w")) date = date.minusWeeks(amount);
+                else if (rawDate.contains("tháng")) date = date.minusMonths(amount);
+                else if (rawDate.contains("năm") || rawDate.contains("y")) date = date.minusYears(amount);
+            }
+        } catch (Exception e) {
+            // Return current date if parsing completely fails
+        }
+        
+        return date.toString();
+    }
     // 2. YouTube (Dynamic - Needs Selenium to scroll)
     private List<SocialResult> crawlYouTubeSelenium(String url, int maxComments) {
         List<SocialResult> results = new ArrayList<>();
@@ -554,6 +764,106 @@ public class UnifiedSocialCrawler implements SocialCrawler {
             // Keep current date if parsing fails
         }
         return date.toString();
+    }
+    // 5. Twitter / X Crawler
+    private List<SocialResult> crawlTwitterSelenium(String url, int maxComments) {
+        List<SocialResult> results = new ArrayList<>();
+        Set<String> seenComments = new HashSet<>();
+        
+        if (url == null || !url.startsWith("http")) {
+            logger.warn("Invalid Twitter URL provided: {}", url);
+            return results;
+        }
+
+        WebDriver driver = setupWebDriver();
+        try {
+            logger.info("Fetching Twitter URL: {}", url);
+            driver.get(url);
+            
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+
+            // Wait for the main tweet container to load
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("body")));
+            Thread.sleep(5000); 
+
+            int previousSize = 0;
+            int retries = 0;
+
+            while (results.size() < maxComments && retries < 4) {
+                
+                // --- CLICK "SHOW REPLIES" BUTTONS ---
+                try {
+                    js.executeScript(
+                        "var buttons = document.querySelectorAll('div[role=\"button\"]');" +
+                        "buttons.forEach(b => {" +
+                        "   var text = b.innerText ? b.innerText.toLowerCase() : '';" +
+                        "   if(text.includes('show replies') || text.includes('show more replies') || text.includes('hiển thị thêm') || text.includes('show probable spam')) {" +
+                        "       b.click();" +
+                        "   }" +
+                        "});"
+                    );
+                    Thread.sleep(1500); // Give the replies time to load into the DOM
+                } catch (Exception ignored) {}
+
+                // Grab all tweet articles on the screen (this captures the main tweet AND all comments)
+                List<WebElement> tweets = driver.findElements(By.cssSelector("article[data-testid='tweet']"));
+                
+                for (WebElement tweet : tweets) {
+                    if (results.size() >= maxComments) break;
+                    
+                    try {
+                        // 1. Extract Author (Usually found in a data-testid="User-Name" block)
+                        String author = "Unknown";
+                        try {
+                            // Twitter's User-Name block contains Name \n @username \n Date. We split to get just the Name.
+                            author = tweet.findElement(By.cssSelector("[data-testid='User-Name']")).getText().split("\n")[0].trim();
+                        } catch (Exception ignored) {}
+
+                        // 2. Extract Text
+                        String content = "";
+                        try {
+                            content = tweet.findElement(By.cssSelector("[data-testid='tweetText']")).getAttribute("innerText").trim();
+                        } catch (Exception e) {
+                            continue; // Skip if it's a media-only tweet (picture/video with no text)
+                        }
+
+                        // 3. Extract Date (Bypassing the hover trick by grabbing the exact ISO string)
+                        String dateStr = java.time.LocalDate.now().toString();
+                        try {
+                            WebElement timeEl = tweet.findElement(By.cssSelector("time"));
+                            String datetime = timeEl.getAttribute("datetime"); // e.g., "2026-03-22T14:30:00.000Z"
+                            if (datetime != null && datetime.length() >= 10) {
+                                dateStr = datetime.substring(0, 10); // Extract just the YYYY-MM-DD portion
+                            }
+                        } catch (Exception ignored) {}
+
+                        String uniqueId = author + "|" + content.replaceAll("\\s+", " ");
+
+                        if (!author.isEmpty() && !content.isEmpty() && !seenComments.contains(uniqueId)) {
+                            seenComments.add(uniqueId);
+                            results.add(new SocialResult("TWITTER", author, content, 0, dateStr));
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                if (results.size() == previousSize) {
+                    retries++;
+                } else {
+                    retries = 0;
+                }
+                previousSize = results.size();
+
+                // Scroll down to trigger the next batch of comments
+                js.executeScript("window.scrollBy(0, 1500);");
+                Thread.sleep(3000); 
+            }
+            logger.info("Successfully crawled {} tweets/replies from Twitter.", results.size());
+            
+        } catch (Exception e) {
+            logger.error("Twitter Selenium Crawl Error for URL [{}]: {}", url, e.getMessage(), e);
+        }
+        return results;
     }
     private WebDriver setupWebDriver() {
         ChromeOptions options = new ChromeOptions();

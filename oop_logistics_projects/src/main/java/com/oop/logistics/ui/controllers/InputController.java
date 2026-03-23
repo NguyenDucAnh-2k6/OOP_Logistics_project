@@ -135,9 +135,10 @@ public class InputController {
                     fb.tearDown();
 
                 } else if ("YouTube".equals(sourceType) || "TikTok".equals(sourceType) || 
-                           "Voz".equals(sourceType) || "Reddit".equals(sourceType)) {
-                    
-                    UnifiedSocialCrawler.Platform platformEnum = UnifiedSocialCrawler.Platform.valueOf(sourceType.toUpperCase());
+                           "Voz".equals(sourceType) || "Reddit".equals(sourceType) || 
+                           "Twitter".equals(sourceType) || "Facebook-Debug".equals(sourceType)) {
+                    String enumString = sourceType.toUpperCase().replace("-DEBUG", "");
+                    UnifiedSocialCrawler.Platform platformEnum = UnifiedSocialCrawler.Platform.valueOf(enumString);
                     UnifiedSocialCrawler crawler = new UnifiedSocialCrawler(platformEnum);
                     String defaultDate = DateExtract.getCurrentDateDDMMYYYY();
 
